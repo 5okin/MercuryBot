@@ -1,5 +1,9 @@
-
 # MercuryBot
+
+<p align='center'>
+    <a href= "https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot"> 
+    <img src="https://github.com/5okin/MercuryBot/assets/70406237/9fbf5218-d5bc-476a-8892-2496a1bbe1ba"></a>
+<p>
 
 MercuryBot is a Discord bot *(so far...)* that monitors various platforms and finds new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab exciting titles for free.
 
@@ -13,7 +17,7 @@ MercuryBot is a Discord bot *(so far...)* that monitors various platforms and fi
 
 - **Multi-Platform Support:** MercuryBot keeps an eye on free game promotions on Epic Games, Steam, GOG, and PS Plus.
 
-- **Online 24/7:** Bot doesn't go offline ensuring you dont miss out on any deal !
+- **Online 24/7:** Bot doesn't go offline ensuring you dont miss out on any deal!
 
 - **Automated Reminders:** Receive timely reminders in your Discord server when new free games become available.
 
@@ -47,6 +51,38 @@ MercuryBot is a Discord bot *(so far...)* that monitors various platforms and fi
 - `/deals`: Display a list of available stores and get the current available games (Ephemeral Message).
 - `/invite`: Get the invite link for MercuryBot.
 - `/feedback`: Send feedback or bug reports. 
+
+
+## Running it on your own.
+
+- Download or clone the repository.
+- Make sure you have python 3.10 or higher installed. `python -V`
+- Install the required dependencies by running. `pip install -r requirements.txt`
+- Make sure you have a working discord [bot TOKEN](#get-a-discord-token) and [mongoDB server](#mongodb-connection-string) running.
+- Add your credentials to the [.env](#env-file) file.
+- Run it using: `python3 Discord.py`
+
+### Get a discord TOKEN
+Log in to https://discord.com/developers/applications/ and click on the New Application button. Go to the bot tab and click the Add Bot button to get a TOKEN. 
+
+
+### MongoDB connection string
+The database used is MongoDB, you can use mongodb atlas which offers a shared $0/month plan, if you don't want to host your own database. Go to DEPLOYMENT / Database / Connect / Drivers. You should get a string like this:
+
+`mongodb+srv://...`
+
+
+### `.env` file
+
+To set up the token you will have to either make use of the [`.env.example`](.env.example) file, either copy or rename it to `.env` and edit it with your data.
+
+Here is an explanation of what everything is:
+| Variable                  | What it is                                                                                                |
+| ------------------------- | ----------------------------------------------                                                            |
+| DEBUG                     | Can be true or false. Changes the log output and TOKEN used to run the bot & slash command sync           |
+| DB_CONNECTION_STRING      | Your mongoDB connection string                                                                            |
+| DISCORD_TOKEN_LIVE        | Live discord TOKEN, used when DEBUG=False                                                                 |
+| DISCORD_TOKEN_TEST        | Test/Dev discord TOKEN, used when DEBUG=True                                                              |
 
 
 ## Contributions
