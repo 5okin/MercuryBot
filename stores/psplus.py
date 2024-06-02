@@ -1,15 +1,14 @@
-import json
-from PIL import Image
-import makejson
-from bs4 import BeautifulSoup
 import asyncio
-import io
 from urllib.request import urlopen, Request
+from bs4 import BeautifulSoup
 from stores._store import Store
+from utils import makejson
 
 
 class Main(Store):
-
+    """
+    psplus store
+    """
     def __init__(self):
         self.id = '4'
         self.base_url = 'https://www.playstation.com'
@@ -19,11 +18,14 @@ class Main(Store):
             url = 'https://www.playstation.com/en-gr/ps-plus/whats-new/'
         )
 
-    
-    def scrape(self):
+
+    def request_data(self, url=None):
+        """
+        get data for psplus
+        """
         data = urlopen(Request(self.url))
         soup = BeautifulSoup(data, 'html.parser')
-        games = soup.find("div", {"class": "cmp-experiencefragment cmp-experiencefragment--your-latest-monthly-games"})
+        games = soup.find("div", {"class": "content-grid layout__3--a"})
         games = games.findAll("div", {"class": "box"})
 
         json_data = []
@@ -32,15 +34,17 @@ class Main(Store):
             title = game.find("h3", {"class":"txt-style-medium-title txt-block-paragraph__title"}).text.strip()
             game_url = self.base_url + game.find("a", {"role":"button"})['href']
             game_image = game.findAll("source")[2]['srcset']
-           
             json_data = makejson.data(json_data, title, 1, game_url, game_image)
-        
+
         return self.compare(json_data)
-    
+
 
     async def get(self):
-        if self.scrape():
-            self.make_gif_image()
+        """
+        psplus get
+        """
+        if self.request_data(self.url):
+            self.image = self.make_gif_image()
             return 1
         return 0
 

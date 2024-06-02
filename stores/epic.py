@@ -1,16 +1,16 @@
-from urllib.request import urlopen, Request
-from urllib.error import URLError, HTTPError
 from datetime import datetime
-from stores._store import Store
-import json
-import makejson
-from PIL import Image
-import asyncio
+from urllib.request import urlopen
 import io
+import asyncio
+from PIL import Image
+from utils import makejson
+from stores._store import Store
 
 
 class Main(Store):
-
+    '''
+    Epic store 
+    '''
     def __init__(self):
         self.id = '1'
         self.online_data = []
@@ -22,23 +22,10 @@ class Main(Store):
         )
 
 
-    def check_if_deals_changed(self):
-        if not self.data:
-            print(self.data)
-            return 1
-
-        data = self.request_data()
-        game_list = data['data']['Catalog']['searchStore']['elements']
-
-        # Remove next weeks offer from the compare
-        for game in game_list:
-            if game['promotions'] is not None:
-                if not game['promotions']['promotionalOffers']:
-                    game_list.remove(game)
-
-        self.compare(game_list)
-
     def process_data(self, pages):
+        """
+        Main epic scraper
+        """
         if not pages:
             return False
 
@@ -46,85 +33,87 @@ class Main(Store):
 
         i = 0
         game_list = pages['data']['Catalog']['searchStore']['elements']
-        while i < len(game_list):
+        #while i < len(game_list):
+        for game in game_list:
 
-            if game_list[i]['promotions'] is not None:
-                game_name = game_list[i]['title']
+            if game['promotions'] is not None:
+                game_name = game['title']
 
-                if (game_list[i]['catalogNs']['mappings'] is not None) and (len(game_list[i]['catalogNs']['mappings'])):
-                    product_url = game_list[i]['catalogNs']['mappings'][0]['pageSlug']
+                if (game['catalogNs']['mappings'] is not None) and (len(game['catalogNs']['mappings'])):
+                    product_url = game['catalogNs']['mappings'][0]['pageSlug']
                     game_url = self.url + product_url
-                elif game_list[i]['productSlug'] != "[]":
+                elif game['productSlug'] != "[]":
                     # When gift is opened (Xmas, etc) productSlug is []
-                    product_url = game_list[i]['productSlug']
+                    product_url = game['productSlug']
                     game_url = self.url + product_url
                 else:
                     game_url = 'https://store.epicgames.com/en-US/free-games'
 
                 # Get the game image
                 # Should be a list with type names
-                try:
+                try:     
                     j = 0
                     while True:
 
-                        if game_list[i]['keyImages'][j]['type'] == 'VaultOpened':
-                            game_image = game_list[i]['keyImages'][j]['url']
+                        if game['keyImages'][j]['type'] == 'VaultOpened':
+                            game_image = game['keyImages'][j]['url']
                             break
 
-                        if game_list[i]['keyImages'][j]['type'] == 'DieselStoreFrontTall':
-                            game_image = game_list[i]['keyImages'][j]['url']
+                        if game['keyImages'][j]['type'] == 'DieselStoreFrontTall':
+                            game_image = game['keyImages'][j]['url']
                             break
 
-                        if game_list[i]['keyImages'][j]['type'] == 'Thumbnail':
-                            game_image = game_list[i]['keyImages'][j]['url']
+                        if game['keyImages'][j]['type'] == 'Thumbnail':
+                            game_image = game['keyImages'][j]['url']
                             break
-                        '''
-                        if game_list[i]['keyImages'][j]['type'] == 'OfferImageTall':
-                            game_image = game_list[i]['keyImages'][j]['url']
-                            break
-                        '''
 
-                        # For Xmas time when the images are wide and the first image is a wrapped gift
-                        if game_list[i]['keyImages'][j]['type'] == 'VaultClosed':
-                            game_image = game_list[i]['keyImages'][j + 2]['url']
+                        # For Xmas when the images are wide and the first image is a wrapped
+                        if game['keyImages'][j]['type'] == 'VaultClosed':
+                            game_image = game['keyImages'][j + 2]['url']
                             break
 
                         j += 1
-                except:
-                    game_image = game_list[i]['keyImages'][0]['url']
+                except Exception as e:
+                    game_image = game['keyImages'][0]['url']
 
                 game_image = game_image.replace(" ", "%20")
 
-                # Get the offer
-                # If deal is going on now
-                if game_list[i]['promotions']['promotionalOffers']:
-                    if game_list[i]['price']['totalPrice']['fmtPrice']['discountPrice'] == "0":
-                        offer_from = game_list[i]['promotions']['promotionalOffers'][0]['promotionalOffers'][0][
-                            'startDate']
-                        offer_until = game_list[i]['promotions']['promotionalOffers'][0]['promotionalOffers'][0][
-                            'endDate']
-                        json_data = makejson.data(json_data, game_name, 1, game_url, game_image, offer_from, offer_until)
+                # If Current deal
+                if game['promotions']['promotionalOffers']:
+                    if game['price']['totalPrice']['fmtPrice']['discountPrice'] == "0":
+                        offer = game['promotions']['promotionalOffers'][0]['promotionalOffers'][0]
+                        json_data = makejson.data(json_data,
+                                                    game_name,
+                                                    1,
+                                                    game_url,
+                                                    game_image,
+                                                    offer['startDate'],
+                                                    offer['endDate'])
 
-                # If deal is upcoming
-                if game_list[i]['promotions']['upcomingPromotionalOffers']:
-                    for offer in game_list[i]['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers']:
+                # If upcoming upcoming deal
+                if game['promotions']['upcomingPromotionalOffers']:
+                    for offer in game['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers']:
                         if offer['discountSetting']['discountPercentage'] == 0:
-                            offer_from = game_list[i]['promotions']['upcomingPromotionalOffers'][0][
-                                'promotionalOffers'][0]['startDate']
-                            offer_until = \
-                                game_list[i]['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers'][0][
-                                    'endDate']
-                            json_data = makejson.data(json_data, game_name, 0, game_url, game_image, offer_from, offer_until)
+                            offer =  game['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers'][0]
+                            json_data = makejson.data(json_data,
+                                                        game_name,
+                                                        0,
+                                                        game_url,
+                                                        game_image,
+                                                        offer['startDate'],
+                                                        offer['endDate'])
             i += 1
-        #self.data = json_data
         return self.compare(json_data)
-        #return json_data
 
     @staticmethod
     def resize_images(images):
+        '''
+        Image resize
+        '''
+
         for index, image in enumerate(images):
             fixed_height = 300
-            height_percent = (fixed_height / float(image.size[1]))
+            height_percent = fixed_height / float(image.size[1])
             width_size = int((float(image.size[0]) * float(height_percent)))
             images[index] = image.resize((width_size, fixed_height))
         return images
@@ -152,15 +141,16 @@ class Main(Store):
         if len(curr_images) >= len(next_images):
             for index, image in enumerate(curr_images):
                 if index < len(next_images):
-                    new_image = Image.new('RGB', (image.size[0] + next_images[index].size[0], image.size[1]),
-                                          (47, 49, 54, 0))
+                    new_image = Image.new('RGB',
+                                        (image.size[0] + next_images[index].size[0],
+                                        image.size[1]),(47, 49, 54, 0))
                     new_image.paste(image, (0, 0))
                     new_image.paste(next_images[index], (image.size[0], 0))
                     combined_images.append(new_image)
                 else:
                     new_image = Image.new('RGB',
-                                          (image.size[0] + next_images[len(next_images) - 1].size[0], image.size[1]),
-                                          (47, 49, 54, 0))
+                                        (image.size[0] + next_images[len(next_images) - 1].size[0],
+                                        image.size[1]),(47, 49, 54, 0))
                     new_image.paste(image, (0, 0))
                     new_image.paste(next_images[len(next_images) - 1], (image.size[0], 0))
                     combined_images.append(new_image)
@@ -169,15 +159,15 @@ class Main(Store):
             for index, image in enumerate(next_images):
                 if index < len(curr_images):
                     new_image = Image.new('RGB',
-                                          (curr_images[index].size[0] + next_images[index].size[0], image.size[1]),
-                                          (47, 49, 54, 0))
+                                        (curr_images[index].size[0] + next_images[index].size[0],
+                                        image.size[1]),(47, 49, 54, 0))
                     new_image.paste(curr_images[index], (0, 0))
                     new_image.paste(image, (curr_images[index].size[0], 0))
                     combined_images.append(new_image)
                 else:
-                    new_image = Image.new('RGB', (
-                        curr_images[len(curr_images) - 1].size[0] + next_images[len(next_images) - 1].size[0],
-                        image.size[1]), (47, 49, 54, 0))
+                    new_image = Image.new('RGB',
+                                        (curr_images[len(curr_images) - 1].size[0] + next_images[len(next_images) - 1].size[0],
+                                        image.size[1]), (47, 49, 54, 0))
                     new_image.paste(curr_images[len(curr_images) - 1], (0, 0))
                     new_image.paste(image, (curr_images[len(curr_images) - 1].size[0], 0))
                     combined_images.append(new_image)
@@ -218,9 +208,12 @@ class Main(Store):
                 await asyncio.sleep(60)
 
     async def get(self):
-        #if self.check_if_deals_changed():
-        if self.process_data(self.request_data()):
+        """
+        Runs epic data check, fetch and compile
+        """
+        if self.process_data(self.request_data(self.page)):
             self.create_combined_gif()
+            self.mobile_image = self.make_gif_image()
             return 1
         return 0
 
