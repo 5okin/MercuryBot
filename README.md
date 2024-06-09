@@ -1,12 +1,14 @@
 # MercuryBot
 
-<p align='center'>
-    <a href= "https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot"> 
-    <img src="https://github.com/5okin/MercuryBot/assets/70406237/9fbf5218-d5bc-476a-8892-2496a1bbe1ba"></a>
-<p>
-
 MercuryBot is a Discord bot *(so far...)* that monitors various platforms and finds new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab exciting titles for free.
 
+<p align='center'>
+    <a href= "https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot"> 
+    <img src="https://github.com/5okin/MercuryBot/assets/70406237/34d1a800-4dd5-4915-a02d-9c884848fcb3"></a>
+<p>
+
+
+Mercury bot sends you notifications like the one bellow every time theres a new free game available so you never miss out again. For epic, it also sends you next weeks free game, if available, all in one notification !
 
 <p align='center'>
     <image src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0">
@@ -60,7 +62,7 @@ MercuryBot is a Discord bot *(so far...)* that monitors various platforms and fi
 - Install the required dependencies by running. `pip install -r requirements.txt`
 - Make sure you have a working discord [bot TOKEN](#get-a-discord-token) and [mongoDB server](#mongodb-connection-string) running.
 - Add your credentials to the [.env](#env-file) file.
-- Run it using: `python3 Discord.py`
+- Run it using: `python3 main.py`
 
 ### Get a discord TOKEN
 Log in to https://discord.com/developers/applications/ and click on the New Application button. Go to the bot tab and click the Add Bot button to get a TOKEN. 

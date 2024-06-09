@@ -1,4 +1,4 @@
-import io
+import io, os
 import traceback
 from time import time
 
@@ -60,6 +60,16 @@ class MyClient(discord.Client):
                 for channel in guild.text_channels:
                     if channel.permissions_for(guild.me).send_messages:
                         await channel.send('Bot Started/Restarted')
+
+        # Upload animated avatar
+        if os.path.exists('avatar.gif'):
+            logger.info("Found animated avatar file.")
+            try:
+                with open('avatar.gif', 'rb') as avatar:
+                    await self.user.edit(avatar=avatar.read())
+                logger.info("Animated avatar upload successful")
+            except Exception as e:
+                logger.info("Failed animated avatar upload %s", e)
 
     async def on_guild_join(self, guild):
         print(guild.system_channel)
