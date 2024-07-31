@@ -1,7 +1,7 @@
 import json
 
 
-def data(json_data, game_name, active_deal, game_url, game_image, offer_from=None, offer_until=None) -> dict:
+def data(json_data, game_name, active_deal, game_url, game_image, offer_from=None, offer_until=None, wide_image=None) -> dict:
     """ Creates a json file from the given data
         
         Parameters
@@ -19,6 +19,7 @@ def data(json_data, game_name, active_deal, game_url, game_image, offer_from=Non
         :param offer_from:
         :param offer_until:
         :param game_image:
+        :param wide_image:
     """
 
     if offer_from and "T" in offer_from:
@@ -34,6 +35,7 @@ def data(json_data, game_name, active_deal, game_url, game_image, offer_from=Non
         'startDate': offer_from,
         'endDate': offer_until,
         'image': game_image,
+        'wideImage': wide_image
     })
     return json_data
 

@@ -10,6 +10,7 @@ from utils.database import Database
 from utils import environment
 
 import clients.discord.bot as discord
+import clients.twitter.bot as twitter
 
 logger = environment.logging.getLogger("bot")
 
@@ -20,6 +21,7 @@ status = ['Still', 'in', 'Development']
 
 modules = []
 
+#MARK: load modules
 def load_modules() -> list:
     """Imports and instances all the modules automagically."""
 
@@ -43,7 +45,9 @@ def load_modules() -> list:
 load_modules()
 
 discord = discord.setup(modules)
+x = twitter.MyClient()
 
+#MARK: update
 async def update(update_store=None) -> None:
     '''
     Update specified store
@@ -59,15 +63,11 @@ async def update(update_store=None) -> None:
         if await update_store.get():
             Database.overwrite_deals(update_store.name, update_store.data)
             Database.add_image(update_store)
-            if update_store.alert_flag:
-                await send_games_notification(update_store)
-            else:
-                print("Updated but didn't send reminders")
-            update_store.alert_flag = True
+            await send_games_notification(update_store)
         else:
             logger.info("No new games games to get for %s", update_store.name)
 
-
+#MARK: Initialize
 async def initialize() -> None:
     '''
     --- APP START / RESTART ---
@@ -97,11 +97,16 @@ async def initialize() -> None:
             except Exception as error:
                 logger.error("Failed to scrape store %s: %s", store.name, str(error))
 
-
+#MARK: send games notification
 async def send_games_notification(store):
     '''
     Send games notifications
     '''
+
+    #Twitter
+    if store.twitter_notification and x:
+        x.tweet(store)
+
     await discord.wait_until_ready()
     servers_data = Database.get_discord_servers()
     for server in servers_data:
@@ -114,32 +119,8 @@ async def send_games_notification(store):
                 #print(f"2: {server.get('channel')} has role {server.get('role')}")
                 await discord.store_messages(store.name, discord.guilds.system_channel, server.get('role'))
 
-    """
-    if store:
-        for guild in client.guilds:
-            if guild.id == 827564503930765312:
-                for channel in guild.text_channels:
-                    if channel.permissions_for(guild.me).send_messages:
-                        print("trying to send reminder")
-                        if x.data:
-                            await channel.send(f'<@&1037050135391256576> Here are the new deals on {x.name}')
-                            await store_messages(store.name, channel)
-                        else:
-                            print("The only deal on the store was just taken down")
 
-        channel = client.get_channel(828324732604514344)
-        await store_messages(store.name, channel)
-
-    if not store:
-        for guild in client.guilds:
-            if guild.id == 827564503930765312:
-                for channel in guild.text_channels:
-                    if channel.permissions_for(guild.me).send_messages:
-                        await channel.send('Last chance to get the games')
-    """
-
-
-
+#MARK: Scheduler loop
 async def scrape_scheduler() -> None:
     '''
     Schedules the scraping of stores, runs perpetually/
@@ -154,7 +135,8 @@ async def scrape_scheduler() -> None:
     pending = set()
 
     while tasks:
-        logger.debug("finished=%s pending=%s tasks=%s", finished, pending, tasks)
+        logger.debug("tasks=%s", [task.get_name() for task in tasks])
+        
         finished, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
         # print(f"{finished=}\n{pending=}\n{tasks=}")
 
@@ -180,7 +162,7 @@ async def scrape_scheduler() -> None:
             break
 
 
-
+#MARK: main
 if __name__ == "__main__":
     #load_dotenv(override=True)
 

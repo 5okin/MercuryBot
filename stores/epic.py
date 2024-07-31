@@ -12,16 +12,17 @@ class Main(Store):
     Epic store 
     '''
     def __init__(self):
-        self.id = '1'
         self.online_data = []
         self.page = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions'
         super().__init__(
             name = 'epic',
+            id = '1',
+            twitter_notification=True,
             service_name = 'Epic Games',
-            url = 'https://www.epicgames.com/store/us-US/product/'
+            url = 'https://www.epicgames.com/store/us-US/product/',
         )
 
-
+    #MARK: process_data
     def process_data(self, pages):
         """
         Main epic scraper
@@ -50,33 +51,37 @@ class Main(Store):
                     game_url = 'https://store.epicgames.com/en-US/free-games'
 
                 # Get the game image
-                # Should be a list with type names
-                try:     
-                    j = 0
-                    while True:
 
-                        if game['keyImages'][j]['type'] == 'VaultOpened':
-                            game_image = game['keyImages'][j]['url']
+                try:
+                    tall_image_url: str = None
+                    wide_image_url: str = None
+
+                    # Loop through the key images
+                    for j, image in enumerate(game['keyImages']):
+                        image_type = image['type']
+                        
+                        # Check for the wide image for Twitter
+                        if image_type == 'OfferImageWide':
+                            wide_image_url = image['url']
+
+                        priority_types = ['VaultOpened', 'DieselStoreFrontTall', 'Thumbnail', 'VaultClosed']
+                        while priority_types:
+                            current_priority = priority_types.pop(0)
+                            
+                            if image_type == current_priority:
+                                if image_type == 'VaultClosed' and j + 2 < len(game['keyImages']):
+                                    tall_image_url = game['keyImages'][j + 2]['url']
+                                else:
+                                    tall_image_url = image['url']
+                                break
+                        
+                        if wide_image_url and tall_image_url:
                             break
 
-                        if game['keyImages'][j]['type'] == 'DieselStoreFrontTall':
-                            game_image = game['keyImages'][j]['url']
-                            break
-
-                        if game['keyImages'][j]['type'] == 'Thumbnail':
-                            game_image = game['keyImages'][j]['url']
-                            break
-
-                        # For Xmas when the images are wide and the first image is a wrapped
-                        if game['keyImages'][j]['type'] == 'VaultClosed':
-                            game_image = game['keyImages'][j + 2]['url']
-                            break
-
-                        j += 1
                 except Exception as e:
-                    game_image = game['keyImages'][0]['url']
+                    tall_image_url = wide_image_url = game['keyImages'][0]['url']
 
-                game_image = game_image.replace(" ", "%20")
+                tall_image_url = tall_image_url.replace(" ", "%20")
 
                 # If Current deal
                 if game['promotions']['promotionalOffers']:
@@ -86,9 +91,10 @@ class Main(Store):
                                                     game_name,
                                                     1,
                                                     game_url,
-                                                    game_image,
+                                                    tall_image_url,
                                                     offer['startDate'],
-                                                    offer['endDate'])
+                                                    offer['endDate'],
+                                                    wide_image_url)
 
                 # If upcoming upcoming deal
                 if game['promotions']['upcomingPromotionalOffers']:
@@ -99,12 +105,14 @@ class Main(Store):
                                                         game_name,
                                                         0,
                                                         game_url,
-                                                        game_image,
+                                                        tall_image_url,
                                                         offer['startDate'],
-                                                        offer['endDate'])
+                                                        offer['endDate'],
+                                                        wide_image_url)
             i += 1
         return self.compare(json_data)
 
+    #MARK: resize images
     @staticmethod
     def resize_images(images):
         '''
@@ -118,6 +126,7 @@ class Main(Store):
             images[index] = image.resize((width_size, fixed_height))
         return images
 
+    #MARK: combined GIF
     def create_combined_gif(self):
         """
         Generates a gif from the given list of images
@@ -174,8 +183,9 @@ class Main(Store):
 
         combined_images[0].save(arr, format='GIF', append_images=combined_images[1:], save_all=True, duration=2000,
                                 loop=0)
-        self.image = arr
+        return arr
 
+    #MARK: Scheduler
     async def scheduler(self):
         while True:
             if self.data:
@@ -207,13 +217,16 @@ class Main(Store):
                 print("self.data was empty")
                 await asyncio.sleep(60)
 
+    #MARK: get
     async def get(self):
         """
         Runs epic data check, fetch and compile
         """
         if self.process_data(self.request_data(self.page)):
-            self.create_combined_gif()
-            self.mobile_image = self.make_gif_image()
+            self.image = self.create_combined_gif()
+            self.image_mobile = self.make_gif_image()
+            self.image_twitter = self.make_gif_image(True, size=2)
+            #self.image_twitter[1] = self.make_gif_image(True, 0)
             return 1
         return 0
 
@@ -222,4 +235,11 @@ if __name__ == "__main__":
     # run with python -m stores.epic
     a = Main()
     asyncio.run(a.get())
-    asyncio.run(a.scheduler())
+    print(a.data)
+    print(a.image_twitter)
+    #asyncio.run(a.scheduler())
+
+
+    import clients.twitter.bot as twitter
+    x = twitter.MyClient()
+    x.tweet(a)

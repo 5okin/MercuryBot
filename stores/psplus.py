@@ -10,10 +10,10 @@ class Main(Store):
     psplus store
     """
     def __init__(self):
-        self.id = '4'
         self.base_url = 'https://www.playstation.com'
         super().__init__(
             name = 'psplus',
+            id = '4',
             service_name = 'PlayStation Plus',
             url = 'https://www.playstation.com/en-gr/ps-plus/whats-new/'
         )
@@ -48,7 +48,7 @@ class Main(Store):
         psplus get
         """
         if self.request_data(self.url):
-            self.image = self.make_gif_image()
+            self.image = self.image_twitter = self.make_gif_image()
             return 1
         return 0
 

@@ -1,8 +1,5 @@
 import discord
-import os
-import json
-# from PIL import Image
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 def get_date(game_date, flag=False):

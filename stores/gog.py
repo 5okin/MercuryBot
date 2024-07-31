@@ -22,11 +22,12 @@ class Main(Store):
         """
         GoG store
         """
-        self.id = '2'
         self.base_url = 'https://www.gog.com'
         self.urls = []
         super().__init__(
             name = 'gog',
+            id = '2',
+            twitter_notification=True,
             service_name = 'GoG',
             url = 'https://www.gog.com/games/ajax/filtered?mediaType=game&page=1&price=discounted'
         )
@@ -150,7 +151,7 @@ class Main(Store):
         if await self.process_data():
             #print('waiting to get gog image')
             await asyncio.sleep(50)
-            self.image = self.make_gif_image()
+            self.image = self.image_twitter = self.make_gif_image()
             return 1
         return 0
 

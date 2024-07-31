@@ -28,7 +28,7 @@ class MyClient(discord.Client):
     async def setup_hook(self):
         self.tree.clear_commands(guild=MY_GUILD)        #Clear guild commands
         if environment.DEVELOPMENT:
-            print("-----------------IN DEV-----------------")
+            logger.debug("IN DEV setting up guild commands")
             #Set global commands as guild commands for specific server
             self.tree.copy_global_to(guild=MY_GUILD) 
             await self.tree.sync(guild=MY_GUILD)
@@ -150,7 +150,7 @@ def setup(modules):
             if store_choice.value in store.name:
                 message_to_show = getattr(messages, store.name)
                 if store.data:
-                    image = store.mobile_image if mobile and bool(store.mobile_image) else store.image
+                    image = store.image_mobile if mobile and bool(store.image_mobile) else store.image
                     if isinstance(image, io.BytesIO):
                         image.seek(0)
                         file = discord.File(image, filename='img.' + store.image_type.lower())

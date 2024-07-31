@@ -1,19 +1,21 @@
 import asyncio
-from urllib.request import urlopen, Request
+from urllib.request import urlopen, Request, HTTPCookieProcessor, build_opener
 from bs4 import BeautifulSoup
 from stores._store import Store
 from utils import makejson
-
+import http.cookiejar
 
 class Main(Store):
     """
     Steam store
     """
     def __init__(self):
-        self.id = '3'
         super().__init__(
             name = 'steam',
+            id = '3',
+            twitter_notification=True,
             service_name = 'Steam',
+            scheduler_time=3600,
             url = ('https://store.steampowered.com/search/results/?'
                     'query=&start=0&count=50&dynamic_data=&sort_by=_ASC&'
                     'maxprice=free&snr=1_7_7_2300_7&specials=1&infinite=1')
@@ -39,7 +41,6 @@ class Main(Store):
                 games = soup.findAll("a", {"class": "search_result_row ds_collapse_flag"})
 
                 # Get new deals
-                print("--- Get new game deals ---")
                 for game in games:
                     game_name = game.find("span", {"class": "title"}).text
                     game_url = game['href']
@@ -48,24 +49,25 @@ class Main(Store):
                     data = urlopen(Request(game_url))
                     soup = BeautifulSoup(data, 'html.parser')
                     # game_image = soup.find("link", rel="image_src")['href']
+                    end_date = (soup.find("p", {"class":"game_purchase_discount_quantity"}).text.split('before')[1]).split('@')[0].strip()
                     game_image = soup.find("meta", property="og:image")
                     game_image = game_image['content'].rsplit('/', 1)[0] + '/header.jpg'
                     number += 1
-                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image)
+                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image, None, end_date)
 
-                return self.compare(json_data)
-        else:
-        # If theres no new deals update
-            self.data.clear()
-            self.image = None
-            return 0
+        return self.compare(json_data)
+        # else:
+        # # If theres no new deals update
+        #     self.data.clear()
+        #     self.image = None
+        #     return 0
 
     async def get(self):
         '''
         Steam get
         '''
         if self.process_data(self.request_data(self.url)['total_count']):
-            self.image = self.make_gif_image()
+            self.image = self.image_twitter = self.make_gif_image()
             return 1
         return 0
 

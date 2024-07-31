@@ -5,7 +5,7 @@ import os
 
 
 load_dotenv(override=True)
-DEBUG = (os.getenv('DEBUG', 'True') == 'True')
+DEBUG = (os.getenv('DEBUG', 'True').lower() == 'true')
 
 
 config = {
@@ -13,7 +13,8 @@ config = {
     'disable_existing_loggers':False,
     'formatters': {
         'standard':{
-            'format': '%(levelname)-10s - %(asctime)s - %(module)-15s : %(message)s'
+            'format': '%(levelname)-10s - %(asctime)s - %(module)-7s : %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
         }
     },
     'handlers': {
@@ -51,9 +52,13 @@ if DEBUG:
     DISCORD_BOT_TOKEN = os.getenv('DISCORD_TOKEN_TEST')
     DEVELOPMENT = True
     DB = '_dev'
-    
+
 else:
     print("---::-PRODUCTION-::---")
     DISCORD_BOT_TOKEN = os.getenv('DISCORD_TOKEN_LIVE')
     DEVELOPMENT = False
     DB = ''
+    X_API_KEY =  os.getenv('X_API_KEY')
+    X_API_SECRET =  os.getenv('X_API_SECRET')
+    X_ACCESS_TOKEN =  os.getenv('X_ACCESS_TOKEN')
+    X_ACCESS_TOKEN_SECRET =  os.getenv('X_ACCESS_TOKEN_SECRET')

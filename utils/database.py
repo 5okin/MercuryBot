@@ -2,7 +2,9 @@ import io
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from utils import environment
 
+logger = environment.logging.getLogger("bot")
 
 class Database(object):
 
@@ -115,7 +117,7 @@ class Database(object):
                 print(f'delete {collection} and write')
                 Database.deals[collection].insert_many(data)
         else:
-            print(f'Module {collection} has no data to upload')
+            logger.debug('Module %s has no data to upload', collection)
 
     @staticmethod
     def find(collection):
@@ -158,7 +160,7 @@ class Database(object):
             }
             Database.images.insert_one(thumbnail)
         else:
-            print(f'Module {store.name} has no image to upload')
+            logger.debug('Module %s has no image to upload', store.name)
 
     @staticmethod
     def get_image(name):
