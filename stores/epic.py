@@ -19,7 +19,7 @@ class Main(Store):
             id = '1',
             twitter_notification=True,
             service_name = 'Epic Games',
-            url = 'https://www.epicgames.com/store/us-US/product/',
+            url = 'https://www.epicgames.com/store/us-US/product/'
         )
 
     #MARK: process_data

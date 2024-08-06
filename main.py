@@ -12,7 +12,7 @@ from utils import environment
 import clients.discord.bot as discord
 import clients.twitter.bot as twitter
 
-logger = environment.logging.getLogger("bot")
+logger = environment.logging.getLogger("bot.main")
 
 shutdown_flag_is_set = False
 
@@ -65,7 +65,7 @@ async def update(update_store=None) -> None:
             Database.add_image(update_store)
             await send_games_notification(update_store)
         else:
-            logger.info("No new games games to get for %s", update_store.name)
+            logger.debug("No new games to for %s", update_store.name)
 
 #MARK: Initialize
 async def initialize() -> None:

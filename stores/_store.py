@@ -7,8 +7,6 @@ from typing import List, Optional, IO
 from PIL import Image
 from utils import environment
 
-logger = environment.logging.getLogger("bot")
-
 
 class Store:
     """
@@ -28,6 +26,7 @@ class Store:
                 twitter_notification: bool = False
                 ):
         self.name = name
+        self.logger = environment.logging.getLogger(f'store.{self.name}')
         self.id = id
         self.service_name = service_name
         self.url = url
@@ -49,7 +48,7 @@ class Store:
             data = json.loads(data.read().decode())
             return data
         except (URLError, HTTPError) as e:
-            logger.debug("Request to %s failed %s", self.service_name, e)
+            self.logger.debug("Request to %s failed %s", self.service_name, e)
             return False
 
     def make_image(self):
@@ -130,16 +129,17 @@ class Store:
                     temp_names.append(data_game_name['title'])
 
 
-            logger.debug('Online Data: %s: %s', self.name, game_titles)
-            logger.debug('Local Data: %s: %s', self.name, temp_names)
+            self.logger.info('Online: %s', game_titles)
+            self.logger.info('Local: %s', temp_names)
 
             # Check if db deals has all the newest games
             check = all(item in temp_names for item in game_titles)
 
             if check is True:
-                logger.info('%s - SAME', self.service_name)
+                self.logger.info('- SAME -')
                 if len(temp_names) > len(json_data):
                     self.data = json_data.copy()
+                    self.image = self.image_twitter = self.make_gif_image()
                 return 0
             else:
                 self.data = json_data

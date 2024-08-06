@@ -4,7 +4,7 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from utils import environment
 
-logger = environment.logging.getLogger("bot")
+logger = environment.logging.getLogger("bot.database")
 
 class Database(object):
 
