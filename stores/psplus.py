@@ -30,15 +30,18 @@ class Main(Store):
 
         json_data = []
 
-        for game in games:
-            title = game.find("h3", {"class":"txt-style-medium-title txt-block-paragraph__title"}).text.strip()
-            game_button = game.find("a", {"role":"button"})
-            if game_button and 'href' in game_button.attrs:
-                game_url = self.base_url + game.find("a", {"role":"button"})['href']
-            else:
-                game_url = 'https://store.playstation.com'
-            game_image = game.findAll("source")[2]['srcset']
-            json_data = makejson.data(json_data, title, 1, game_url, game_image)
+        try:
+            for game in games:
+                title = game.find("h3", {"class":"txt-style-medium-title txt-block-paragraph__title"}).text.strip()
+                game_button = game.find("a", {"role":"button"})
+                if game_button and 'href' in game_button.attrs:
+                    game_url = self.base_url + game.find("a", {"role":"button"})['href']
+                else:
+                    game_url = 'https://store.playstation.com'
+                game_image = game.findAll("source")[2]['srcset']
+                json_data = makejson.data(json_data, title, 1, game_url, game_image)
+        except Exception as e:
+            self.logger.critical("Data acquisition failed %s", e)
 
         return self.compare(json_data)
 

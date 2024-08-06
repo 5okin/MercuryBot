@@ -6,7 +6,7 @@ import tweepy.client
 from utils import environment, makejson
 
 load_dotenv(override=True)
-logger = environment.logging.getLogger("bot")
+logger = environment.logging.getLogger("bot.twitter")
 
 class MyClient():
 

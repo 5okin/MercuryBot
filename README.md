@@ -1,21 +1,24 @@
 # MercuryBot
 
-MercuryBot is a Discord and X, formerly known as twitter, bot that monitors various platforms and finds new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab exciting titles for free.
+MercuryBot is a Discord and X, formerly known as twitter, bot that monitors various platforms and finds new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab titles for free.
 
 <br>
 
-<p align="middle">
-    <image>
-        <a href=https://github.com/5okin/MercuryBot/assets/70406237/34d1a800-4dd5-4915-a02d-9c884848fcb3>
+<div align="center">
+    <div>
+        <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
         <img src="https://github.com/user-attachments/assets/0998cdf8-1797-4b92-bf8e-674c9063c470" width="200" />
-    </image>
-    <image>
-        <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" width="100" height="0" alt="" />
-    </s>
-    <image>
-        <img src="https://github.com/user-attachments/assets/9532f375-b187-4cfc-a06e-2f067200b0f6" width="170" /> 
-    </image>
-</p>
+    </div>
+    <div>
+        <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" width="150" height="0" alt="" />
+    </div>
+    <div>
+         <a href="https://x.com/_MercuryBot_">
+        <img src="https://github.com/user-attachments/assets/9532f375-b187-4cfc-a06e-2f067200b0f6" width="180" /> 
+    </div>
+</div>
+
+<br>
 
 <p align='center'>
     <a href= "https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot"> 
@@ -23,15 +26,13 @@ MercuryBot is a Discord and X, formerly known as twitter, bot that monitors vari
 <p>
 
 
-Mercury bot sends you notifications like the one bellow every time theres a new free game available so you never miss out again. For epic, it also sends you next weeks free game, if available, all in one notification !
+Mercury bot sends you notifications like the ones bellow every time theres a new free game available so you never miss out again. For epic notifications on discord, it also sends you next weeks free game, if available, all in one notification !
 
-<p align='center'>
-    <image src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0">
-<p>
-
-<p align='center'>
-    <image src="https://github.com/user-attachments/assets/aaddf0ad-1aef-4a78-be88-51742df5e6b6" width="50%">
-<p>
+<p align="center">
+  <img alt="Light" src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0" width="40%">
+&nbsp; &nbsp; &nbsp; &nbsp;
+  <img alt="Dark" src="https://github.com/user-attachments/assets/2aa7d6b4-d88a-44f4-a8c7-9871e760f18d" width="40%">
+</p>
 
 
 ## Features
@@ -42,7 +43,7 @@ Mercury bot sends you notifications like the one bellow every time theres a new 
 
 - **Automated Reminders:** Receive timely reminders in your Discord server or twitter feed when new free games become available.
 
-- **Customizable Settings:** Configure MercuryBot to tailor notifications to your preferences.
+- **Customizable Settings:** Configure MercuryBot to tailor notifications to your preferences on discord.
 
 - **Ephemeral Messages:** Commands you send to the bot won't spam and clutter you channels, they stay invisible to everyone but you.
 
@@ -51,7 +52,7 @@ Mercury bot sends you notifications like the one bellow every time theres a new 
 
 ## Discord
 
-### How to Use
+### How to Use on Discord
 
 1. Invite MercuryBot to your Discord server. [<img src="https://github.com/5okin/MercuryBot/assets/70406237/9fbf5218-d5bc-476a-8892-2496a1bbe1ba">](https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot)
 
@@ -77,7 +78,6 @@ Mercury bot sends you notifications like the one bellow every time theres a new 
 
 
 ## Running it on your own
-
 
 - Download or clone the repository.
 - Make sure you have python 3.10 or higher installed. `python -V`

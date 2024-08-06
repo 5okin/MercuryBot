@@ -9,7 +9,7 @@ from utils.database import Database
 import clients.discord.messages as messages
 from utils import environment
 
-logger = environment.logging.getLogger("bot")
+logger = environment.logging.getLogger(f"bot.discord")
 MY_GUILD = discord.Object(id=827564503930765312)
 
 
