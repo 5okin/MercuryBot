@@ -17,7 +17,7 @@ class Store:
                 id: str,
                 service_name: str,
                 url: str,
-                data: Optional[List] = None,
+                data: Optional[List] = [None],
                 image: IO = None,
                 image_mobile: IO = None,
                 image_twitter: IO [bytes] = [None, None],
@@ -76,8 +76,6 @@ class Store:
             new_image.thumbnail((new_image.size[0] // 2, new_image.size[1] // 2))
             return new_image
 
-
-    #MARK: make_gif_image
     def make_gif_image(self, wide=False, status=1, size=1):
         '''
         Creates a gif off of a list of urls containing images
@@ -111,41 +109,13 @@ class Store:
         img.save(fp=arr, format='GIF', append_images=imgs, save_all=True, duration=2000, loop=0)
         return arr
 
-    #MARK: get_date
-    def get_date(self, data, status='start'):
-        """
-        Returns the start or end date of a deal based on the status parameter.
-        
-        Parameters:
-        - deal: The dictionary containing deal details.
-        - status: A string indicating which date to return ('start' or 'end').
-        
-        Returns:
-        - A formatted date string of the specified type.
-        """
-        if status == 'start':
-            status = 'startDate'
-        elif status == 'end':
-            status = 'endDate'
-        else:
-            raise ValueError("Invalid date_type. Choose 'start' or 'end'.")
-        
-        month = data[status].strftime("%b")
-        day = data[status].day
-        return str(month) + ' ' + str(day)
-    
-
-    def make_images_test(self):
-        self.image = self.image_twitter = self.make_gif_image()
 
 
-    #MARK: compare
     def compare(self, json_data):
         """
         Compare local deals with current deals online
         """
-        # Theres local data and data online
-        if json_data and self.data:
+        if json_data:
             # Online data
             game_titles = []
             for game in json_data:
@@ -158,6 +128,7 @@ class Store:
                 if data_game_name['activeDeal']:
                     temp_names.append(data_game_name['title'])
 
+
             self.logger.info('Online: %s', game_titles)
             self.logger.info('Local: %s', temp_names)
 
@@ -165,26 +136,17 @@ class Store:
             check = all(item in temp_names for item in game_titles)
 
             if check is True:
-                self.logger.info('-- SAME --')
+                self.logger.info('- SAME -')
                 if len(temp_names) > len(json_data):
                     self.data = json_data.copy()
-                    self.make_images_test()
+                    self.image = self.image_twitter = self.make_gif_image()
                 return 0
             else:
                 self.data = json_data
-                self.make_images_test()
                 return 1
-
-        # Data is empty but theres data online (1st run)
-        elif json_data and not self.data:
+        else:
             self.data = json_data
-            self.make_images_test()
-            return 0
-
-        # Theres no data online
-        elif not json_data:
-            self.data = json_data
-            self.image = self.image_mobile = self.image_twitter = None
+            self.image = None
             return 0
 
     #MARK: scheduler

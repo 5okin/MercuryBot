@@ -32,7 +32,7 @@ class Main(Store):
             url = 'https://www.gog.com/games/ajax/filtered?mediaType=game&page=1&price=discounted'
         )
 
-    #MARK: giveaway
+
     def giveaway(self, json_data):
         '''
         Search gog front page for giveaways
@@ -55,7 +55,8 @@ class Main(Store):
                 game_page = BeautifulSoup(urlopen(game_url),'html.parser')
                 game_id = game_page.find("div",{"card-product" : True}).attrs["card-product"]
                 offer_until = game_page.find("span",class_="product-actions__time").text.rsplit(' ', 1)[0]
-                offer_until = datetime.strptime(offer_until, "%d/%m/%Y %H:%M").replace(year=datetime.now().year)
+                offer_until = datetime.strptime(offer_until, "%d/%m/%Y %H:%M")
+                offer_until = offer_until.strftime("%B %d")
         
             api_search = urlopen(f"https://api.gog.com/v2/games/{game_id}")
             games = json.loads(api_search.read().decode())
@@ -90,7 +91,7 @@ class Main(Store):
                     json_response = await response.json()
                     return json.loads(json.dumps(json_response))
         except Exception as e:
-            logger.error('Gog request data broke: %s', str(e))
+            logger.debug('Gog request data broke: %s', str(e))
 
     async def client_session(self):
         '''
@@ -141,14 +142,16 @@ class Main(Store):
 
         return self.compare(json_data)
 
-    #MARK: get
+
     async def get(self):
         '''
         Gog get method
         '''
         self.create_urls()
         if await self.process_data():
-            # await asyncio.sleep(50)
+            #print('waiting to get gog image')
+            await asyncio.sleep(50)
+            self.image = self.image_twitter = self.make_gif_image()
             return 1
         return 0
 

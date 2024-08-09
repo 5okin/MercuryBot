@@ -67,7 +67,7 @@ class Main(Store):
                     game_image = soup.find("meta", property="og:image")
                     game_image = game_image['content'].rsplit('/', 1)[0] + '/header.jpg'
                     number += 1
-                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image, None, end_date_object)
+                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image, None, end_date)
 
         return self.compare(json_data)
         # else:
@@ -76,17 +76,16 @@ class Main(Store):
         #     self.image = None
         #     return 0
 
-    #MARK: get
     async def get(self):
         '''
         Steam get
         '''
         if self.process_data(self.request_data(self.url)['total_count']):
-            # self.image = self.image_twitter = self.make_gif_image()
+            self.image = self.image_twitter = self.make_gif_image()
             return 1
         return 0
 
 if __name__ == "__main__":
-    store = Main()
-    asyncio.run(store.get())
-    print(store.data)
+    a = Main()
+    asyncio.run(a.get())
+    print(a.data)
