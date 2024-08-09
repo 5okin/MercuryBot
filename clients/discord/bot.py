@@ -107,7 +107,7 @@ class MyClient(discord.Client):
                         # await channel.send(embed = message_to_show(store.data), file=file)
                         channel = self.get_channel(channel)
                         default_txt = f'{store.service_name} has new free games'
-                        await channel.send(default_txt + f' <@&{role}>' if role else default_txt, embed=message_to_show(store), view=footer_buttons(), file=file)
+                        await channel.send(default_txt + f' <@&{role}>' if role else default_txt, embed=message_to_show(store.data), view=footer_buttons(), file=file)
                     #except AttributeError:
                         #print('Image not found')
 
@@ -154,7 +154,7 @@ def setup(modules):
                     if isinstance(image, io.BytesIO):
                         image.seek(0)
                         file = discord.File(image, filename='img.' + store.image_type.lower())
-                        await interaction.response.send_message(embed=message_to_show(store, mobile=mobile), file=file, view=footer_buttons(), ephemeral=True)
+                        await interaction.response.send_message(embed=message_to_show(store.data, mobile=mobile), file=file, view=footer_buttons(), ephemeral=True)
                     else:
                         print("RIPERINO BROTHERINO_1")
                 else:

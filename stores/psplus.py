@@ -51,6 +51,7 @@ class Main(Store):
         psplus get
         """
         if self.request_data(self.url):
+            self.image = self.image_twitter = self.make_gif_image()
             return 1
         return 0
 

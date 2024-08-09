@@ -5,35 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "MAIN",
+            "name": "Python Debugger: MAIN",
             "type": "debugpy",
             "request": "launch",
-            "module": "main",
-            "justMyCode": false,
+            "module": "main"
         },
         {
-            "name": "EPIC",
+            "name": "Python Debugger: EPIC",
             "type": "debugpy",
             "request": "launch",
             "module": "stores.epic"
         },
         {
-            "name": "STEAM",
+            "name": "Python Debugger: STEAM",
             "type": "debugpy",
             "request": "launch",
             "module": "stores.steam"
-        },
-        {
-            "name": "GOG",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "stores.gog"
-        },
-        {
-            "name": "PSPLUS",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "stores.psplus"
         }
     ]
 }
