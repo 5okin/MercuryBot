@@ -87,15 +87,13 @@ class Main(Store):
                 if game['promotions']['promotionalOffers']:
                     if game['price']['totalPrice']['fmtPrice']['discountPrice'] == "0":
                         offer = game['promotions']['promotionalOffers'][0]['promotionalOffers'][0]
-                        startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
-                        endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
                         json_data = makejson.data(json_data,
                                                     game_name,
                                                     1,
                                                     game_url,
                                                     tall_image_url,
-                                                    startDate,
-                                                    endDate,
+                                                    offer['startDate'],
+                                                    offer['endDate'],
                                                     wide_image_url)
 
                 # If upcoming upcoming deal
@@ -103,15 +101,13 @@ class Main(Store):
                     for offer in game['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers']:
                         if offer['discountSetting']['discountPercentage'] == 0:
                             offer =  game['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers'][0]
-                            startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
-                            endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
                             json_data = makejson.data(json_data,
                                                         game_name,
                                                         0,
                                                         game_url,
                                                         tall_image_url,
-                                                        startDate,
-                                                        endDate,
+                                                        offer['startDate'],
+                                                        offer['endDate'],
                                                         wide_image_url)
             i += 1
         return self.compare(json_data)
@@ -193,11 +189,11 @@ class Main(Store):
     async def scheduler(self):
         while True:
             if self.data:
-                date = self.data[0]['endDate']
+                date = datetime.strptime(self.data[0]['endDate'], '%y-%m-%d %H:%M:%S')
 
                 # From all the deals saved find the one that ends first
                 for time in self.data:
-                    temp = time['endDate']
+                    temp = datetime.strptime(time['endDate'], '%y-%m-%d %H:%M:%S')
                     if temp < date:
                         date = temp
 
@@ -221,33 +217,29 @@ class Main(Store):
                 print("self.data was empty")
                 await asyncio.sleep(60)
 
-    def make_images_test(self):
-        self.image = self.create_combined_gif()
-        self.image_mobile = self.make_gif_image()
-        self.image_twitter = self.make_gif_image(True, size=2)
-
     #MARK: get
     async def get(self):
         """
         Runs epic data check, fetch and compile
-
-        returns 0 if nothing changed 
-        returns 1 if new data was found
         """
         if self.process_data(self.request_data(self.page)):
+            self.image = self.create_combined_gif()
+            self.image_mobile = self.make_gif_image()
+            self.image_twitter = self.make_gif_image(True, size=2)
+            #self.image_twitter[1] = self.make_gif_image(True, 0)
             return 1
         return 0
 
 
 if __name__ == "__main__":
     # run with python -m stores.epic
-    store = Main()
-    asyncio.run(store.get())
-    print(store.data)
-    print(store.image_twitter)
-    # asyncio.run(store.scheduler())
+    a = Main()
+    asyncio.run(a.get())
+    print(a.data)
+    print(a.image_twitter)
+    #asyncio.run(a.scheduler())
 
 
     import clients.twitter.bot as twitter
     x = twitter.MyClient()
-    x.tweet(store)
+    x.tweet(a)

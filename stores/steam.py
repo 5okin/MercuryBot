@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 from stores._store import Store
 from utils import makejson
 import http.cookiejar
-from datetime import datetime
 
 class Main(Store):
     """
@@ -22,7 +21,6 @@ class Main(Store):
                     'maxprice=free&snr=1_7_7_2300_7&specials=1&infinite=1')
         )
 
-    #MARK: process_data 
     def process_data(self, games_num):
         """
         Steam process data
@@ -52,11 +50,10 @@ class Main(Store):
                     soup = BeautifulSoup(data, 'html.parser')
                     # game_image = soup.find("link", rel="image_src")['href']
                     end_date = (soup.find("p", {"class":"game_purchase_discount_quantity"}).text.split('before')[1]).split('@')[0].strip()
-                    end_date_object = datetime.strptime(end_date, "%d %b").replace(year=datetime.now().year)
                     game_image = soup.find("meta", property="og:image")
                     game_image = game_image['content'].rsplit('/', 1)[0] + '/header.jpg'
                     number += 1
-                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image, None, end_date_object)
+                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image, None, end_date)
 
         return self.compare(json_data)
         # else:
@@ -65,17 +62,16 @@ class Main(Store):
         #     self.image = None
         #     return 0
 
-    #MARK: get
     async def get(self):
         '''
         Steam get
         '''
         if self.process_data(self.request_data(self.url)['total_count']):
-            # self.image = self.image_twitter = self.make_gif_image()
+            self.image = self.image_twitter = self.make_gif_image()
             return 1
         return 0
 
 if __name__ == "__main__":
-    store = Main()
-    asyncio.run(store.get())
-    print(store.data)
+    a = Main()
+    asyncio.run(a.get())
+    print(a.data)

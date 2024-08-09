@@ -1,8 +1,5 @@
 import json
-from utils import environment
-from datetime import datetime
 
-logger = environment.logging.getLogger("bot.makejson")
 
 def data(json_data, game_name, active_deal, game_url, game_image, offer_from=None, offer_until=None, wide_image=None) -> dict:
     """ Creates a json file from the given data
@@ -25,13 +22,11 @@ def data(json_data, game_name, active_deal, game_url, game_image, offer_from=Non
         :param wide_image:
     """
 
-    # Don't leave date objects as None if no data is passed.
-    if offer_from is None: offer_from = datetime(1970, 1, 1)
-    if offer_until is None: offer_until = datetime(1970, 1, 1)
+    if offer_from and "T" in offer_from:
+        offer_from = date_from_str(offer_from)
 
-    if not isinstance(offer_from, datetime) or not isinstance(offer_until, datetime):
-        logger.warning("Dates of passed for %s arent datetime objects", game_name)
-
+    if offer_until and "T" in offer_until:
+        offer_until = date_from_str(offer_until)
 
     json_data.append({
         'title': game_name.encode('ascii', 'ignore').decode('ascii'),
@@ -43,6 +38,14 @@ def data(json_data, game_name, active_deal, game_url, game_image, offer_from=Non
         'wideImage': wide_image
     })
     return json_data
+
+
+def date_from_str(date):
+    date = date.split("T")
+    date[1] = date[1][:-5]
+    date[0] = date[0][2:]
+    date = date[0] + ' ' + date[1]
+    return date
 
 
 def save_to_file(filename, json_data):
