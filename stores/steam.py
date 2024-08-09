@@ -22,6 +22,17 @@ class Main(Store):
                     'maxprice=free&snr=1_7_7_2300_7&specials=1&infinite=1')
         )
 
+    def parse_date(self, date_str):
+        date_formats = ["%b %d", "%d %b"]
+
+        for fmt in date_formats:
+            try:
+                return datetime.strptime(date_str, fmt).replace(year=datetime.now().year)
+            except ValueError:
+                continue
+        self.logger.warning(f"Date format not recognized: {date_str}")
+        return datetime(1970, 1, 1)
+
     #MARK: process_data 
     def process_data(self, games_num):
         """
@@ -52,7 +63,7 @@ class Main(Store):
                     soup = BeautifulSoup(data, 'html.parser')
                     # game_image = soup.find("link", rel="image_src")['href']
                     end_date = (soup.find("p", {"class":"game_purchase_discount_quantity"}).text.split('before')[1]).split('@')[0].strip()
-                    end_date_object = datetime.strptime(end_date, "%d %b").replace(year=datetime.now().year)
+                    end_date_object = self.parse_date(end_date)
                     game_image = soup.find("meta", property="og:image")
                     game_image = game_image['content'].rsplit('/', 1)[0] + '/header.jpg'
                     number += 1
