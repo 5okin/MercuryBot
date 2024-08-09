@@ -76,16 +76,17 @@ class Main(Store):
         #     self.image = None
         #     return 0
 
+    #MARK: get
     async def get(self):
         '''
         Steam get
         '''
         if self.process_data(self.request_data(self.url)['total_count']):
-            self.image = self.image_twitter = self.make_gif_image()
+            # self.image = self.image_twitter = self.make_gif_image()
             return 1
         return 0
 
 if __name__ == "__main__":
-    a = Main()
-    asyncio.run(a.get())
-    print(a.data)
+    store = Main()
+    asyncio.run(store.get())
+    print(store.data)
