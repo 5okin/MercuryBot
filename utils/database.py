@@ -111,7 +111,7 @@ class Database(object):
         Database.deals[collection].drop()
         if data:
             if not Database.collections_exists(collection):
-                print(f'Creating {collection}')
+                logger.info('Creating collection for %s', collection)
                 Database.deals[collection].insert_many(data)
             else:
                 print(f'delete {collection} and write')

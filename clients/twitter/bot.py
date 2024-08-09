@@ -50,13 +50,8 @@ class MyClient():
 
         txt = f'🕹️ Free now on {store.name} 🕹️\n\n'
 
-        try:
-            if(store.data[0]['endDate']):
-                month = datetime.strptime(store.data[0]['endDate'], '%y-%m-%d %H:%M:%S').strftime("%b")
-                day = datetime.strptime(store.data[0]['endDate'], '%y-%m-%d %H:%M:%S').day
-                txt += f'Free now until: {str(month)} {str(day)}\n\n'
-        except:
-            txt += f'Free now\n\n'
+        end_date = store.get_date(store.data[0], 'end')
+        txt += f'Free now until: {str(end_date)}\n\n'
 
         for data in store.data:
             title = data['title']
@@ -74,16 +69,14 @@ class MyClient():
         txt_string = self.format_tweet(store)
 
         if (store.image_twitter):
-            print('----------------WITH IMAGE--------------------')
+            logger.debug('----------------WITH IMAGE--------------------')
             store.image_twitter.seek(0)
 
             media = self.client_v1.media_upload(filename='image', file=store.image_twitter)
             media_id = [media.media_id_string]
 
         tweetNow = self.client_v2.create_tweet(text=txt_string, media_ids=media_id)
-        print(f"https://twitter.com/user/status/{tweetNow.data['id']}")
-
-
+        logger.info("https://twitter.com/user/status/%s", tweetNow.data['id'])
 
 
 
