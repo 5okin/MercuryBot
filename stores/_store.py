@@ -135,7 +135,7 @@ class Store:
         return str(month) + ' ' + str(day)
     
 
-    def make_images_test(self):
+    def set_images(self):
         self.image = self.image_twitter = self.make_gif_image()
 
 
@@ -168,17 +168,17 @@ class Store:
                 self.logger.info('-- SAME --')
                 if len(temp_names) > len(json_data):
                     self.data = json_data.copy()
-                    self.make_images_test()
+                    self.set_images()
                 return 0
             else:
                 self.data = json_data
-                self.make_images_test()
+                self.set_images()
                 return 1
 
         # Data is empty but theres data online (1st run)
         elif json_data and not self.data:
             self.data = json_data
-            self.make_images_test()
+            self.set_images()
             return 0
 
         # Theres no data online
