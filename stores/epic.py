@@ -221,7 +221,7 @@ class Main(Store):
                 print("self.data was empty")
                 await asyncio.sleep(60)
 
-    def make_images_test(self):
+    def set_images(self):
         self.image = self.create_combined_gif()
         self.image_mobile = self.make_gif_image()
         self.image_twitter = self.make_gif_image(True, size=2)

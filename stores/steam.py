@@ -6,6 +6,7 @@ from utils import makejson
 import http.cookiejar
 from datetime import datetime
 
+
 class Main(Store):
     """
     Steam store
@@ -16,7 +17,7 @@ class Main(Store):
             id = '3',
             twitter_notification=True,
             service_name = 'Steam',
-            scheduler_time=3600,
+            scheduler_time=7200,
             url = ('https://store.steampowered.com/search/results/?'
                     'query=&start=0&count=50&dynamic_data=&sort_by=_ASC&'
                     'maxprice=free&snr=1_7_7_2300_7&specials=1&infinite=1')
@@ -64,10 +65,11 @@ class Main(Store):
                     # game_image = soup.find("link", rel="image_src")['href']
                     end_date = (soup.find("p", {"class":"game_purchase_discount_quantity"}).text.split('before')[1]).split('@')[0].strip()
                     end_date_object = self.parse_date(end_date)
+                    offer_from  = datetime.now()
                     game_image = soup.find("meta", property="og:image")
                     game_image = game_image['content'].rsplit('/', 1)[0] + '/header.jpg'
                     number += 1
-                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image, None, end_date_object)
+                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image, offer_from, end_date_object)
 
         return self.compare(json_data)
         # else:

@@ -3,6 +3,7 @@ from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup
 from stores._store import Store
 from utils import makejson
+from datetime import datetime
 
 
 class Main(Store):
@@ -39,7 +40,8 @@ class Main(Store):
                 else:
                     game_url = 'https://store.playstation.com'
                 game_image = game.findAll("source")[2]['srcset']
-                json_data = makejson.data(json_data, title, 1, game_url, game_image)
+                offer_from  = datetime.now()
+                json_data = makejson.data(json_data, title, 1, game_url, game_image, offer_from)
         except Exception as e:
             self.logger.critical("Data acquisition failed %s", e)
 
