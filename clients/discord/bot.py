@@ -53,7 +53,7 @@ class MyClient(discord.Client):
     async def on_ready(self):
         logger.info("Bot ready, logged in as %s", format(self.user))
 
-        logger.info("Connected to servers: %s",  ', '.join(['%s' % guild.name for guild in self.guilds]))
+        logger.info("Connected to servers: %s", ', '.join(['%s(%d)' % (guild.name, len([member for member in guild.members if not member.bot])) for guild in self.guilds]))
 
         for guild in self.guilds:
             if guild.id == 827564503930765312:

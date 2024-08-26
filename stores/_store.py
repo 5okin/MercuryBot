@@ -6,6 +6,7 @@ from urllib.error import HTTPError, URLError
 from typing import List, Optional, IO
 from PIL import Image
 from utils import environment
+from datetime import datetime
 
 
 class Store:
@@ -75,6 +76,28 @@ class Store:
 
             new_image.thumbnail((new_image.size[0] // 2, new_image.size[1] // 2))
             return new_image
+        
+    
+    def parse_date(self, date_str, date_formats):
+        '''
+        Returns a date object according to given formats
+
+        Parameters:
+        - date_str: The date string to convert.
+        - date_formats: List of formats to try for converting.
+        
+        Returns:
+        - A datetime object.
+        """
+        '''
+
+        for fmt in date_formats:
+            try:
+                return datetime.strptime(date_str, fmt)
+            except ValueError:
+                continue
+        self.logger.warning(f"Date format not recognized: {date_str}")
+        return datetime(1970, 1, 1)
 
 
     #MARK: make_gif_image

@@ -52,7 +52,7 @@ class Main(Store):
                 game_page = BeautifulSoup(urlopen(game_url),'html.parser')
                 game_id = game_page.find("div",{"card-product" : True}).attrs["card-product"]
                 offer_until = game_page.find("span",class_="product-actions__time").text.rsplit(' ', 1)[0]
-                offer_until = datetime.strptime(offer_until, "%d/%m/%Y %H:%M")
+                offer_until = self.parse_date(offer_until, ["%d/%m/%Y %H:%M", "%m/%d/%Y %H:%M"])
         
             api_search = urlopen(f"https://api.gog.com/v2/games/{game_id}")
             games = json.loads(api_search.read().decode())
