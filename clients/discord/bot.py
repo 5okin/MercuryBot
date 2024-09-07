@@ -38,16 +38,7 @@ class MyClient(discord.Client):
 
     async def change_status(self):
         await self.wait_until_ready()
-        '''
-        msgs = cycle(status)
 
-        while not client.is_closed():
-            try:
-                await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=next(msgs)))
-                await asyncio.sleep(3)
-            except:
-                pass
-        '''
         await self.change_presence(
             activity=discord.Activity(type=discord.ActivityType.watching, name='out for free games'))
 
@@ -81,7 +72,7 @@ class MyClient(discord.Client):
     async def on_guild_join(self, guild):
         print(guild.system_channel)
         if guild.system_channel:
-            await guild.system_channel.send('HI, if youre a mod you can setup the bot by using the slash commands')
+            await guild.system_channel.send('Hi, if youre a mod you can setup the bot by using the **/settings** slash command')
         else:
             for channel in guild.text_channels:
                 if channel.permissions_for(guild.me).send_messages:
@@ -166,7 +157,7 @@ def setup(modules):
                     else:
                         print("RIPERINO BROTHERINO_1")
                 else:
-                    await interaction.response.send_message(f"Sorry, no data at this time for {store.name}", ephemeral=True)
+                    await interaction.response.send_message(f"No free games on {store.name}", ephemeral=True)
 
 
     #@app_commands.is_owner()
@@ -183,21 +174,6 @@ def setup(modules):
         Database.insert_discord_server([{
         'server': interaction.guild_id,
         'channel': channel.id}])
-
-
-    # @client.tree.command(name='invite', description="Invite the bot to your server!")
-    # async def invite(interaction: discord.Interaction):
-    #     invite_link = 'https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot'
-    #     url_view = discord.ui.View()
-    #     url_view.add_item(discord.ui.Button(label=f'\u21AA', style=discord.ButtonStyle.green, disabled = True ))
-    #     url_view.add_item(discord.ui.Button(label='🤖 Invite Link ', style=discord.ButtonStyle.blurple, url=invite_link))
-    #     url_view.add_item(discord.ui.Button(label=f'\u21A9', style=discord.ButtonStyle.green, disabled = True ))
-    #     await interaction.response.send_message(view=url_view)
-
-
-
-            
-
 
 
     async def callback(self, interaction: discord.Interaction):
