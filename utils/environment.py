@@ -7,6 +7,9 @@ import os
 load_dotenv(override=True)
 DEBUG = (os.getenv('DEBUG', 'True').lower() == 'true')
 
+# DISCORD_DEV_GUILD = os.getenv('DISCORD_DEV_GUILD')
+DISCORD_DEV_GUILD = os.getenv('DISCORD_DEV_GUILD') # if os.getenv('DISCORD_DEV_GUILD') is not None else '0'
+DISCORD_ADMIN_ACC = int(os.getenv('DISCORD_ADMIN_ACC')) if os.getenv('DISCORD_ADMIN_ACC') is not None else None
 
 if DEBUG:
     print('\x1b[6;30;42m' + "---::-DEBUG-::---" + '\x1b[0m')

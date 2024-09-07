@@ -1,6 +1,6 @@
 import io, os
 import traceback
-from time import time
+from datetime import datetime
 
 import discord
 from discord import app_commands
@@ -10,7 +10,6 @@ import clients.discord.messages as messages
 from utils import environment
 
 logger = environment.logging.getLogger(f"bot.discord")
-MY_GUILD = discord.Object(id=827564503930765312)
 
 
 class MyClient(discord.Client):
@@ -19,6 +18,7 @@ class MyClient(discord.Client):
         intents = discord.Intents.default()
         intents.members = True
         intents.presences = True
+        self.ADMIN_USER = None
         super().__init__(
             intents = intents,
             activity = discord.Activity(type=discord.ActivityType.watching, name="out for free games")
@@ -26,12 +26,13 @@ class MyClient(discord.Client):
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
-        self.tree.clear_commands(guild=MY_GUILD)        #Clear guild commands
-        if environment.DEVELOPMENT:
+        DEV_GUILD = discord.Object(id=environment.DISCORD_DEV_GUILD) if environment.DISCORD_DEV_GUILD is not None else None
+        if environment.DEVELOPMENT and DEV_GUILD:
             logger.debug("IN DEV setting up guild commands")
-            #Set global commands as guild commands for specific server
-            self.tree.copy_global_to(guild=MY_GUILD) 
-            await self.tree.sync(guild=MY_GUILD)
+            self.tree.clear_commands(guild=DEV_GUILD)  # Clear guild commands
+            # Set global commands as guild commands for specific server
+            # self.tree.copy_global_to(guild=DEV_GUILD)
+            await self.tree.sync(guild=DEV_GUILD)
         else:
             await self.tree.sync()
 
@@ -51,15 +52,20 @@ class MyClient(discord.Client):
             activity=discord.Activity(type=discord.ActivityType.watching, name='out for free games'))
 
     async def on_ready(self):
-        logger.info("Bot ready, logged in as %s", format(self.user))
+        self.ADMIN_USER = self.get_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
 
-        logger.info("Connected to servers: %s", ', '.join(['%s(%d)' % (guild.name, len([member for member in guild.members if not member.bot])) for guild in self.guilds]))
+        if self.ADMIN_USER:
+            await self.ADMIN_USER.send(f"**Status** {self.user} `Started/Restarted and ready`, "
+                                       f"connected to {len(self.guilds)} servers")
+        else:
+            logger.info("%s Started/Restarted and ready, connected to %s servers", format(self.user), len(self.guilds))
 
         for guild in self.guilds:
-            if guild.id == 827564503930765312:
-                for channel in guild.text_channels:
-                    if channel.permissions_for(guild.me).send_messages:
-                        await channel.send('Bot Started/Restarted')
+            Database.insert_discord_server([{
+                'server': guild.id,
+                'server_name': guild.name,
+                'population' : len([member for member in guild.members if not member.bot])
+            }])
 
         # Upload animated avatar
         if os.path.exists('avatar.gif'):
@@ -71,6 +77,7 @@ class MyClient(discord.Client):
             except Exception as e:
                 logger.info("Failed animated avatar upload %s", e)
 
+
     async def on_guild_join(self, guild):
         print(guild.system_channel)
         if guild.system_channel:
@@ -80,6 +87,7 @@ class MyClient(discord.Client):
                 if channel.permissions_for(guild.me).send_messages:
                     await channel.send('Hey there! this is the message i send when i join a server')
                 break
+
 
     async def on_guild_remove(self, guild):
         Database.remove_server(guild)
@@ -282,19 +290,24 @@ def setup(modules):
             max_length=300,
         )
 
-    async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f'Thanks for your feedback, {interaction.user}!', ephemeral=True)
+        async def on_submit(self, interaction: discord.Interaction):
+            await interaction.response.send_message(f'Thanks for your feedback, {interaction.user}!', ephemeral=True)
 
-        Database.add_feedback({
-        'server': interaction.guild_id,
-        'user': interaction.user.name,
-        'timestamp': time.ctime(),
-        'feedback': str(self.feedback.value)
-        })
+            feedback_payload = {
+            'server': interaction.guild_id,
+            'user': interaction.user.name,
+            'timestamp': datetime.now(),
+            'feedback': str(self.feedback.value)
+            }
 
-    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
-        await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
-        traceback.print_exception(type(error), error, error.__traceback__)
+            Database.add_feedback(feedback_payload)
+
+            await client.get_user(362361984026542083)\
+                .send(f"**Feedback**\n`{feedback_payload['feedback']}`")
+
+        async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+            await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
+            traceback.print_exception(type(error), error, error.__traceback__)
 
 
     @client.tree.command(description="Submit feedback")
