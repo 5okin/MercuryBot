@@ -60,12 +60,12 @@ class MyClient(discord.Client):
         else:
             logger.info("%s Started/Restarted and ready, connected to %s servers", format(self.user), len(self.guilds))
 
-        for guild in self.guilds:
-            Database.insert_discord_server([{
-                'server': guild.id,
-                'server_name': guild.name,
-                'population' : len([member for member in guild.members if not member.bot])
-            }])
+        # for guild in self.guilds:
+        #     Database.insert_discord_server([{
+        #         'server': guild.id,
+        #         'server_name': guild.name,
+        #         'population' : len([member for member in guild.members if not member.bot])
+        #     }])
 
         # Upload animated avatar
         if os.path.exists('avatar.gif'):
@@ -348,18 +348,20 @@ def setup(modules):
 
     def settings_embed(server):
         server = Database.get_discord_server(server)
-        channel = '<#'+str(server.get('channel'))+'>' if server.get('channel') else 'None'
-        role = '<@&'+str(server.get('role'))+'>' if server.get('role') else 'None'
+
+        channel = '<#'+str(server.get('channel'))+'>' if server and server.get('channel') else 'None'
+        role = '<@&'+str(server.get('role'))+'>' if server and server.get('role') else 'None'
+        notifications_str = str(server['notification_settings'] if server and server.get('notification_settings') else '')
 
         notifications = ''
         for store in client.modules:
-            if store.id in str(server['notification_settings']):
+            if store.id in notifications_str:
                 notifications += f'✔️ {store.name}\n'
             else:
                 notifications += f'❌ {store.name}\n'
 
         embed = discord.Embed(title="⚙️ Settings ⚙️", description=f"Channel: {channel}\nNotification role: {role}", color=0x00aff4)
-        embed.add_field(name="🛎️ You'll receive notifications for the following stores 🛎️", value=f"{notifications}", inline=True)
+        embed.add_field(name="🛎️ You'll receive notifications for the following stores 🛎️\n", value=f"{notifications}", inline=True)
         return embed
 
 
@@ -372,11 +374,14 @@ def setup(modules):
 
         async def settings_button_callback(self, interaction: discord.Integration):
             server = Database.get_discord_server(interaction.guild_id)
-            channel = client.get_channel(server['channel'])
+            if server and server.get('channel'):
+                channel = client.get_channel(server['channel'])
 
-            embed = discord.Embed(title="⚙️ Test notification ⚙️", description=f"Notifications for games would be send to this channel", color=0x00aff4)
-            
-            await channel.send(f'Pinging role <@&{server["role"]}> for test' if server["role"] else '', embed=embed)
-            await interaction.response.send_message("I've send a test notification message !", ephemeral=True)
+                embed = discord.Embed(title="⚙️ Test notification ⚙️", description=f"Notifications for games would be send to this channel", color=0x00aff4)
+                
+                await channel.send(f'Pinging role <@&{server.get("role")}> for test' if server.get("role") else '', embed=embed)
+                await interaction.response.send_message("I've send a test notification message !", ephemeral=True)
+            else:
+                await interaction.response.send_message("You have to set a channel first in order to test the notification", ephemeral=True)
 
     return client
