@@ -81,18 +81,18 @@ class Database(object):
 
 
     @staticmethod
-    def remove_server(guild):
+    def remove_server(guildId):
         '''
         Removes the server from the database when the bot is kicked.
         Important so it doesnt try to send messages to a server its no longer connected to.
         '''
-        result = Database.servers['discord'].delete_one({'server': guild.id})
+        result = Database.servers['discord'].delete_one({'server': guildId})
 
         # Check if the document was deleted successfully
         if result.deleted_count == 1:
-            print(f"Document deleted successfully.")
+            logger.info('Document deleted successfully for %s', guildId)
         else:
-            print(f"No server found.")
+            logger.info('No server found.')
 
 
     @staticmethod
