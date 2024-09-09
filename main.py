@@ -103,7 +103,7 @@ async def send_games_notification(store):
     Send games notifications
     '''
 
-    #Twitter
+    # tweet about it...
     if store.twitter_notification and x:
         x.tweet(store)
 
@@ -115,9 +115,6 @@ async def send_games_notification(store):
             if server.get('channel'):
                 #print(f"{server.get('channel')} has role {server.get('role')}")
                 await discord.store_messages(store.name, server.get('channel'), server.get('role'))
-            else:
-                #print(f"2: {server.get('channel')} has role {server.get('role')}")
-                await discord.store_messages(store.name, discord.guilds.system_channel, server.get('role'))
 
 
 #MARK: Scheduler loop

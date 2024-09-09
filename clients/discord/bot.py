@@ -1,6 +1,6 @@
 import io, os
 import traceback
-from time import time
+from datetime import datetime
 
 import discord
 from discord import app_commands
@@ -10,7 +10,6 @@ import clients.discord.messages as messages
 from utils import environment
 
 logger = environment.logging.getLogger(f"bot.discord")
-MY_GUILD = discord.Object(id=827564503930765312)
 
 
 class MyClient(discord.Client):
@@ -19,6 +18,7 @@ class MyClient(discord.Client):
         intents = discord.Intents.default()
         intents.members = True
         intents.presences = True
+        self.ADMIN_USER = None
         super().__init__(
             intents = intents,
             activity = discord.Activity(type=discord.ActivityType.watching, name="out for free games")
@@ -26,42 +26,55 @@ class MyClient(discord.Client):
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
-        self.tree.clear_commands(guild=MY_GUILD)        #Clear guild commands
-        if environment.DEVELOPMENT:
+        DEV_GUILD = discord.Object(id=environment.DISCORD_DEV_GUILD) if environment.DISCORD_DEV_GUILD is not None else None
+        if environment.DEVELOPMENT and DEV_GUILD:
             logger.debug("IN DEV setting up guild commands")
-            #Set global commands as guild commands for specific server
-            self.tree.copy_global_to(guild=MY_GUILD) 
-            await self.tree.sync(guild=MY_GUILD)
+            self.tree.clear_commands(guild=DEV_GUILD)  # Clear guild commands
+            # Set global commands as guild commands for specific server
+            # self.tree.copy_global_to(guild=DEV_GUILD)
+            await self.tree.sync(guild=DEV_GUILD)
         else:
             await self.tree.sync()
 
+
     async def change_status(self):
         await self.wait_until_ready()
-        '''
-        msgs = cycle(status)
 
-        while not client.is_closed():
-            try:
-                await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=next(msgs)))
-                await asyncio.sleep(3)
-            except:
-                pass
-        '''
         await self.change_presence(
             activity=discord.Activity(type=discord.ActivityType.watching, name='out for free games'))
 
+    # MARK: on_ready
     async def on_ready(self):
-        logger.info("Bot ready, logged in as %s", format(self.user))
+        # setup dm or logger
+        self.ADMIN_USER = self.get_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
 
-        logger.info("Connected to servers: %s", ', '.join(['%s(%d)' % (guild.name, len([member for member in guild.members if not member.bot])) for guild in self.guilds]))
+        if self.ADMIN_USER:
+            await self.ADMIN_USER.send(f"**Status** {self.user} `Started/Restarted and ready`, "
+                                       f"connected to {len(self.guilds)} servers")
+        else:
+            logger.info("%s Started/Restarted and ready, connected to %s servers", format(self.user), len(self.guilds))
 
+        # Update server population
         for guild in self.guilds:
-            if guild.id == 827564503930765312:
-                for channel in guild.text_channels:
-                    if channel.permissions_for(guild.me).send_messages:
-                        await channel.send('Bot Started/Restarted')
+            Database.insert_discord_server([{
+                'server': guild.id,
+                # 'channel': guild.system_channel.id,
+                # 'server_name': guild.name,
+                'population' : len([member for member in guild.members if not member.bot])
+            }])
 
-        # Upload animated avatar
+
+        # Check if connected to all guilds stored in db, only applicable if removed while bot was offline
+        servers_data = Database.get_discord_servers()
+        guild_ids = [server.id for server in self.guilds]
+        servers_data_ids = [server['server'] for server in servers_data]
+
+        not_in_guilds = [server for server in servers_data_ids if server not in guild_ids]
+        for guild in not_in_guilds:
+            Database.remove_server(guild)
+
+        
+        # Upload animated avatar (only needs to be run once)
         if os.path.exists('avatar.gif'):
             logger.info("Found animated avatar file.")
             try:
@@ -71,20 +84,28 @@ class MyClient(discord.Client):
             except Exception as e:
                 logger.info("Failed animated avatar upload %s", e)
 
+
+    # MARK: on_guild_join
     async def on_guild_join(self, guild):
-        print(guild.system_channel)
         if guild.system_channel:
-            await guild.system_channel.send('HI, if youre a mod you can setup the bot by using the slash commands')
+            await guild.system_channel.send('Hi, if youre a mod you can setup the bot by using the **/settings** slash command')
         else:
             for channel in guild.text_channels:
                 if channel.permissions_for(guild.me).send_messages:
                     await channel.send('Hey there! this is the message i send when i join a server')
                 break
 
-    async def on_guild_remove(self, guild):
-        Database.remove_server(guild)
+        Database.insert_discord_server([{
+            'server': guild.id,
+            'channel': guild.system_channel.id if guild.system_channel else None,
+            'server_name': guild.name,
+            'population' : len([member for member in guild.members if not member.bot])
+        }])
 
-    
+    async def on_guild_remove(self, guild):
+        Database.remove_server(guild.id)
+
+    # MARK: store_messages
     async def store_messages(self, command, channel, role):
         for store in self.modules:
             if command in store.name:
@@ -104,25 +125,11 @@ class MyClient(discord.Client):
                                 filetype = store.image_type.lower()
                             file = discord.File(img, filename='img.' + filetype)
 
-                        # await channel.send(embed = message_to_show(store.data), file=file)
                         channel = self.get_channel(channel)
                         default_txt = f'{store.service_name} has new free games'
                         await channel.send(default_txt + f' <@&{role}>' if role else default_txt, embed=message_to_show(store), view=footer_buttons(), file=file)
                     #except AttributeError:
                         #print('Image not found')
-
-
-
-
-class Roles_Select(discord.ui.RoleSelect):
-    def __init__(self) -> None:
-        super().__init__(
-            placeholder="🔍 Select a role...",
-            min_values=0,
-            max_values=1,
-            custom_id="select_roles",
-            disabled=False,
-        )
 
 
 class footer_buttons(discord.ui.View):
@@ -139,6 +146,7 @@ class footer_buttons(discord.ui.View):
 def setup(modules):
     client = MyClient(modules)
 
+    # MARK: deals command
     @client.tree.command(name="deals", description="Choose what store you want to retrieve the current deals for.")
     @app_commands.choices(store_choice=[app_commands.Choice(name=store.service_name, value=store.name) for store in client.modules])                     
     @app_commands.describe(store_choice='Select the store you want to view')
@@ -156,82 +164,12 @@ def setup(modules):
                         file = discord.File(image, filename='img.' + store.image_type.lower())
                         await interaction.response.send_message(embed=message_to_show(store, mobile=mobile), file=file, view=footer_buttons(), ephemeral=True)
                     else:
-                        print("RIPERINO BROTHERINO_1")
+                        print("RIPERINO BROTHERINO")
                 else:
-                    await interaction.response.send_message(f"Sorry, no data at this time for {store.name}", ephemeral=True)
+                    await interaction.response.send_message(f"No free games on {store.name}", ephemeral=True)
 
 
-    #@app_commands.is_owner()
-    #@app_commands.checks.has_permissions(administrator=True)
-    @app_commands.default_permissions(manage_guild=True)
-    @client.tree.command(name='updates-channel', description="Channel that receives automatic deal notifications")
-    @app_commands.describe(channel='Ha1')
-    async def channel_select(interaction: discord.Interaction, channel: discord.TextChannel):
-        await channel.send('This is the channel that the updates will be send to')
-        await interaction.response.send_message(f"The update channel has been changed to {channel.name}", ephemeral=True)
-        print(type(channel))
-        print(f"{channel=}\n{channel.id=}")
-        
-        Database.insert_discord_server([{
-        'server': interaction.guild_id,
-        'channel': channel.id}])
-
-
-    # @client.tree.command(name='invite', description="Invite the bot to your server!")
-    # async def invite(interaction: discord.Interaction):
-    #     invite_link = 'https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot'
-    #     url_view = discord.ui.View()
-    #     url_view.add_item(discord.ui.Button(label=f'\u21AA', style=discord.ButtonStyle.green, disabled = True ))
-    #     url_view.add_item(discord.ui.Button(label='🤖 Invite Link ', style=discord.ButtonStyle.blurple, url=invite_link))
-    #     url_view.add_item(discord.ui.Button(label=f'\u21A9', style=discord.ButtonStyle.green, disabled = True ))
-    #     await interaction.response.send_message(view=url_view)
-
-
-
-            
-
-
-
-    async def callback(self, interaction: discord.Interaction):
-
-        embed = discord.Embed(
-                color=0x00aff4, 
-                description=f"Every time i have an update i will send a notification to:\n\nChannel: <#{interaction.guild.system_channel.id}>"
-                            f"\nPinging role: {'<@&'+ str(self.values[0].id)+'>' if len(self.values) else ' None'}"
-                            f"\n\nTo change the channel that receives the updates use the updates-channel slash command"
-                )
-            
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-        Database.insert_discord_server([{
-            'server': interaction.guild_id,
-            'channel': interaction.guild.system_channel.id,
-            'role': self.values[0].id if len(self.values) else None
-        }])
-
-
-    class select_store(discord.ui.Select):
-        def __init__(self, interaction: discord.Interaction):
-            options=[discord.SelectOption(label=f'{store.service_name}', value=store.name) for store in client.modules]
-            super().__init__(placeholder="Select the stores you want to receive notifications for", max_values=len(client.modules), min_values=0, options=options)
-
-        async def callback(self, interaction: discord.Interaction):
-
-            choice = []
-            for store in client.modules:
-                if store.name in self.values:
-                    choice.append(store.id)
-
-            Database.insert_store_notifications([{
-                'server' : interaction.guild_id,
-                'notification_settings' : int("".join(str(_) for _ in choice))
-            }])
-
-            embed = settings_embed(interaction.guild_id)
-            
-            await interaction.response.send_message(embed=embed, view=settings_test_button(), ephemeral=True)
-
-
+    # MARK: my roles select
     class my_Roles_Select(discord.ui.Select):
 
         def __init__(self, interaction: discord.Interaction):
@@ -243,37 +181,13 @@ def setup(modules):
             await interaction.response.send_message(content=f"Your choice is {self.values[0]}!",ephemeral=True)
 
 
-
-    @app_commands.default_permissions(manage_guild=True)
-    @client.tree.command(name='role-ping', description="Select role to ping")
-    async def role_select(interaction: discord.Interaction):
-        print(f'{interaction=}')
-        url_view = discord.ui.View()
-        url_view.add_item(Roles_Select())
-        await interaction.response.send_message(view=url_view, ephemeral=True)
-
-
-    @app_commands.default_permissions(manage_guild=True)
-    @client.tree.command(name='store-notifications', description="Select the stores you want to receive notifications for")
-    async def store_notification(interaction: discord.Interaction):
-        url_view = discord.ui.View()
-        url_view.add_item(select_store(interaction))
-        await interaction.response.send_message(view=url_view, ephemeral=True)
-
-
-    @app_commands.default_permissions(manage_guild=True)
-    @client.tree.command(name='role-ping-test', description="Select role to ping")
-    async def role_select2(interaction: discord.Interaction):
-        url_view = discord.ui.View()
-        url_view.add_item(my_Roles_Select(interaction))
-        print('\n')
-        for role in interaction.guild.roles:
-            print(f'{role} {role.members}')
-        await interaction.response.send_message(view=url_view, ephemeral=True)
+    # MARK: Feedback
+    @client.tree.command(description="Submit feedback")
+    async def feedback(interaction: discord.Interaction):
+        await interaction.response.send_modal(Feedback())
 
 
     class Feedback(discord.ui.Modal, title='Feedback'):
-
         feedback = discord.ui.TextInput(
             label='Tell us what you think?',
             style=discord.TextStyle.long,
@@ -282,88 +196,206 @@ def setup(modules):
             max_length=300,
         )
 
-    async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f'Thanks for your feedback, {interaction.user}!', ephemeral=True)
+        async def on_submit(self, interaction: discord.Interaction):
+            await interaction.response.send_message(f'Thanks for your feedback, {interaction.user}!', ephemeral=True)
 
-        Database.add_feedback({
-        'server': interaction.guild_id,
-        'user': interaction.user.name,
-        'timestamp': time.ctime(),
-        'feedback': str(self.feedback.value)
-        })
+            feedback_payload = {
+            'server': interaction.guild_id,
+            'user': interaction.user.name,
+            'timestamp': datetime.now(),
+            'feedback': str(self.feedback.value)
+            }
 
-    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
-        await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
-        traceback.print_exception(type(error), error, error.__traceback__)
+            Database.add_feedback(feedback_payload)
+
+            await client.get_user(362361984026542083)\
+                .send(f"**Feedback**\n`{feedback_payload['feedback']}`")
+
+        async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+            await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
+            traceback.print_exception(type(error), error, error.__traceback__)
 
 
-    @client.tree.command(description="Submit feedback")
-    async def feedback(interaction: discord.Interaction):
-        await interaction.response.send_modal(Feedback())
-
-
+    # MARK: Settings
     @app_commands.default_permissions(manage_guild=True)
     @client.tree.command(name='settings', description="Show bot settings like update channel and ping role")
     async def settings(interaction: discord.Interaction):
         '''
         Return bot settings
         '''
-        '''
-        settings_button = discord.ui.Button(label=f'Test notifications', style=discord.ButtonStyle.primary)
-        server = Database.get_discord_server(interaction.guild_id)
-
-        async def button_callback(interaction):
-
-            server = Database.get_discord_server(interaction.guild_id)
-            channel = client.get_channel(server['channel'])
-
-            embed = discord.Embed(title="⚙️ Test notification ⚙️", description=f"Notifications for games would be send to this channel", color=0x00aff4)
-        
-            await channel.send(f'Pinging role <@&{server["role"]}> for test' if server["role"] else '', embed=embed)
-            await interaction.response.send_message("I've send a test notification message !", ephemeral=True)
-
-        settings_button.callback = button_callback
-        view = discord.ui.View()
-        view.add_item(settings_button)
-        '''
-        #view = discord.ui.View()
-        #view.add_item(settings_test_button)
         embed = settings_embed(interaction.guild_id)
-
-        await interaction.response.send_message(embed=embed, view=settings_test_button(), ephemeral=True)
+        await interaction.response.send_message(embed=embed, view=Settings_buttons(), ephemeral=True)
 
 
     def settings_embed(server):
         server = Database.get_discord_server(server)
-        channel = '<#'+str(server.get('channel'))+'>' if server.get('channel') else 'None'
-        role = '<@&'+str(server.get('role'))+'>' if server.get('role') else 'None'
+
+        channel = '<#'+str(server.get('channel'))+'>' if server and server.get('channel') else 'None'
+        role = '<@&'+str(server.get('role'))+'>' if server and server.get('role') else 'None'
+        notifications_str = str(server['notification_settings'] if server and server.get('notification_settings') else '')
 
         notifications = ''
         for store in client.modules:
-            if store.id in str(server['notification_settings']):
+            if store.id in notifications_str:
                 notifications += f'✔️ {store.name}\n'
             else:
                 notifications += f'❌ {store.name}\n'
 
-        embed = discord.Embed(title="⚙️ Settings ⚙️", description=f"Channel: {channel}\nNotification role: {role}", color=0x00aff4)
-        embed.add_field(name="🛎️ You'll receive notifications for the following stores 🛎️", value=f"{notifications}", inline=True)
+        embed = discord.Embed(title="⚙️ Settings ⚙️", description=f"Notification channel: {channel}\nNotification role: {role}", color=0x00aff4)
+        embed.add_field(name="🛎️ You'll receive notifications for the following stores 🛎️\n", value=f"{notifications}", inline=True)
         return embed
 
 
-    class settings_test_button(discord.ui.View):
+    class Settings_buttons(discord.ui.View):
         def __init__(self):
             super().__init__()
-            self.settings_button = discord.ui.Button(label=f'Test notifications', style=discord.ButtonStyle.primary)
-            self.add_item(self.settings_button)
-            self.settings_button.callback = self.settings_button_callback
 
-        async def settings_button_callback(self, interaction: discord.Integration):
+            # Settings test notification button 
+            settings_test_button = discord.ui.Button(
+                label=f'Test notifications', 
+                style=discord.ButtonStyle.primary
+            )
+
+            # Settings add notification channel
+            settings_channel_button = discord.ui.Button(
+                label=f'Set channel',
+                style=discord.ButtonStyle.secondary
+            )
+
+            settings_role_button = discord.ui.Button(
+                label=f'Set role',
+                style=discord.ButtonStyle.secondary
+            )
+
+            settings_store_button = discord.ui.Button(
+                label=f'Set stores',
+                style=discord.ButtonStyle.secondary
+            )   
+                        
+            settings_test_button.callback = self.test_settings_callback
+            self.add_item(settings_test_button)
+
+
+            settings_channel_button.callback = self.channel_select_callback
+            self.add_item(settings_channel_button)
+
+
+            settings_role_button.callback = self.settings_role_callback
+            self.add_item(settings_role_button)
+
+            settings_store_button.callback = self.settings_store_callback
+            self.add_item(settings_store_button)
+
+
+        # MARK: test settings callback
+        async def test_settings_callback(self, interaction: discord.Integration):
             server = Database.get_discord_server(interaction.guild_id)
-            channel = client.get_channel(server['channel'])
+            if server and server.get('channel'):
+                channel = client.get_channel(server['channel'])
 
-            embed = discord.Embed(title="⚙️ Test notification ⚙️", description=f"Notifications for games would be send to this channel", color=0x00aff4)
-            
-            await channel.send(f'Pinging role <@&{server["role"]}> for test' if server["role"] else '', embed=embed)
-            await interaction.response.send_message("I've send a test notification message !", ephemeral=True)
+                embed = discord.Embed(title="⚙️ Test notification ⚙️", description=f"Notifications for games would be send to this channel", color=0x00aff4)
+                
+                await channel.send(f'Pinging role <@&{server.get("role")}> for test' if server.get("role") else '', embed=embed)
+                await interaction.response.send_message("I've send a test notification message !", ephemeral=True)
+            else:
+                await interaction.response.send_message("You have to set a channel first in order to test the notification", ephemeral=True)
+
+        # MARK: channel callback
+        async def channel_select_callback(self, interaction: discord.Interaction):
+            class Channel_Select(discord.ui.ChannelSelect):
+                def __init__(self) -> None:
+                    channel_id = None
+                    if Database.get_discord_server(interaction.guild_id):
+                        channel_id = Database.get_discord_server(interaction.guild_id).get('channel', None)
+                    
+                    default = [discord.Object(id=channel_id)] if channel_id is not None else []
+
+                    super().__init__(
+                        placeholder="🔍 Select a Channel...",
+                        channel_types=[discord.ChannelType.text],
+                        min_values=1,
+                        max_values=1,
+                        custom_id="select_channel",
+                        disabled=False,
+                        default_values = default
+                    )
+                    
+                async def callback(self, interaction: discord.Integration):
+                    # await client.get_channel(self.values[0].id).send('This is the channel that the updates will be send to')
+                    Database.insert_discord_server([{
+                        'server': interaction.guild_id,
+                        'channel': self.values[0].id
+                        }])
+                    await interaction.response.send_message(f"The update channel has been changed to {self.values[0]}", ephemeral=True)
+
+            url_view = discord.ui.View()
+            url_view.add_item(Channel_Select())
+            await interaction.response.send_message(view=url_view, ephemeral=True)
+
+        # MARK: role callback
+        async def settings_role_callback(self, interaction: discord.Interaction):
+            class Roles_Select(discord.ui.RoleSelect):
+                def __init__(self) -> None:
+                    role_id = None
+                    if Database.get_discord_server(interaction.guild_id):
+                        role_id = Database.get_discord_server(interaction.guild_id).get('role')
+    
+                    default = [discord.Object(id=role_id)] if role_id is not None else []
+
+                    super().__init__(
+                        placeholder="🔍 Select a role...",
+                        min_values=0,
+                        max_values=1,
+                        custom_id="select_roles",
+                        disabled=False,
+                        default_values = default
+                    )
+
+                async def callback(self, interaction: discord.Integration):
+                    role = self.values[0] if len(self.values) else None
+                    Database.insert_discord_server([{
+                        'server': interaction.guild_id,
+                        'role': role.id if role else role
+                        }])
+                    if role:
+                        await interaction.response.send_message(f"Ping {role.name}", ephemeral=True)
+                    else:
+                        await interaction.response.send_message(f"Notification will be send but no role will be pinged", 
+                                                                ephemeral=True)
+
+            url_view = discord.ui.View()
+            url_view.add_item(Roles_Select())
+            await interaction.response.send_message(view=url_view, ephemeral=True)
+
+        # MARK: store callback
+        async def settings_store_callback(self, interaction: discord.Interaction):   
+            class Store_select(discord.ui.Select):
+                def __init__(self) -> None:
+                    options=[discord.SelectOption(label=f'{store.service_name}', value=store.name) for store in client.modules]
+                    super().__init__(
+                        placeholder="Select the stores you want to receive notifications for", 
+                        max_values=len(client.modules), 
+                        min_values=0, 
+                        options=options
+                    )
+
+                async def callback(self, interaction: discord.Interaction):
+
+                    choice = []
+                    for store in client.modules:
+                        if store.name in self.values:
+                            choice.append(store.id)
+
+                    Database.insert_store_notifications([{
+                        'server' : interaction.guild_id,
+                        'notification_settings' : int("".join(str(_) for _ in choice))
+                    }])
+
+                    stores = ' '.join(str(_+',') for _ in self.values)[:-1]
+                    await interaction.response.send_message(f"Gonna send notifications for: {stores}", ephemeral=True)
+
+            url_view = discord.ui.View()
+            url_view.add_item(Store_select())
+            await interaction.response.send_message(view=url_view, ephemeral=True)
 
     return client
