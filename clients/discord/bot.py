@@ -58,7 +58,7 @@ class MyClient(discord.Client):
         for guild in self.guilds:
             Database.insert_discord_server([{
                 'server': guild.id,
-                # 'channel': guild.system_channel.id,
+                # 'channel': guild.system_channel.id if guild.system_channel else None,
                 # 'server_name': guild.name,
                 'population' : len([member for member in guild.members if not member.bot])
             }])
@@ -87,12 +87,13 @@ class MyClient(discord.Client):
 
     # MARK: on_guild_join
     async def on_guild_join(self, guild):
+        msg = 'Hi, if youre a mod you can setup the bot by using the **/settings** slash command'
         if guild.system_channel:
-            await guild.system_channel.send('Hi, if youre a mod you can setup the bot by using the **/settings** slash command')
+            await guild.system_channel.send(msg)
         else:
             for channel in guild.text_channels:
                 if channel.permissions_for(guild.me).send_messages:
-                    await channel.send('Hey there! this is the message i send when i join a server')
+                    await channel.send(msg)
                 break
 
         Database.insert_discord_server([{
@@ -293,7 +294,7 @@ def setup(modules):
             if server and server.get('channel'):
                 channel = client.get_channel(server['channel'])
 
-                embed = discord.Embed(title="⚙️ Test notification ⚙️", description=f"Notifications for games would be send to this channel", color=0x00aff4)
+                embed = discord.Embed(title="⚙️ Test notification ⚙️", description=f"Notifications for games will be send to this channel", color=0x00aff4)
                 
                 await channel.send(f'Pinging role <@&{server.get("role")}> for test' if server.get("role") else '', embed=embed)
                 await interaction.response.send_message("I've send a test notification message !", ephemeral=True)
@@ -371,7 +372,19 @@ def setup(modules):
         async def settings_store_callback(self, interaction: discord.Interaction):   
             class Store_select(discord.ui.Select):
                 def __init__(self) -> None:
-                    options=[discord.SelectOption(label=f'{store.service_name}', value=store.name) for store in client.modules]
+                    server = Database.get_discord_server(interaction.guild_id)
+                    notifications_str = str(server['notification_settings'] if server and server.get('notification_settings') else '')
+
+                    options= [
+                        discord.SelectOption(
+                            default=store.id in notifications_str, 
+                            label=f'{store.service_name}',
+                            # description=f'Receive notifications for {store.service_name}',
+                            value=store.name
+                        )
+                        for store in client.modules
+                    ]
+
                     super().__init__(
                         placeholder="Select the stores you want to receive notifications for", 
                         max_values=len(client.modules), 
@@ -386,13 +399,19 @@ def setup(modules):
                         if store.name in self.values:
                             choice.append(store.id)
 
+                    if self.values:
+                        stores = ' '.join(str(_+',') for _ in self.values)[:-1]
+                        notification_settings = int("".join(str(_) for _ in choice))
+                        await interaction.response.send_message(f"Gonna send notifications for: {stores}", ephemeral=True)
+                    else:
+                        await interaction.response.send_message(f"You aren't going to receive **any** notifications", ephemeral=True)
+                        notification_settings = None
+
                     Database.insert_store_notifications([{
                         'server' : interaction.guild_id,
-                        'notification_settings' : int("".join(str(_) for _ in choice))
+                        'notification_settings' : notification_settings
                     }])
 
-                    stores = ' '.join(str(_+',') for _ in self.values)[:-1]
-                    await interaction.response.send_message(f"Gonna send notifications for: {stores}", ephemeral=True)
 
             url_view = discord.ui.View()
             url_view.add_item(Store_select())
