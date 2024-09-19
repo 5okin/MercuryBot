@@ -47,7 +47,7 @@ load_modules()
 discord = discord.setup(modules)
 x = twitter.MyClient()
 
-#MARK: update
+#MARK: Update
 async def update(update_store=None) -> None:
     '''
     Update specified store
@@ -97,17 +97,19 @@ async def initialize() -> None:
             except Exception as error:
                 logger.error("Failed to scrape store %s: %s", store.name, str(error))
 
-#MARK: send games notification
+#MARK: Send games notification
 async def send_games_notification(store):
     '''
     Send games notifications
     '''
 
+    await discord.wait_until_ready()
+
     # tweet about it...
     if store.twitter_notification and x:
-        x.tweet(store)
+        tweet_url = x.tweet(store)
+        await discord.dm_logs(tweet_url)
 
-    await discord.wait_until_ready()
     servers_data = Database.get_discord_servers()
     for server in servers_data:
         # Check server notification settings

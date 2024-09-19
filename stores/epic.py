@@ -81,8 +81,6 @@ class Main(Store):
                 except Exception as e:
                     tall_image_url = wide_image_url = game['keyImages'][0]['url']
 
-                tall_image_url = tall_image_url.replace(" ", "%20")
-
                 # If Current deal
                 if game['promotions']['promotionalOffers']:
                     if game['price']['totalPrice']['fmtPrice']['discountPrice'] == "0":
@@ -248,6 +246,6 @@ if __name__ == "__main__":
     # asyncio.run(store.scheduler())
 
 
-    import clients.twitter.bot as twitter
-    x = twitter.MyClient()
-    x.tweet(store)
+    # import clients.twitter.bot as twitter
+    # x = twitter.MyClient()
+    # x.tweet(store)

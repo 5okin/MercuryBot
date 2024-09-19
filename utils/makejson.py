@@ -1,5 +1,6 @@
 import json
 from utils import environment
+from urllib.parse import quote
 from datetime import datetime
 
 logger = environment.logging.getLogger("bot.makejson")
@@ -39,8 +40,8 @@ def data(json_data, game_name, active_deal, game_url, game_image, offer_from=Non
         'url': game_url,
         'startDate': offer_from,
         'endDate': offer_until,
-        'image': game_image,
-        'wideImage': wide_image
+        'image': game_image.replace(" ", "%20"),
+        'wideImage': wide_image.replace(" ", "%20") if wide_image else None
     })
     return json_data
 

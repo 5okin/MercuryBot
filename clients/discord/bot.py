@@ -42,12 +42,14 @@ class MyClient(discord.Client):
 
         await self.change_presence(
             activity=discord.Activity(type=discord.ActivityType.watching, name='out for free games'))
+        
+    async def on_connect(self):
+        # setup dm or logger
+        self.ADMIN_USER = self.get_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
+        
 
     # MARK: on_ready
     async def on_ready(self):
-        # setup dm or logger
-        self.ADMIN_USER = self.get_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
-
         if self.ADMIN_USER:
             await self.ADMIN_USER.send(f"**Status** {self.user} `Started/Restarted and ready`, "
                                        f"connected to {len(self.guilds)} servers")
@@ -105,6 +107,15 @@ class MyClient(discord.Client):
 
     async def on_guild_remove(self, guild):
         Database.remove_server(guild.id)
+
+    
+    async def dm_logs(self, tweetUrl):
+        '''
+        Send link to tweet update as a dm
+        '''
+        if self.ADMIN_USER:
+            await self.ADMIN_USER.send(f"**Twitter** {tweetUrl}")
+            
 
     # MARK: store_messages
     async def store_messages(self, command, channel, role):
