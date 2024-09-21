@@ -19,6 +19,7 @@ class MyClient(discord.Client):
         intents.members = True
         intents.presences = True
         self.ADMIN_USER = None
+        self.DEV_GUILD = None
         super().__init__(
             intents = intents,
             activity = discord.Activity(type=discord.ActivityType.watching, name="out for free games")
@@ -26,13 +27,12 @@ class MyClient(discord.Client):
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
-        DEV_GUILD = discord.Object(id=environment.DISCORD_DEV_GUILD) if environment.DISCORD_DEV_GUILD is not None else None
-        if environment.DEVELOPMENT and DEV_GUILD:
+        if self.DEV_GUILD:
             logger.debug("IN DEV setting up guild commands")
-            self.tree.clear_commands(guild=DEV_GUILD)  # Clear guild commands
+            self.tree.clear_commands(guild=self.DEV_GUILD)  # Clear guild commands
             # Set global commands as guild commands for specific server
             # self.tree.copy_global_to(guild=DEV_GUILD)
-            await self.tree.sync(guild=DEV_GUILD)
+            await self.tree.sync(guild=self.DEV_GUILD)
         else:
             await self.tree.sync()
 
@@ -43,13 +43,13 @@ class MyClient(discord.Client):
         await self.change_presence(
             activity=discord.Activity(type=discord.ActivityType.watching, name='out for free games'))
         
+        
+    # MARK: on_connnect
     async def on_connect(self):
         # setup dm or logger
         self.ADMIN_USER = self.get_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
-        
+        self.DEV_GUILD = discord.Object(id=environment.DISCORD_DEV_GUILD) if environment.DISCORD_DEV_GUILD is not None and environment.DEVELOPMENT else None
 
-    # MARK: on_ready
-    async def on_ready(self):
         if self.ADMIN_USER:
             await self.ADMIN_USER.send(f"**Status** {self.user} `Started/Restarted and ready`, "
                                        f"connected to {len(self.guilds)} servers")
@@ -108,13 +108,18 @@ class MyClient(discord.Client):
     async def on_guild_remove(self, guild):
         Database.remove_server(guild.id)
 
-    
-    async def dm_logs(self, tweetUrl):
+    #MARK: dm_logs
+    async def dm_logs(self, logTitle: str, logPayload: str) -> None:
         '''
-        Send link to tweet update as a dm
+        Send logs to bot owner through dm
+
+        Parameteres:
+            logTitle (str): The title you want the dm to have.
+            logPayload (str): The message you want the dm to have.
         '''
         if self.ADMIN_USER:
-            await self.ADMIN_USER.send(f"**Twitter** {tweetUrl}")
+            await self.ADMIN_USER.send(f"**{logTitle}** {logPayload}")
+
             
 
     # MARK: store_messages

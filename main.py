@@ -108,7 +108,7 @@ async def send_games_notification(store):
     # tweet about it...
     if store.twitter_notification and x:
         tweet_url = x.tweet(store)
-        await discord.dm_logs(tweet_url)
+        await discord.dm_logs("Tweet", tweet_url)
 
     servers_data = Database.get_discord_servers()
     for server in servers_data:

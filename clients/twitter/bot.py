@@ -77,6 +77,7 @@ class MyClient():
 
         tweetNow = self.client_v2.create_tweet(text=txt_string, media_ids=media_id)
         logger.info("https://twitter.com/user/status/%s", tweetNow.data['id'])
+        
         return (f'https://twitter.com/user/status/{ tweetNow.data["id"] }')
 
 
