@@ -27,6 +27,7 @@ class MyClient(discord.Client):
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
+        self.DEV_GUILD = discord.Object(id=environment.DISCORD_DEV_GUILD) if environment.DISCORD_DEV_GUILD is not None and environment.DEVELOPMENT else None
         if self.DEV_GUILD:
             logger.debug("IN DEV setting up guild commands")
             self.tree.clear_commands(guild=self.DEV_GUILD)  # Clear guild commands
@@ -42,29 +43,13 @@ class MyClient(discord.Client):
 
         await self.change_presence(
             activity=discord.Activity(type=discord.ActivityType.watching, name='out for free games'))
-        
-        
+  
+
     # MARK: on_connnect
     async def on_connect(self):
+        await self.wait_until_ready()
         # setup dm or logger
         self.ADMIN_USER = self.get_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
-        self.DEV_GUILD = discord.Object(id=environment.DISCORD_DEV_GUILD) if environment.DISCORD_DEV_GUILD is not None and environment.DEVELOPMENT else None
-
-        if self.ADMIN_USER:
-            await self.ADMIN_USER.send(f"**Status** {self.user} `Started/Restarted and ready`, "
-                                       f"connected to {len(self.guilds)} servers")
-        else:
-            logger.info("%s Started/Restarted and ready, connected to %s servers", format(self.user), len(self.guilds))
-
-        # Update server population
-        for guild in self.guilds:
-            Database.insert_discord_server([{
-                'server': guild.id,
-                # 'channel': guild.system_channel.id if guild.system_channel else None,
-                # 'server_name': guild.name,
-                'population' : len([member for member in guild.members if not member.bot])
-            }])
-
 
         # Check if connected to all guilds stored in db, only applicable if removed while bot was offline
         servers_data = Database.get_discord_servers()
@@ -75,6 +60,20 @@ class MyClient(discord.Client):
         for guild in not_in_guilds:
             Database.remove_server(guild)
 
+        # Update server populations
+        for guild in self.guilds:
+            Database.insert_discord_server([{
+                'server': guild.id,
+                # 'channel': guild.system_channel.id if guild.system_channel else None,
+                # 'server_name': guild.name,
+                'population' : len([member for member in guild.members if not member.bot])
+            }])
+
+        if self.ADMIN_USER:
+            await self.ADMIN_USER.send(f"**Status** {self.user} `Started/Restarted and ready`, "
+                                       f"connected to {len(self.guilds)} servers with {Database.get_population()} people")
+        else:
+            logger.info("%s Started/Restarted and ready, connected to %s servers with %s people", format(self.user), len(self.guilds), {Database.get_population()})
         
         # Upload animated avatar (only needs to be run once)
         if os.path.exists('avatar.gif'):
@@ -351,31 +350,48 @@ def setup(modules):
 
         # MARK: role callback
         async def settings_role_callback(self, interaction: discord.Interaction):
-            class Roles_Select(discord.ui.RoleSelect):
+            class Roles_Select(discord.ui.Select):
                 def __init__(self) -> None:
                     role_id = None
                     if Database.get_discord_server(interaction.guild_id):
                         role_id = Database.get_discord_server(interaction.guild_id).get('role')
+
+                        options=[
+                            discord.SelectOption(label="Dont ping a role", value="None"),
+                            *[
+                                discord.SelectOption(
+                                    label=f'{role.name} 🧍{len(role.members)}', 
+                                    value=role.id
+                                )
+                                for role in sorted(interaction.guild.roles, key=lambda r: r.name.lower())
+                            ]
+                        ]
     
-                    default = [discord.Object(id=role_id)] if role_id is not None else []
+                    default = role_id if role_id is not None else None
+
+                    if default:
+                        for option in options:
+                            if str(option.value) == default:
+                                option.default = True
 
                     super().__init__(
                         placeholder="🔍 Select a role...",
                         min_values=0,
                         max_values=1,
                         custom_id="select_roles",
+                        options=options,
                         disabled=False,
-                        default_values = default
                     )
 
                 async def callback(self, interaction: discord.Integration):
-                    role = self.values[0] if len(self.values) else None
+                    role = self.values[0] if len(self.values) and (self.values[0] != "None") else None
+                    role_name = discord.utils.get(interaction.guild.roles, id=int(role)).name.replace("@", "") if role else None
                     Database.insert_discord_server([{
                         'server': interaction.guild_id,
-                        'role': role.id if role else role
-                        }])
+                        'role': role if role else role
+                    }])
                     if role:
-                        await interaction.response.send_message(f"Ping {role.name}", ephemeral=True)
+                        await interaction.response.send_message(f"Ping {role_name}", ephemeral=True)
                     else:
                         await interaction.response.send_message(f"Notification will be send but no role will be pinged", 
                                                                 ephemeral=True)
