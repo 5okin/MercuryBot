@@ -371,9 +371,11 @@ def setup(modules):
                                     value=role.id
                                 )
                                 for role in sorted(interaction.guild.roles, key=lambda r: r.name.lower())
+                                if not role.managed
                             ]
                         ]
-    
+
+                    if len(options)>25: logger.error("RoleSelect: server %s has more then 25 role options")
                     default = role_id if role_id is not None else None
 
                     if default:
@@ -386,7 +388,7 @@ def setup(modules):
                         min_values=0,
                         max_values=1,
                         custom_id="select_roles",
-                        options=options,
+                        options=options[:25],
                         disabled=False,
                     )
 
