@@ -122,7 +122,7 @@ class MyClient(discord.Client):
             
 
     # MARK: store_messages
-    async def store_messages(self, command, channel, role):
+    async def store_messages(self, command, server, channel, role):
         for store in self.modules:
             if command in store.name:
                 message_to_show = getattr(messages, store.name)
@@ -142,8 +142,14 @@ class MyClient(discord.Client):
                             file = discord.File(img, filename='img.' + filetype)
 
                         channel = self.get_channel(channel)
+
+                        if role and role == self.get_guild(server).default_role.id:
+                            role = '@everyone'
+                        elif role:
+                            role = f' <@&{role}>'
+
                         default_txt = f'{store.service_name} has new free games'
-                        await channel.send(default_txt + f' <@&{role}>' if role else default_txt, embed=message_to_show(store), view=footer_buttons(), file=file)
+                        await channel.send(default_txt + f' {role}' if role else default_txt, embed=message_to_show(store), view=footer_buttons(), file=file)
                     #except AttributeError:
                         #print('Image not found')
 
@@ -315,10 +321,16 @@ def setup(modules):
             server = Database.get_discord_server(interaction.guild_id)
             if server and server.get('channel'):
                 channel = client.get_channel(server['channel'])
-
                 embed = discord.Embed(title="⚙️ Test notification ⚙️", description=f"Notifications for games will be send to this channel", color=0x00aff4)
-                
-                await channel.send(f'Pinging role <@&{server.get("role")}> for test' if server.get("role") else '', embed=embed)
+
+                if server.get("role") and (server.get("role") == interaction.guild.default_role.id):
+                    await channel.send(f'Pinging role @everyone for test', embed=embed)
+                elif server.get("role"):
+                    await channel.send(f'Pinging role <@&{server.get("role")}> for test', embed=embed)
+                else:    
+                    await channel.send(embed=embed)
+
+                # await channel.send(f'Pinging role <@&{server.get("role")}> for test' if server.get("role") else '', embed=embed)
                 await interaction.response.send_message("I've send a test notification message !", ephemeral=True)
             else:
                 await interaction.response.send_message("You have to set a channel first in order to test the notification", ephemeral=True)
@@ -367,7 +379,7 @@ def setup(modules):
                             discord.SelectOption(label="Dont ping a role", value="None"),
                             *[
                                 discord.SelectOption(
-                                    label=f'{role.name} 🧍{len(role.members)}', 
+                                    label=f'{(role.name).replace("@", "")} 🧍{len(role.members)}', 
                                     value=role.id
                                 )
                                 for role in sorted(interaction.guild.roles, key=lambda r: r.name.lower())
@@ -395,14 +407,14 @@ def setup(modules):
                 async def callback(self, interaction: discord.Integration):
                     role = int(self.values[0]) if len(self.values) and (self.values[0] != "None") else None
 
-                    if role == interaction.guild.default_role.id:
+                    if role and (int(self.values[0]) == interaction.guild.default_role.id):
                         role_name = '@everyone'
-                    else:
+                    elif role:
                         role_name = f'<@&{role}>'
 
                     Database.insert_discord_server([{
                         'server': interaction.guild_id,
-                        'role': role if role else role
+                        'role': role
                     }])
                     if role:
                         await interaction.response.send_message(f"Ping {role_name}", ephemeral=True)

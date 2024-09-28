@@ -116,7 +116,7 @@ async def send_games_notification(store):
         if str(store.id) in str(server.get('notification_settings')):
             if server.get('channel'):
                 #print(f"{server.get('channel')} has role {server.get('role')}")
-                await discord.store_messages(store.name, server.get('channel'), server.get('role'))
+                await discord.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'))
 
 
 #MARK: Scheduler loop
