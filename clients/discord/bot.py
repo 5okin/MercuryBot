@@ -73,7 +73,7 @@ class MyClient(discord.Client):
             await self.ADMIN_USER.send(f"**Status** {self.user} `Started/Restarted and ready`, "
                                        f"connected to {len(self.guilds)} servers with {Database.get_population()} people")
         else:
-            logger.info("%s Started/Restarted and ready, connected to %s servers with %s people", format(self.user), len(self.guilds), {Database.get_population()})
+            logger.info("%s Started/Restarted and ready, connected to %s servers with %s people", format(self.user), len(self.guilds), Database.get_population())
         
         # Upload animated avatar (only needs to be run once)
         if os.path.exists('avatar.gif'):
@@ -239,15 +239,22 @@ def setup(modules):
         '''
         Return bot settings
         '''
-        embed = settings_embed(interaction.guild_id)
+        embed = settings_embed(interaction)
         await interaction.response.send_message(embed=embed, view=Settings_buttons(), ephemeral=True)
 
 
-    def settings_embed(server):
-        server = Database.get_discord_server(server)
+    def settings_embed(interaction):
+        server = Database.get_discord_server(interaction.guild_id)
 
         channel = '<#'+str(server.get('channel'))+'>' if server and server.get('channel') else 'None'
-        role = '<@&'+str(server.get('role'))+'>' if server and server.get('role') else 'None'
+        
+        if (server.get('role') == interaction.guild.default_role.id):
+            role = '@everyone'
+        elif (server and server.get('role')):
+            role = '<@&'+str(server.get('role'))+'>'
+        else:
+            role = 'None'
+        
         notifications_str = str(server['notification_settings'] if server and server.get('notification_settings') else '')
 
         notifications = ''
@@ -371,7 +378,7 @@ def setup(modules):
 
                     if default:
                         for option in options:
-                            if str(option.value) == default:
+                            if option.value == default:
                                 option.default = True
 
                     super().__init__(
@@ -384,8 +391,13 @@ def setup(modules):
                     )
 
                 async def callback(self, interaction: discord.Integration):
-                    role = self.values[0] if len(self.values) and (self.values[0] != "None") else None
-                    role_name = discord.utils.get(interaction.guild.roles, id=int(role)).name.replace("@", "") if role else None
+                    role = int(self.values[0]) if len(self.values) and (self.values[0] != "None") else None
+
+                    if role == interaction.guild.default_role.id:
+                        role_name = '@everyone'
+                    else:
+                        role_name = f'<@&{role}>'
+
                     Database.insert_discord_server([{
                         'server': interaction.guild_id,
                         'role': role if role else role
