@@ -27,10 +27,10 @@ class Main(Store):
         data = urlopen(Request(self.url))
         soup = BeautifulSoup(data, 'html.parser')
         games = soup.find("div", {"class": "content-grid layout__3--a"})
-        games = games.findAll("div", {"class": "box"})
-
+        games = games.select("div[class^='box']")
         json_data = []
 
+        if not games: return self.logger.critical('PSplus isn\'t returning any deals!')
         try:
             for game in games:
                 title = game.find("h3", {"class":"txt-style-medium-title txt-block-paragraph__title"}).text.strip()
