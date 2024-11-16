@@ -53,8 +53,10 @@ class Main(Store):
                     data = urlopen(Request(game_url))
                     soup = BeautifulSoup(data, 'html.parser')
                     # game_image = soup.find("link", rel="image_src")['href']
-                    end_date = (soup.find("p", {"class":"game_purchase_discount_quantity"}).text.split('before')[1]).split('@')[0].strip()
-                    end_date_object = self.parse_date(end_date, ["%b %d", "%d %b"]).replace(year=datetime.now().year)
+                    end_date = end_date_object = soup.find("p", {"class":"game_purchase_discount_quantity"})
+                    if (end_date):
+                        end_date = (end_date.text.split('before')[1]).split('@')[0].strip()
+                        end_date_object = self.parse_date(end_date, ["%b %d", "%d %b"]).replace(year=datetime.now().year)
                     offer_from  = datetime.now()
                     game_image = soup.find("meta", property="og:image")
                     game_image = game_image['content'].rsplit('/', 1)[0] + '/header.jpg'

@@ -91,13 +91,14 @@ class Store:
         """
         '''
 
-        for fmt in date_formats:
-            try:
-                return datetime.strptime(date_str, fmt)
-            except ValueError:
-                continue
-        self.logger.warning(f"Date format not recognized: {date_str}")
-        return datetime(1970, 1, 1)
+        if isinstance(date_str, str):
+            for fmt in date_formats:
+                try:
+                    return datetime.strptime(date_str, fmt)
+                except ValueError:
+                    continue
+            self.logger.warning(f"Date format not recognized: {date_str}")
+        return None
 
 
     #MARK: make_gif_image
