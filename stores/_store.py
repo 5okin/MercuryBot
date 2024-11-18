@@ -154,10 +154,11 @@ class Store:
         else:
             raise ValueError("Invalid date_type. Choose 'start' or 'end'.")
         
-        month = data[status].strftime("%b")
-        day = data[status].day
-        return str(month) + ' ' + str(day)
-    
+        if data[status]:
+            month = data[status].strftime("%b")
+            day = data[status].day
+            return str(month) + ' ' + str(day)
+        return None    
 
     def set_images(self):
         self.image = self.image_twitter = self.make_gif_image()
@@ -189,7 +190,7 @@ class Store:
             check = all(item in temp_names for item in game_titles)
 
             if check is True:
-                self.logger.info('-- SAME --')
+                self.logger.debug('-- SAME --')
                 if len(temp_names) > len(json_data):
                     self.data = json_data.copy()
                     self.set_images()

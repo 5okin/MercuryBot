@@ -28,6 +28,7 @@ class MyClient(discord.Client):
 
     async def setup_hook(self):
         self.DEV_GUILD = discord.Object(id=environment.DISCORD_DEV_GUILD) if environment.DISCORD_DEV_GUILD is not None and environment.DEVELOPMENT else None
+        self.ADMIN_USER = await self.fetch_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
         if self.DEV_GUILD:
             logger.debug("IN DEV setting up guild commands")
             self.tree.clear_commands(guild=self.DEV_GUILD)  # Clear guild commands
@@ -45,12 +46,8 @@ class MyClient(discord.Client):
             activity=discord.Activity(type=discord.ActivityType.watching, name='out for free games'))
   
 
-    # MARK: on_connnect
-    async def on_connect(self):
-        await self.wait_until_ready()
-        # setup dm or logger
-        self.ADMIN_USER = self.get_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
-
+    # MARK: on_ready
+    async def on_ready(self):
         # Check if connected to all guilds stored in db, only applicable if removed while bot was offline
         servers_data = Database.get_discord_servers()
         guild_ids = [server.id for server in self.guilds]

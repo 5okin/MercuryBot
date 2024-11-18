@@ -68,13 +68,17 @@ def gog(store, mobile=False):
 
 
 def steam(store, mobile=False):
-    embed_var = discord.Embed(title="🕹️ Steam 🕹️", description="", color=0x00aff4)
+    embed_var = discord.Embed(title="🕹️ Steam 🕹️", description=f'\u200B\n**Free Now**', color=0x00aff4)
 
     for deal in store.data:
         title = deal['title']
         link = deal['url']
-        end_date = store.get_date(deal, 'end')
-        embed_var.add_field(name='', value="• " + f"[**{title}**]({link})\nUntil: {end_date}‎", inline=False)
+
+        embed_var.add_field(
+            name = f'\u200B\n',
+            value = f"• [**{title}**]({link})\nUntil: {store.get_date(deal, 'end')}" if store.get_date(deal, 'end') else f"• [**{title}**]({link})",
+            inline = False
+)
 
     embed_var.set_image(url="attachment://img.gif")
     embed_var.set_footer(text=footer)

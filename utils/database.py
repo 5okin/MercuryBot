@@ -110,12 +110,8 @@ class Database(object):
     def overwrite_deals(collection, data):
         Database.deals[collection].drop()
         if data:
-            if not Database.collections_exists(collection):
-                logger.info('Creating collection for %s', collection)
-                Database.deals[collection].insert_many(data)
-            else:
-                print(f'delete {collection} and write')
-                Database.deals[collection].insert_many(data)
+            logger.info('Creating collection for %s', collection)
+            Database.deals[collection].insert_many(data)
         else:
             logger.debug('Module %s has no data to upload', collection)
 
