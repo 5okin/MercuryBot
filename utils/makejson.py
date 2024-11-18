@@ -28,7 +28,7 @@ def data(json_data, game_name, active_deal, game_url, game_image, offer_from=Non
 
     # Set offer_from to today if its not provided
     if offer_from is None or not isinstance(offer_from, datetime) : offer_from = datetime.now()
-    if offer_until is not None or not isinstance(offer_until, datetime):
+    if offer_until is not None and not isinstance(offer_until, datetime):
         logger.warning("Dates of passed for %s arent datetime objects", game_name)
 
 
