@@ -67,7 +67,7 @@ class CustomFormatter(logging.Formatter):
             if key.startswith("_"):
                 log_record[key[1:]] = value
 
-        json_log = json.dumps(log_record, indent=4)
+        json_log = json.dumps(log_record)
         return f"{log_color}{json_log}{self.RESET}"
 
 
