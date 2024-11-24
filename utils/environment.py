@@ -68,7 +68,7 @@ class CustomFormatter(logging.Formatter):
                 log_record[key[1:]] = value
 
         json_log = json.dumps(log_record)
-        return f"{log_color}{json_log}{self.RESET}"
+        return f"{log_color}{json_log}{self.RESET}" if DEBUG else json_log
 
 
 config = {
