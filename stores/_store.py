@@ -183,14 +183,15 @@ class Store:
                 if data_game_name['activeDeal']:
                     temp_names.append(data_game_name['title'])
 
-            self.logger.info('Online: %s', game_titles)
-            self.logger.info('Local: %s', temp_names)
-
+            self.logger.info("Store Compare",
+                             extra={
+                                 '_Online' : game_titles,
+                                 '_Local': temp_names
+                             })
             # Check if db deals has all the newest games
             check = all(item in temp_names for item in game_titles)
 
             if check is True:
-                self.logger.debug('-- SAME --')
                 if len(temp_names) > len(json_data):
                     self.data = json_data.copy()
                     self.set_images()

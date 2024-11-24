@@ -1,7 +1,9 @@
 from dotenv import load_dotenv
 from logging.config import dictConfig
-import logging
+import json
+import logging, traceback
 import os
+import sys
 
 
 load_dotenv(override=True)
@@ -31,28 +33,43 @@ else:
 
 
 class CustomFormatter(logging.Formatter):
-    grey = "\x1b[38;21m"
-    dark_green = "\033[32m"
-    yellow = "\033[33m"
-    red = "\x1b[31;21m"
-    bold_red = "\x1b[31;1m"
-    reset = "\x1b[0m"
-    #format = " %(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d) "
-    format = '%(levelname)-8s - %(asctime)s - %(name)-14s : %(message)s'
-    datefmt = '%Y-%m-%d %H:%M:%S'
 
-    FORMATS = {
-        logging.DEBUG: dark_green + format + reset,
-        logging.INFO: grey + format + reset,
-        logging.WARNING: yellow + format + reset,
-        logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
+    COLORS = {
+        logging.DEBUG: "\033[32m",      # Dark green
+        logging.INFO: "\x1b[38;21m",    # grey
+        logging.WARNING: "\033[33m",    # Yellow
+        logging.ERROR: "\033[31m",      # Red
+        logging.CRITICAL: "\033[41m",   # Red background
     }
+    RESET = "\033[0m"
 
-    def format(self, log):
-        log_fmt = self.FORMATS.get(log.levelno)
-        formatter = logging.Formatter(log_fmt, datefmt= '%Y-%m-%d %H:%M:%S')
-        return formatter.format(log)
+    def format(self, record):
+        log_color = self.COLORS.get(record.levelno, self.RESET)
+
+        log_record = {
+            "message": record.getMessage(),
+            "level": record.levelname,
+            "time": self.formatTime(record, datefmt='%Y-%m-%d %H:%M:%S'),
+            "name": record.name
+        }
+
+        # Automatically add traceback for errors or critical logs
+        if record.levelno >= logging.WARNING: 
+            log_record['file'] = f'{record.pathname} :{record.lineno}'
+            log_record["traceback"] = traceback.format_exc()
+
+            if record.exc_info and sys.exc_info()[0] is not None:
+                log_record["exception_type"] = str(sys.exc_info()[0])
+                log_record["exception_message"] = str(sys.exc_info()[1]) 
+            
+        # Add any extra fields
+        for key, value in record.__dict__.items():
+            if key.startswith("_"):
+                log_record[key[1:]] = value
+
+        json_log = json.dumps(log_record, indent=4)
+        return f"{log_color}{json_log}{self.RESET}"
+
 
 config = {
     'version':1,

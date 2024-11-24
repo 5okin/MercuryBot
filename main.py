@@ -34,11 +34,9 @@ def load_modules() -> list:
                 imported_module = importlib.import_module(f"stores.{module_name}")
                 modules.append(getattr(imported_module, "Main")())
             except:
-                print(f"Error while loading module {module_name} beacuse of {sys.exc_info()[0]}")
-                print(f"{sys.exc_info()[1]}\n")
-    logger.info(f"{len(modules)} modules loaded")
+                logger.error("Error while loading module")
     if not modules:
-        print("Program is exiting because no modules were loaded")
+        logger.error("Program is exiting because no modules were loaded")
         exit()
     return modules
 
@@ -58,14 +56,17 @@ async def update(update_store=None) -> None:
     Database(modules)
     Database.connect(environment.DB)
 
-    if update_store:
-        logger.info("Updating store: %s", update_store.name)
-        if await update_store.get():
-            Database.overwrite_deals(update_store.name, update_store.data)
-            Database.add_image(update_store)
-            await send_games_notification(update_store)
-        else:
-            logger.debug("No new games to for %s", update_store.name)
+    try:
+        if update_store:
+            logger.info("Updating store: %s", update_store.name)
+            if await update_store.get():
+                Database.overwrite_deals(update_store.name, update_store.data)
+                Database.add_image(update_store)
+                await send_games_notification(update_store)
+            else:
+                logger.debug("No new games to for %s", update_store.name)
+    except:
+        logger.error("Failed to update store")
 
 #MARK: Initialize
 async def initialize() -> None:
@@ -98,7 +99,7 @@ async def initialize() -> None:
                 logger.error("Failed to scrape store %s: %s", store.name, str(error))
 
 #MARK: Send games notification
-async def send_games_notification(store):
+async def send_games_notification(store) -> None:
     '''
     Send games notifications
     '''
@@ -110,14 +111,23 @@ async def send_games_notification(store):
         tweet_url = x.tweet(store)
         await discord.dm_logs("Tweet", tweet_url)
 
-    servers_data = Database.get_discord_servers()
-    for server in servers_data:
-        # Check server notification settings
-        if str(store.id) in str(server.get('notification_settings')):
-            if server.get('channel'):
-                #print(f"{server.get('channel')} has role {server.get('role')}")
-                await discord.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'))
-
+    try:
+        servers_data = Database.get_discord_servers()
+        for server in servers_data:
+            # Check server notification settings
+            if str(store.id) in str(server.get('notification_settings')):
+                if server.get('channel'):
+                    #print(f"{server.get('channel')} has role {server.get('role')}")
+                    await discord.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'))
+    except:
+        logger.error("Failed to send notification", 
+                     extra={
+                     '_store_name': getattr(store, 'name', 'unkown'),
+                     '_server_name':server.get('server_name', 'unkown'),
+                     '_server_id': server.get('server', 'unkown'),
+                     '_server_channel': server.get('channel', 'unkown'),
+                     }
+        )
 
 #MARK: Scheduler loop
 async def scrape_scheduler() -> None:
@@ -142,11 +152,7 @@ async def scrape_scheduler() -> None:
         for task in finished:
             store = task.result()
 
-            try:
-                await update(store)
-            except Exception:
-                logger.error("FAILED TASK: %s", task.result)
-                logger.error(traceback.format_exc())
+            await update(store)
 
             pending.add(asyncio.create_task(store.scheduler(), name=store.name))
             logger.debug("Adding back in %s", task.get_name())
