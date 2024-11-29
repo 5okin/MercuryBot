@@ -58,8 +58,7 @@ class Main(Store):
                         end_date = (end_date.text.split('before')[1]).split('@')[0].strip()
                         end_date_object = self.parse_date(end_date, ["%b %d", "%d %b"]).replace(year=datetime.now().year)
                     offer_from  = datetime.now()
-                    game_image = soup.find("meta", property="og:image")
-                    game_image = game_image['content'].rsplit('/', 1)[0] + '/header.jpg'
+                    game_image = soup.find("meta", property="og:image").get("content")
                     number += 1
                     json_data = makejson.data(json_data, game_name, 1, game_url, game_image, offer_from, end_date_object)
 
