@@ -205,11 +205,11 @@ class Store:
         elif json_data and not self.data:
             self.data = json_data
             self.set_images()
-            return 0
+            return 1
 
         # Theres no data online
         elif not json_data:
-            self.data = json_data
+            self.data = None
             self.image = self.image_mobile = self.image_twitter = None
             return 0
 
