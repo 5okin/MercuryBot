@@ -17,7 +17,7 @@ class Main(Store):
         super().__init__(
             name = 'epic',
             id = '1',
-            twitter_notification=True,
+            twitter_notification = True,
             service_name = 'Epic Games',
             url = 'https://www.epicgames.com/store/us-US/product/'
         )
@@ -64,8 +64,8 @@ class Main(Store):
                         if image_type == 'OfferImageWide':
                             wide_image_url = image['url']
 
-                        priority_types = ['VaultOpened', 'DieselStoreFrontTall', 'Thumbnail', 'VaultClosed']
-                        while priority_types:
+                        priority_types = ['VaultOpened', 'DieselStoreFrontTall', 'Thumbnail', 'DieselStoreFrontWide', 'VaultClosed']
+                        while priority_types and not tall_image_url:
                             current_priority = priority_types.pop(0)
                             
                             if image_type == current_priority:
@@ -75,8 +75,14 @@ class Main(Store):
                                     tall_image_url = image['url']
                                 break
                         
-                        if wide_image_url and tall_image_url:
-                            break
+                        # if wide_image_url and tall_image_url:
+                        #     break
+
+                    # Ensure that if one is None, it takes the value of the other
+                    if wide_image_url is None and tall_image_url is not None:
+                        wide_image_url = tall_image_url
+                    elif tall_image_url is None and wide_image_url is not None:
+                        tall_image_url = wide_image_url
 
                 except Exception as e:
                     tall_image_url = wide_image_url = game['keyImages'][0]['url']
