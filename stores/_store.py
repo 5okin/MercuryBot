@@ -171,28 +171,28 @@ class Store:
         """
         # Theres local data and data online
         if json_data and self.data:
+
             # Online data
-            game_titles = []
-            for game in json_data:
-                if game['activeDeal']:
-                    game_titles.append(game['title'].encode('ascii', 'ignore').decode('ascii'))
+            online_titles = [
+                game['title'].encode('ascii', 'ignore').decode('ascii')
+                for game in json_data if game['activeDeal']
+            ]
 
             # Local data
-            temp_names = []
-            for data_game_name in self.data:
-                if data_game_name['activeDeal']:
-                    temp_names.append(data_game_name['title'])
+            local_titles = [
+                game['title']
+                for game in self.data if game['activeDeal']
+            ]
 
-            self.logger.info("Store Compare",
-                             extra={
-                                 '_Online' : game_titles,
-                                 '_Local': temp_names
-                             })
-            # Check if db deals has all the newest games
-            check = all(item in temp_names for item in game_titles)
+            self.logger.info("Store Compare", extra={
+                '_Online' : online_titles,
+                '_Local': local_titles
+            })
+            # Check if online deals exist in local
+            match = all(title in local_titles for title in online_titles)
 
-            if check is True:
-                if len(temp_names) > len(json_data):
+            if match is True:
+                if len(local_titles) > len(online_titles):
                     self.data = json_data.copy()
                     self.set_images()
                 return 0

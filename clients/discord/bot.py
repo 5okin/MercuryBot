@@ -9,7 +9,7 @@ from utils.database import Database
 import clients.discord.messages as messages
 from utils import environment
 
-logger = environment.logging.getLogger(f"bot.discord")
+logger = environment.logging.getLogger("bot.discord")
 
 
 class MyClient(discord.Client):
