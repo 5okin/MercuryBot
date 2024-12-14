@@ -1,6 +1,8 @@
 import json
 import asyncio
 import io
+import imageio
+import numpy as np
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from typing import List, Optional, IO
@@ -22,9 +24,11 @@ class Store:
                 image: IO = None,
                 image_mobile: IO = None,
                 image_twitter: IO [bytes] = [None, None],
+                video: IO = None,
                 image_type: str = 'GIF',
                 scheduler_time: int = 1800,
-                twitter_notification: bool = False
+                twitter_notification: bool = False,
+                bsky_notification: bool = False
                 ):
         self.name = name
         self.logger = environment.logging.getLogger(f'store.{self.name}')
@@ -35,9 +39,11 @@ class Store:
         self.image = image
         self.image_mobile = image_mobile
         self.image_twitter = image_twitter
+        self.video = video
         self.image_type = image_type
         self.scheduler_time = scheduler_time
         self.twitter_notification = twitter_notification
+        self.bsky_notification = bsky_notification
 
 
     def request_data(self, url=None):
@@ -121,6 +127,7 @@ class Store:
             images = 'image'
 
         arr = io.BytesIO()
+        arr_mp4 = io.BytesIO()
         img, *imgs = [
             Image.open(urlopen(game[images]))
             for game in self.data
@@ -133,6 +140,21 @@ class Store:
             im.thumbnail((im.size[0]//size, im.size[1]//size))
 
         img.save(fp=arr, format='GIF', append_images=imgs, save_all=True, duration=2000, loop=0)
+
+        # Create MP4
+        writer = imageio.get_writer(arr_mp4, fps=24, format='mp4')
+        for game in self.data:
+            if game['activeDeal'] == status:
+                image_url = game[images]
+                image = Image.open(urlopen(image_url))
+                image.thumbnail((image.size[0]//size, image.size[1]//size))
+                image_np = np.array(image)
+                writer.append_data(image_np)
+        
+        writer.close()
+        arr_mp4.seek(0)
+        self.video = arr_mp4
+
         return arr
 
     #MARK: get_date

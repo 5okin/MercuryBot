@@ -19,17 +19,18 @@ if DEBUG:
     DEVELOPMENT = True
     DB = '_dev'
     loggerlevel = 'DEBUG'
-
 else:
     print('\x1b[37;41m' + "---::-PRODUCTION-::---" + '\x1b[0m')
     DISCORD_BOT_TOKEN = os.getenv('DISCORD_TOKEN_LIVE')
     DEVELOPMENT = False
     DB = ''
     loggerlevel = 'INFO'
-    X_API_KEY =  os.getenv('X_API_KEY')
-    X_API_SECRET =  os.getenv('X_API_SECRET')
-    X_ACCESS_TOKEN =  os.getenv('X_ACCESS_TOKEN')
-    X_ACCESS_TOKEN_SECRET =  os.getenv('X_ACCESS_TOKEN_SECRET')
+    X_API_KEY = os.getenv('X_API_KEY')
+    X_API_SECRET = os.getenv('X_API_SECRET')
+    X_ACCESS_TOKEN = os.getenv('X_ACCESS_TOKEN')
+    X_ACCESS_TOKEN_SECRET = os.getenv('X_ACCESS_TOKEN_SECRET')
+    BSKY_USER = os.getenv('BSKY_USER')
+    BSKY_PASSWORD = os.getenv('BSKY_PASSWORD')
 
 
 class CustomFormatter(logging.Formatter):

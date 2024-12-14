@@ -5,16 +5,20 @@ MercuryBot is a Discord and X, formerly known as twitter, bot that monitors vari
 <br>
 
 <div align="center">
-    <div>
+    <div style="display: inline-block; padding: 0 50px;">
+        <a href="https://x.com/_MercuryBot_">
+            <img src="https://github.com/user-attachments/assets/e1d13e8e-93fc-49a0-99f1-6f03b74fae59" width="200" /> 
+        </a>
+    </div>
+    <div style="display: inline-block; padding: 0 50px">
         <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
-        <img src="https://github.com/user-attachments/assets/0998cdf8-1797-4b92-bf8e-674c9063c470" width="200" />
+            <img src="https://github.com/user-attachments/assets/aaf0d3f0-eecc-4e87-9004-11171d68da00" width="200" />
+        </a>
     </div>
-    <div>
-        <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" width="150" height="0" alt="" />
-    </div>
-    <div>
-         <a href="https://x.com/_MercuryBot_">
-        <img src="https://github.com/user-attachments/assets/9532f375-b187-4cfc-a06e-2f067200b0f6" width="180" /> 
+    <div style="display: inline-block; padding: 0 50px;">
+        <a href="https://bsky.app/profile/mercurybot.bsky.social">
+            <img src="https://github.com/user-attachments/assets/64235e24-fc43-4305-b047-5e392e18c4c6" width="200" /> 
+        </a>
     </div>
 </div>
 

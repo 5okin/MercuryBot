@@ -11,6 +11,7 @@ from utils import environment
 
 import clients.discord.bot as discord
 import clients.twitter.bot as twitter
+import clients.blueSky.bot as blueSky
 
 logger = environment.logging.getLogger("bot.main")
 
@@ -44,6 +45,7 @@ load_modules()
 
 discord = discord.setup(modules)
 x = twitter.MyClient()
+bsky = blueSky.MyClient()
 
 #MARK: Update
 async def update(update_store=None) -> None:
@@ -111,6 +113,11 @@ async def send_games_notification(store) -> None:
         tweet_url = x.tweet(store)
         await discord.dm_logs("Tweet", tweet_url)
 
+    # The other tweet about it...
+    if store.bsky_notification and bsky:
+        bsky_url = bsky.post(store)
+        await discord.dm_logs("Bluesky", bsky_url)
+
     try:
         servers_data = Database.get_discord_servers()
         for server in servers_data:
@@ -132,7 +139,7 @@ async def send_games_notification(store) -> None:
 #MARK: Scheduler loop
 async def scrape_scheduler() -> None:
     '''
-    Schedules the scraping of stores, runs perpetually/
+    Schedules the scraping of stores, runs perpetually
     '''
     # await client.wait_until_ready()
     tasks = set()

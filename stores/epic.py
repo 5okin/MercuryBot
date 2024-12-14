@@ -18,6 +18,7 @@ class Main(Store):
             name = 'epic',
             id = '1',
             twitter_notification = True,
+            bsky_notification = True,
             service_name = 'Epic Games',
             url = 'https://www.epicgames.com/store/us-US/product/'
         )
