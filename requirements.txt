@@ -10,3 +10,4 @@ urllib3==2.2.1
 charset-normalizer~=3.3.2
 python-dotenv~=1.0.1
 tweepy~=4.14.0
+atproto~=0.0.56
