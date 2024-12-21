@@ -25,7 +25,7 @@ Mercury bot sends you notifications like the ones bellow every time there's a ne
 
 Discord             |  X            |  Bluesky
 :-------------------------:|:-------------------------:|:-------------------------:
-<img src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0"> | <img src="https://github.com/user-attachments/assets/2aa7d6b4-d88a-44f4-a8c7-9871e760f18d" width="300"> | <img src="https://github.com/user-attachments/assets/f8bee8bc-7f56-452c-adc0-5ba84d14fa13">
+<img src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0"> | <img src="https://github.com/user-attachments/assets/2aa7d6b4-d88a-44f4-a8c7-9871e760f18d" width="60%"> | <img src="https://github.com/user-attachments/assets/f8bee8bc-7f56-452c-adc0-5ba84d14fa13">
 
 
 ## Features
