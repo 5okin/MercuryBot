@@ -214,9 +214,11 @@ class Main(Store):
                     return self
                 # if deal ends in the next 24-hours just wait for it.
                 elif delta.total_seconds() <= 86400:
-                    print(f'game time: {date}')
-                    print(f'datetime.now: {datetime.now()}')
-                    print(f'EPIC -> Waiting for {delta.total_seconds()} before trying to loop again')
+                    self.logger.info(f"EPIC -> Waiting for {delta.total_seconds()}", extra={
+                        '_game_time': date,
+                        '_datetime.now': datetime.now()
+                    })
+
                     await asyncio.sleep(delta.total_seconds())
                 # if deal doesn't end in the next 24 hours check if the games changed every 30-minutes
                 else:
