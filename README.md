@@ -1,6 +1,6 @@
 # MercuryBot
 
-MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms and finds new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab titles for free.
+MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab titles for free.
 
 <br>
 
@@ -17,34 +17,32 @@ MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that moni
     <img src="https://github.com/5okin/MercuryBot/assets/70406237/34d1a800-4dd5-4915-a02d-9c884848fcb3"></a>
 <p><br>
 
-Mercury bot sends you notifications like the ones bellow every time theres a new free game available so you never miss out again. For epic notifications on discord, it also sends you next weeks free game, if available, all in one notification !
+Mercury bot sends you notifications like the ones bellow every time there's a new free game available, so you never miss out again. For epic notifications on Discord, it also sends you next weeks free game (if available) all in one notification!
 
-<p align="center">
-  <img alt="Light" src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0" width="40%">
-&nbsp; &nbsp; &nbsp; &nbsp;
-  <img alt="Dark" src="https://github.com/user-attachments/assets/2aa7d6b4-d88a-44f4-a8c7-9871e760f18d" width="40%">
-</p>
+Discord             |  X            |  Bluesky
+:-------------------------:|:-------------------------:|:-------------------------:
+<img src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0"> | <img src="https://github.com/user-attachments/assets/2aa7d6b4-d88a-44f4-a8c7-9871e760f18d" width="400"> | <img src="https://github.com/user-attachments/assets/f8bee8bc-7f56-452c-adc0-5ba84d14fa13">
 
 
 ## Features
 
-- **Multi-Platform Support:** MercuryBot keeps an eye on free game promotions on Epic Games, Steam, GOG, and PS Plus.
+- **Multi-Platform Support:** MercuryBot monitors free game promotions on Epic Games, Steam, GOG, and PS Plus.
 
 - **Online 24/7:** Bot doesn't go offline ensuring you dont miss out on any deal!
 
-- **Automated Reminders:** Receive timely reminders in your Discord server or twitter feed when new free games become available.
+- **Automated Reminders:** Receive timely reminders in your Discord server, X or Bluesky feed when new free games become available.
 
 - **Customizable Settings:** Configure MercuryBot to tailor notifications to your preferences on discord.
 
-- **Ephemeral Messages:** Commands you send to the bot won't spam and clutter you channels, they stay invisible to everyone but you.
+- **Ephemeral Messages:** Commands you send to the bot won't spam and clutter your channels, they stay invisible to everyone but you.
 
-- **Privacy focused:** Using slash commands the bot never has access to you messages.
+- **Privacy focused:** Using slash commands the bot never has access to your messages.
 
 
 ## Discord
 
 ### Slash Commands
-- `/settings`: Setup and review your notification preferences using the `/settings` slash command.
+- `/settings`: Setup and review your notification preferences.
 - `/deals`: Display a list of available stores and get the current available games (Ephemeral Message).
 - `/feedback`: Send feedback or bug reports. 
 
@@ -55,8 +53,8 @@ Mercury bot sends you notifications like the ones bellow every time theres a new
 2. Run the `/settings` slash command and configure the bot:
 
     - `Test notifications`: Test your settings.
-    - `Set channel`: The channel that will receive the notifications.
-    - `Set role`: Set the role that is pinged when a notification is send, if you'd like.
+    - `Set channel`: The channel to receive the notifications.
+    - `Set role`: Specify the role to be pinged for notifications (optional).
     - `Set stores`: Set the store you wish to receive notifications for.
 
 <p align='center'>
@@ -68,7 +66,7 @@ Mercury bot sends you notifications like the ones bellow every time theres a new
 
 ### Command breakdown
 
-- The `Test notifications` button sends a notification to the set channel, pinging the set role so as to test that everything is working as expected.
+- The `Test notifications` button sends a notification to the set channel, pinging the set role to ensure everything works correctly.
 <p align='center'>
  <image src="https://github.com/user-attachments/assets/0806c7b4-5ddd-402a-90e1-c4ba4e6e9584">
 <p>
@@ -95,8 +93,8 @@ Mercury bot sends you notifications like the ones bellow every time theres a new
 - Download or clone the repository.
 - Make sure you have python 3.10 or higher installed. `python -V`
 - Install the required dependencies by running. `pip install -r requirements.txt`
-- Make sure you have a working [discord bot TOKEN](#get-a-discord-token) and [mongoDB server](#mongodb-connection-string) running.
-- If you wish you can also setup a [twitter key](#get-twitter-keys) and [BlueSky account](#get-a-bluesky-account) but these aren't required.  
+- Obtain a working [discord bot TOKEN](#get-a-discord-token) and [mongoDB server](#mongodb-connection-string) running.
+- Optionally, set up a [twitter key](#get-twitter-keys) and [BlueSky account](#get-a-bluesky-account) but these aren't required.  
 - Add your credentials to the [.env](#env-file) file.
 - Run it using: `python3 main.py`
 
@@ -110,19 +108,17 @@ You can follow twitters documentation https://developer.x.com/en/docs/twitter-ap
 All you need to do is create a normal Bluesky account https://bsky.app/ 
 
 ### MongoDB connection string
-The database used is MongoDB, you can use mongodb atlas which offers a shared $0/month plan, if you don't want to host your own database. Go to DEPLOYMENT / Database / Connect / Drivers. You should get a string like this:
-
-`mongodb+srv://...`
+The database used is MongoDB, you can use mongodb atlas which offers a shared $0/month plan, if you don't want to host your own database. Navigate to ***DEPLOYMENT*** > ***Database*** > ***Connect*** > ***Drivers*** to obtain a connection string (eg., `mongodb+srv://...`)
 
 
 ### `.env` file
 
-To set up the token you will have to either make use of the [`.env.example`](.env.example) file, either copy or rename it to `.env` and edit it with your data.
+Copy or rename the [`.env.example`](.env.example) file to `.env` and edit it with your data.
 
 Here is an explanation of what everything is:
 | Variable               | What it is                                                                                        |
 | ---------------------- | ----------------------------------------------                                                    |
-| DEBUG                  | Can be true or false. Changes the log output and TOKEN used to run the bot & slash command sync   |
+| DEBUG                  | Can be `true` or `false`. Controls log output and bot configuration (test vs. live).              |
 | DB_CONNECTION_STRING   | Your mongoDB connection string                                                                    |
 | DISCORD_TOKEN_LIVE     | Live discord TOKEN, used when DEBUG=False                                                         |
 | DISCORD_TOKEN_TEST     | Test/Dev discord TOKEN, used when DEBUG=True                                                      |
@@ -141,6 +137,71 @@ Here is an explanation of what everything is:
 - When in `DEBUG` mode the bot can use `DISCORD_DEV_GUILD` to sync commands to that specific guild to cut down on wait times.
 
 - If you wish to receive discord direct messages from the bot for things like bot restart, feedback send, etc you can set `DISCORD_ADMIN_ACC`.
+
+### MongoDB
+There are three databases created `deals`, `feedback` and `servers` (with _dev variants for debug mode).
+
+| Database    | Contents                                                                                                              |
+| ------      | ------                                                                                                                |
+| `deals`     | Contains a number of collections, one for every store (eg., steam, epic)                                              |
+| `feedback`  | Stores feedback and bug reports submitted via Discord.                                                                |
+| `servers`   | Contains a collection with the servers and the preferences and configurations for every discord server the bot is in  |
+
+#### Deals database:
+```mermaid
+graph TD;
+    deals-->epic;
+    deals-->gog;
+    deals-->steam;
+    deals-->etc.;
+```
+
+Each collection contains all the information required for its respective store.
+
+|               |                                                                                           |
+| ------        | ------                                                                                    |
+| `title`       | Game name.                                                                                |
+| `activeDeals` | boolean `0` or `1`. If the deal is active right now or its a feature offer.               |
+| `url`         | The url of the game.                                                                      | 
+| `startDate`   | When the deal starts.                                                                     |
+| `endDate`     | When the deal is set to end.                                                              |
+| `image`       | The image (usually gif) that is created containing all the game art.                      |
+| `wideImage`   | Social media-optimized image.                                                             |
+
+#### servers database
+This datebase only has a collection for discord. For the time being its the only implementation that requires it.
+
+|                         |                                                                                           |
+| ------                  | ------                                                                                    |
+| `server`                | Guild id.                                                                                 |
+| `channel`               | Channel id.                                                                               |
+| `population`            | The number of actual people in the server.                                                | 
+| `server_name`           | The name of the server.                                                                   |
+| `role`                  | The role id that is to be pinged in the notifications send.                               |
+| `notification_settings` | A integer number that represents what notifications the server wants to receive.          |
+
+
+#### notification_settings
+To optimize storage and simplify notification settings, MercuryBot uses a compact integer-based encoding system for `notification_settings`:
+
+- Each store is assigned a unique integer ID:
+  - Epic Games: `1`
+  - GOG: `2`
+  - Steam: `3`
+  - PS Plus: `4`
+  - (Additional stores can be added as needed.)
+  
+- These IDs are combined into a single integer to represent notification preferences. For example:
+  - `123`: Notifications for Epic Games, GOG, and Steam.
+  - `23`: Notifications for GOG and Steam only.
+  - `3`: Notifications for Steam only.
+
+This method is both space-efficient and scalable.
+
+**Decoding Logic**: 
+- To determine if notifications are enabled for a specific store, parse the integer into its individual digits.
+- For example, if `notification_settings = 123`, notifications are enabled for stores `1`, `2`, and `3`.
+
 
 ## Contributions
 
