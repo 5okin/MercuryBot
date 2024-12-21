@@ -1,11 +1,5 @@
 from atproto import Client, client_utils
-from dotenv import load_dotenv
 from utils import environment
-from typing import List, Dict
-import io
-import re
-from moviepy import ImageSequenceClip
-from PIL import Image, ImageSequence
 
 logger = environment.logging.getLogger("bot.blueSky")
 
@@ -16,7 +10,7 @@ class MyClient():
         Check if running in dev mode
         '''
         if environment.DEVELOPMENT:
-            logger.debug('Bluesky bot not running in development')
+            logger.debug("Bluesky doesn't run in development")
             return 0
         return super(MyClient, cls).__new__(cls)
 
@@ -24,7 +18,8 @@ class MyClient():
         self.client = Client()
         self.client.login(environment.BSKY_USER, environment.BSKY_PASSWORD)
 
-    def format_tweet(self, store) -> str:
+    #MARK: format post
+    def format_post(self, store) -> str:
         txt = client_utils.TextBuilder()
         txt.text(f'🕹️ Free now on {store.name} 🕹️\n\n')
 
@@ -39,8 +34,12 @@ class MyClient():
                 txt.text("\n\n")
         return txt
 
-
+    #MARK: Post
     def post(self, store) -> str:
-        txt_string = self.format_tweet(store)
-        post = self.client.send_video(text=txt_string, video=store.video, video_alt='games photos')
-        return  (f"https://bsky.app/profile/{environment.BSKY_USER}/post/{post.uri.split('/')[-1]}")
+        txt_string = self.format_post(store)
+        post = self.client.send_video(text=txt_string, video=store.video, video_alt='game photos')
+        
+        bskyUrl = f"https://bsky.app/profile/{environment.BSKY_USER}/post/{post.uri.split('/')[-1]}"
+        logger.info("blueSky: /%s", bskyUrl)
+        
+        return  (bskyUrl)

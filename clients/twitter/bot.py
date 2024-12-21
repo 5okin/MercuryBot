@@ -1,9 +1,7 @@
 import tweepy
-import os
 from dotenv import load_dotenv
-from datetime import datetime
 import tweepy.client
-from utils import environment, makejson
+from utils import environment
 
 load_dotenv(override=True)
 logger = environment.logging.getLogger("bot.twitter")
@@ -15,7 +13,7 @@ class MyClient():
         Check if running in dev mode
         '''
         if environment.DEVELOPMENT:
-            logger.debug('Twitter bot not running in development')
+            logger.debug("Twitter bot doesn't run in development")
             return 0
         return super(MyClient, cls).__new__(cls)
 
@@ -58,27 +56,25 @@ class MyClient():
             link = data['url']
             if data['activeDeal']:
                 txt += "• " + f"{title}\n{link}\n\n"
-
         return txt.strip()
     
     # MARK: Tweet
     def tweet(self, store) -> str:
 
         media_id: str = None
-
         txt_string = self.format_tweet(store)
 
         if (store.image_twitter):
-            logger.debug('----------------WITH IMAGE--------------------')
             store.image_twitter.seek(0)
 
             media = self.client_v1.media_upload(filename='image', file=store.image_twitter)
             media_id = [media.media_id_string]
 
         tweetNow = self.client_v2.create_tweet(text=txt_string, media_ids=media_id)
-        logger.info("https://twitter.com/user/status/%s", tweetNow.data['id'])
+        tweetUrl = f'https://twitter.com/user/status/{ tweetNow.data["id"] }'
+        logger.info("twitter: /%s", tweetUrl)
         
-        return (f'https://twitter.com/user/status/{ tweetNow.data["id"] }')
+        return (tweetUrl)
 
 
 
