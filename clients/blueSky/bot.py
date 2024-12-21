@@ -36,10 +36,15 @@ class MyClient():
 
     #MARK: Post
     def post(self, store) -> str:
-        txt_string = self.format_post(store)
-        post = self.client.send_video(text=txt_string, video=store.video, video_alt='game photos')
-        
-        bskyUrl = f"https://bsky.app/profile/{environment.BSKY_USER}/post/{post.uri.split('/')[-1]}"
-        logger.info("blueSky: /%s", bskyUrl)
-        
-        return  (bskyUrl)
+        try:
+            txt_string = self.format_post(store)
+            post = self.client.send_video(text=txt_string, video=store.video, video_alt='game photos')
+            
+            bskyUrl = f"https://bsky.app/profile/{environment.BSKY_USER}/post/{post.uri.split('/')[-1]}"
+            logger.info("blueSky: /%s", bskyUrl)
+            
+            return  (bskyUrl)
+
+        except Exception as e:
+            logger.error("Failed to create Bluesky post %s", str(e))
+            return None

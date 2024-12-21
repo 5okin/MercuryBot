@@ -60,22 +60,25 @@ class MyClient():
     
     # MARK: Tweet
     def tweet(self, store) -> str:
+        try:
+            media_id: str = None
+            txt_string = self.format_tweet(store)
 
-        media_id: str = None
-        txt_string = self.format_tweet(store)
+            if (store.image_twitter):
+                store.image_twitter.seek(0)
 
-        if (store.image_twitter):
-            store.image_twitter.seek(0)
+                media = self.client_v1.media_upload(filename='image', file=store.image_twitter)
+                media_id = [media.media_id_string]
 
-            media = self.client_v1.media_upload(filename='image', file=store.image_twitter)
-            media_id = [media.media_id_string]
+            tweetNow = self.client_v2.create_tweet(text=txt_string, media_ids=media_id)
+            tweetUrl = f'https://twitter.com/user/status/{ tweetNow.data["id"] }'
+            logger.info("twitter: /%s", tweetUrl)
+            
+            return (tweetUrl)
 
-        tweetNow = self.client_v2.create_tweet(text=txt_string, media_ids=media_id)
-        tweetUrl = f'https://twitter.com/user/status/{ tweetNow.data["id"] }'
-        logger.info("twitter: /%s", tweetUrl)
-        
-        return (tweetUrl)
-
+        except Exception as e:
+            logger.error("Failed to create tweet: %s", str(e))
+            return None
 
 
 if __name__ == "__main__":
