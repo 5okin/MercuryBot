@@ -8,7 +8,7 @@ from urllib.error import HTTPError, URLError
 from typing import List, Optional, IO
 from PIL import Image
 from utils import environment
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Store:
@@ -177,9 +177,13 @@ class Store:
             raise ValueError("Invalid date_type. Choose 'start' or 'end'.")
         
         if data[status]:
-            month = data[status].strftime("%b")
-            day = data[status].day
-            return str(month) + ' ' + str(day)
+            date_value = data[status]
+            tomorrow = datetime.now().date() + timedelta(days=1)
+            if date_value.date() == tomorrow:
+                return "Tomorrow !!"
+            month = date_value.strftime("%b")
+            day = date_value.day
+            return f"{month} {day}"
         return None    
 
     def set_images(self):
