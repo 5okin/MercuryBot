@@ -1,25 +1,13 @@
 # MercuryBot
 
-MercuryBot is a Discord and X, formerly known as twitter, bot that monitors various platforms and finds new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab titles for free.
+MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms and finds new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab titles for free.
 
 <br>
 
 <div align="center">
-    <div style="display: inline-block; padding: 0 50px;">
-        <a href="https://x.com/_MercuryBot_">
-            <img src="https://github.com/user-attachments/assets/e1d13e8e-93fc-49a0-99f1-6f03b74fae59" width="200" /> 
-        </a>
-    </div>
-    <div style="display: inline-block; padding: 0 50px">
-        <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
-            <img src="https://github.com/user-attachments/assets/aaf0d3f0-eecc-4e87-9004-11171d68da00" width="200" />
-        </a>
-    </div>
-    <div style="display: inline-block; padding: 0 50px;">
-        <a href="https://bsky.app/profile/mercurybot.bsky.social">
-            <img src="https://github.com/user-attachments/assets/64235e24-fc43-4305-b047-5e392e18c4c6" width="200" /> 
-        </a>
-    </div>
+    <a href="https://x.com/_MercuryBot_"><img src="https://github.com/user-attachments/assets/e1d13e8e-93fc-49a0-99f1-6f03b74fae59" alt="X Link"></a>
+    <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot"><img src="https://github.com/user-attachments/assets/aaf0d3f0-eecc-4e87-9004-11171d68da00" alt="Discord Link"></a>
+    <a href="https://bsky.app/profile/mercurybot.bsky.social"><img src="https://github.com/user-attachments/assets/64235e24-fc43-4305-b047-5e392e18c4c6" alt="Bluesky Link"></a>
 </div>
 
 <br>
@@ -27,8 +15,7 @@ MercuryBot is a Discord and X, formerly known as twitter, bot that monitors vari
 <p align='center'>
     <a href= "https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot"> 
     <img src="https://github.com/5okin/MercuryBot/assets/70406237/34d1a800-4dd5-4915-a02d-9c884848fcb3"></a>
-<p>
-
+<p><br>
 
 Mercury bot sends you notifications like the ones bellow every time theres a new free game available so you never miss out again. For epic notifications on discord, it also sends you next weeks free game, if available, all in one notification !
 
@@ -61,7 +48,7 @@ Mercury bot sends you notifications like the ones bellow every time theres a new
 - `/deals`: Display a list of available stores and get the current available games (Ephemeral Message).
 - `/feedback`: Send feedback or bug reports. 
 
-### How to Use on Discord
+### How to use
 
 1. Invite MercuryBot to your Discord server. [<img src="https://github.com/5okin/MercuryBot/assets/70406237/9fbf5218-d5bc-476a-8892-2496a1bbe1ba">](https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot)
 
@@ -108,7 +95,8 @@ Mercury bot sends you notifications like the ones bellow every time theres a new
 - Download or clone the repository.
 - Make sure you have python 3.10 or higher installed. `python -V`
 - Install the required dependencies by running. `pip install -r requirements.txt`
-- Make sure you have a working discord [bot TOKEN](#get-a-discord-token), a [twitter keys](#get-twitter-keys)  and [mongoDB server](#mongodb-connection-string) running.
+- Make sure you have a working [discord bot TOKEN](#get-a-discord-token) and [mongoDB server](#mongodb-connection-string) running.
+- If you wish you can also setup a [twitter key](#get-twitter-keys) and [BlueSky account](#get-a-bluesky-account) but these aren't required.  
 - Add your credentials to the [.env](#env-file) file.
 - Run it using: `python3 main.py`
 
@@ -118,6 +106,8 @@ Log in to https://discord.com/developers/applications/ and click on the New Appl
 ### Get twitter Keys
 You can follow twitters documentation https://developer.x.com/en/docs/twitter-api/getting-started/getting-access-to-the-twitter-api to get started.
 
+### Get a Bluesky account
+All you need to do is create a normal Bluesky account https://bsky.app/ 
 
 ### MongoDB connection string
 The database used is MongoDB, you can use mongodb atlas which offers a shared $0/month plan, if you don't want to host your own database. Go to DEPLOYMENT / Database / Connect / Drivers. You should get a string like this:
@@ -142,9 +132,11 @@ Here is an explanation of what everything is:
 | X_API_SECRET           | Twitter/X api secret                                                                              |
 | DISCORD_DEV_GUILD      | Test Guild Id (not necessary)                                                                     |
 | DISCORD_ADMIN_ACC      | Your account Id (not necessary)                                                                   |
+| BSKY_USER              | Your account username                                                                             |
+| BSKY_PASSWORD          | Your account password                                                                             |
 
 
-- When `DEBUG` variable is set to True, the log output is changed, the bot uses DISCORD_TOKEN_TEST instead of DISCORD_TOKEN_LIVE and the twitter client isnt run at all.
+- When `DEBUG` variable is set to True, the log output is changed, the bot uses DISCORD_TOKEN_TEST instead of DISCORD_TOKEN_LIVE and the twitter and bluesky clients dont run at all.
 
 - When in `DEBUG` mode the bot can use `DISCORD_DEV_GUILD` to sync commands to that specific guild to cut down on wait times.
 
