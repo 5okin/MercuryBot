@@ -66,7 +66,7 @@ class CustomFormatter(logging.Formatter):
         # Add any extra fields
         for key, value in record.__dict__.items():
             if key.startswith("_"):
-                log_record[key[1:]] = value
+                log_record[key[1:]] = str(value)
 
         json_log = json.dumps(log_record)
         return f"{log_color}{json_log}{self.RESET}" if DEBUG else json_log
