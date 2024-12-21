@@ -56,7 +56,8 @@ class Main(Store):
                     end_date = end_date_object = soup.find("p", {"class":"game_purchase_discount_quantity"})
                     if (end_date):
                         end_date = (end_date.text.split('before')[1]).split('@')[0].strip()
-                        end_date_object = self.parse_date(end_date, ["%b %d", "%d %b", "%d %b, %Y"]).replace(year=datetime.now().year)
+                        date_formats = ["%b %d", "%d %b", "%d %b, %Y", "%b %d, %Y"]
+                        end_date_object = self.parse_date(end_date, date_formats).replace(year=datetime.now().year)
                     offer_from  = datetime.now()
                     game_image = soup.find("meta", property="og:image").get("content")
                     number += 1
