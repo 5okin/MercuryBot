@@ -1,3 +1,7 @@
+[![Static Badge](https://img.shields.io/badge/Discord-%235765f2?logo=discord&logoColor=%23f7f7f7)](https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot)
+[![Static Badge](https://img.shields.io/badge/-%23222222?logo=x&logoColor=%23f7f7f7)](https://x.com/_MercuryBot_)
+[![Static Badge](https://img.shields.io/badge/Bluesky-%231185fe?style=flat&logo=bluesky&logoColor=%23ffffff)](https://bsky.app/profile/mercurybot.bsky.social)
+
 # MercuryBot
 
 MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab titles for free.
@@ -21,7 +25,7 @@ Mercury bot sends you notifications like the ones bellow every time there's a ne
 
 Discord             |  X            |  Bluesky
 :-------------------------:|:-------------------------:|:-------------------------:
-<img src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0"> | <img src="https://github.com/user-attachments/assets/2aa7d6b4-d88a-44f4-a8c7-9871e760f18d" width="400"> | <img src="https://github.com/user-attachments/assets/f8bee8bc-7f56-452c-adc0-5ba84d14fa13">
+<img src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0"> | <img src="https://github.com/user-attachments/assets/2aa7d6b4-d88a-44f4-a8c7-9871e760f18d" width="300"> | <img src="https://github.com/user-attachments/assets/f8bee8bc-7f56-452c-adc0-5ba84d14fa13">
 
 
 ## Features
