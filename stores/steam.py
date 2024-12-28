@@ -12,6 +12,8 @@ class Main(Store):
     Steam store
     """
     def __init__(self):
+        self.gamesInfoApi = 'https://store.steampowered.com/api/appdetails?appids'
+        self.dlcUrl = 'https://store.steampowered.com/search/?maxprice=free&category1=21&specials=1'
         super().__init__(
             name = 'steam',
             id = '3',
@@ -29,7 +31,6 @@ class Main(Store):
         """
         Steam process data
         """
-        number = 0
         i = 0
         json_data = []
         # print(games_num)
@@ -48,11 +49,10 @@ class Main(Store):
                 for game in games:
                     game_name = game.find("span", {"class": "title"}).text
                     game_url = game['href']
-                    # game_image = game.find("img")['src']
-                    # Get bigger images
+                    appId = game['data-ds-appid']
+                    productType = self.request_data(f'{self.gamesInfoApi}={appId}')[appId]['data']['type']
                     data = urlopen(Request(game_url))
                     soup = BeautifulSoup(data, 'html.parser')
-                    # game_image = soup.find("link", rel="image_src")['href']
                     end_date = end_date_object = soup.find("p", {"class":"game_purchase_discount_quantity"})
                     if (end_date):
                         end_date = (end_date.text.split('before')[1]).split('@')[0].strip()
@@ -60,8 +60,7 @@ class Main(Store):
                         end_date_object = self.parse_date(end_date, date_formats).replace(year=datetime.now().year)
                     offer_from  = datetime.now()
                     game_image = soup.find("meta", property="og:image").get("content")
-                    number += 1
-                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image, offer_from, end_date_object)
+                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image, offer_from, end_date_object, productType=productType)
 
         return self.compare(json_data)
         # else:

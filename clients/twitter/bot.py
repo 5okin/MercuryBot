@@ -44,18 +44,26 @@ class MyClient():
         )
         return client
     # MARK: twitter txt
-    def format_tweet(self, store) -> str:
+    def format_tweet(self, store, minify=False) -> str:
 
         txt = f'🕹️ Free now on {store.name} 🕹️\n\n'
-
-        end_date = store.get_date(store.data[0], 'end')
-        txt += f'Free now until: {str(end_date)}\n\n'
 
         for data in store.data:
             title = data['title']
             link = data['url']
-            if data['activeDeal']:
-                txt += "• " + f"{title}\n{link}\n\n"
+            end_date = store.get_date(data, 'end')
+            active_deal = data.get('activeDeal', False)
+
+            if active_deal and (not minify or data.get('type') == 'game'):
+                line = "• " + f"{title}\n"
+                if end_date:
+                    line += f"Until: {end_date}\n"
+                line += f"{link}"
+                txt += f"{line}\n\n"
+
+        if (minify):
+            dlcCount = sum(1 for obj in store.data if obj.get('type') != "game")
+            txt += f"• {dlcCount} free DLC's \n{store.dlcUrl}"
         return txt.strip()
     
     # MARK: Tweet
@@ -63,6 +71,11 @@ class MyClient():
         try:
             media_id: str = None
             txt_string = self.format_tweet(store)
+
+            if len(txt_string) > 280:
+                txt_string = self.format_tweet(store, True)
+                if len(txt_string) > 280:
+                    logger.error("Tweet content exceeds 280 characters, even in minified form")
 
             if (store.image_twitter):
                 store.image_twitter.seek(0)

@@ -5,13 +5,13 @@ from datetime import datetime
 
 logger = environment.logging.getLogger("bot.makejson")
 
-def data(json_data, game_name, active_deal, game_url, game_image, offer_from=None, offer_until=None, wide_image=None) -> dict:
+def data(json_data, game_name, active_deal, game_url, game_image, offer_from=None, offer_until=None, wide_image=None, productType='game') -> dict:
     """ Creates a json file from the given data
         
         Parameters
         -----------
         json_data
-                The variable you want to append the data too
+            The variable you want to append the data to
 
         Returns
         -----------
@@ -24,6 +24,7 @@ def data(json_data, game_name, active_deal, game_url, game_image, offer_from=Non
         :param offer_until:
         :param game_image:
         :param wide_image:
+        :param type:
     """
 
     # Set offer_from to today if its not provided
@@ -39,7 +40,8 @@ def data(json_data, game_name, active_deal, game_url, game_image, offer_from=Non
         'startDate': offer_from,
         'endDate': offer_until,
         'image': game_image.replace(" ", "%20"),
-        'wideImage': wide_image.replace(" ", "%20") if wide_image else None
+        'wideImage': wide_image.replace(" ", "%20") if wide_image else None,
+        'type': productType
     })
     return json_data
 
