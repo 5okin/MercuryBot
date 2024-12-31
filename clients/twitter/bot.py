@@ -51,7 +51,7 @@ class MyClient():
         for data in store.data:
             title = data['title']
             link = data['url']
-            end_date = store.get_date(data, 'end')
+            end_date = store.get_date(data, 'end', True)
             active_deal = data.get('activeDeal', False)
 
             if active_deal and (not minify or data.get('type') == 'game'):

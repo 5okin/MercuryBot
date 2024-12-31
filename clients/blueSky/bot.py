@@ -23,7 +23,7 @@ class MyClient():
         txt = client_utils.TextBuilder()
         txt.text(f'🕹️ Free now on {store.name} 🕹️\n\n')
 
-        end_date = store.get_date(store.data[0], 'end')
+        end_date = store.get_date(store.data[0], 'end', True)
         txt.text(f'Free now until: {str(end_date)}\n\n')
 
         for data in store.data:

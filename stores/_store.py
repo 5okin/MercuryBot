@@ -158,16 +158,17 @@ class Store:
         return arr
 
     #MARK: get_date
-    def get_date(self, data, status='start'):
+    def get_date(self, data, status='start', returnAsRelative=False):
         """
         Returns the start or end date of a deal based on the status parameter.
         
         Parameters:
         - deal: The dictionary containing deal details.
         - status: A string indicating which date to return ('start' or 'end').
+        - returnAsRelative: A boolean indicating the format True for False for data string and True 'Tomorrow !!')
         
         Returns:
-        - A formatted date string of the specified type.
+        - A formatted date string or "Tomorrow !!" returnAsRelative value.
         """
         if status == 'start':
             status = 'startDate'
@@ -176,15 +177,16 @@ class Store:
         else:
             raise ValueError("Invalid date_type. Choose 'start' or 'end'.")
         
-        if data[status]:
+        if data.get(status):
             date_value = data[status]
             tomorrow = datetime.now().date() + timedelta(days=1)
-            if date_value.date() == tomorrow:
+
+            if returnAsRelative and date_value.date() == tomorrow:
                 return "Tomorrow !!"
             month = date_value.strftime("%b")
             day = date_value.day
             return f"{month} {day}"
-        return None    
+        return None
 
     def set_images(self):
         self.image = self.image_twitter = self.make_gif_image()

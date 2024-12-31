@@ -24,7 +24,7 @@ def epic(store, mobile=False):
 
         if deal['activeDeal']:
             # startDate = get_date(data['startDate'])
-            now_end_date = store.get_date(deal, 'end')
+            now_end_date = store.get_date(deal, 'end', True)
             # now_end_date = get_date(deal['endDate'], True)
 
             # all_freenow += "• " + f"[**{title}**]({link})\n‎ [Launcher](com.epicgames.launcher://store/p/tomb-raider)\n"
@@ -58,7 +58,7 @@ def gog(store, mobile=False):
     for deal in store.data:
         title = deal['title']
         link = deal['url']
-        end_date = store.get_date(deal, 'end')
+        end_date = store.get_date(deal, 'end', True)
         # all_freenow += "• " + f"[**{title}**]({link})\n‎"
         embed_var.add_field(name=f'\u200B\n', value=f"[**{title}**]({link})\nUntil: {end_date}", inline=False)
 
@@ -73,10 +73,11 @@ def steam(store, mobile=False):
     for deal in store.data:
         title = deal['title']
         link = deal['url']
+        end_date = store.get_date(deal, 'end', True)
 
         embed_var.add_field(
             name = f'\u200B\n',
-            value = f"• [**{title}**]({link})\nUntil: {store.get_date(deal, 'end')}" if store.get_date(deal, 'end') else f"• [**{title}**]({link})",
+            value = f"• [**{title}**]({link})\nUntil: {end_date}" if end_date else f"• [**{title}**]({link})",
             inline = False
 )
 
