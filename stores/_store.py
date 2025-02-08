@@ -142,14 +142,19 @@ class Store:
         img.save(fp=arr, format='GIF', append_images=imgs, save_all=True, duration=2000, loop=0)
 
         # Create MP4
-        writer = imageio.get_writer(arr_mp4, fps=24, format='mp4')
+        writer = imageio.get_writer(arr_mp4, fps=5, format='mp4')
+        frame_duration = 3
+
         for game in self.data:
             if game['activeDeal'] == status:
                 image_url = game[images]
                 image = Image.open(urlopen(image_url))
                 image.thumbnail((image.size[0]//size, image.size[1]//size))
                 image_np = np.array(image)
-                writer.append_data(image_np)
+
+                # 3 seconds for every image
+                for _ in range(frame_duration * 1):
+                    writer.append_data(image_np)
         
         writer.close()
         arr_mp4.seek(0)
