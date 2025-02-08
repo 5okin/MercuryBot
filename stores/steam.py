@@ -47,17 +47,21 @@ class Main(Store):
 
                 # Get new deals
                 for game in games:
+                    end_date_object = None
                     game_name = game.find("span", {"class": "title"}).text
                     game_url = game['href']
                     appId = game['data-ds-appid']
                     productType = self.request_data(f'{self.gamesInfoApi}={appId}')[appId]['data']['type']
                     data = urlopen(Request(game_url))
                     soup = BeautifulSoup(data, 'html.parser')
-                    end_date = end_date_object = soup.find("p", {"class":"game_purchase_discount_quantity"})
-                    if (end_date):
+                    end_date = soup.find("p", {"class":"game_purchase_discount_quantity"})
+
+                    try:
                         end_date = (end_date.text.split('before')[1]).split('@')[0].strip()
                         date_formats = ["%b %d", "%d %b", "%d %b, %Y", "%b %d, %Y"]
                         end_date_object = self.parse_date(end_date, date_formats).replace(year=datetime.now().year)
+                    except:
+                        self.logger.warning("Date could not be handled")
                     offer_from  = datetime.now()
                     game_image = soup.find("meta", property="og:image").get("content")
                     json_data = makejson.data(json_data, game_name, 1, game_url, game_image, offer_from, end_date_object, productType=productType)
