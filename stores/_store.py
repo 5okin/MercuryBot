@@ -153,9 +153,9 @@ class Store:
                 image_np = np.array(image)
 
                 # 3 seconds for every image
-                for _ in range(frame_duration * 1):
+                for _ in range(frame_duration * 5):
                     writer.append_data(image_np)
-        
+    
         writer.close()
         arr_mp4.seek(0)
         self.video = arr_mp4
