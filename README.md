@@ -80,6 +80,11 @@ Discord             |  X            |  Bluesky
  <image src="https://github.com/user-attachments/assets/000b9130-5e67-4864-a070-45f2c42184b6">
 <p>
 
+- When setting a channel, you will be notified if you select a channel that the bot lacks permissions for.
+<p align='center'>
+ <image src="https://github.com/user-attachments/assets/99ebcc9c-2326-4001-abac-943ca76bfa2c">
+<p>
+
 - The `Set role` button allowes you set the role that will be pinged when a notification is send, you can choose not to ping any roles.
 <p align='center'>
  <image src="https://github.com/user-attachments/assets/36d13c17-d472-497c-bb91-f2211891cd14">

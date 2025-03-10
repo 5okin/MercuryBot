@@ -44,7 +44,32 @@ class MyClient(discord.Client):
 
         await self.change_presence(
             activity=discord.Activity(type=discord.ActivityType.watching, name='out for free games'))
-  
+
+    # MARK: check_permissions 
+    def check_channel_permissions(self, channel):
+        """
+        Checks if the bot has the required permissions in a given channel.
+
+        Args:
+            channel (discord.TextChannel): The Discord text channel to check.
+
+        Returns:
+            tuple: (bool, str)
+                - bool: True if the bot has all required permissions, otherwise False.
+                - str: A formatted message listing each required permission with a ✅ or ❌.
+        """
+        guild = channel.guild
+        required_permissions  = ['send_messages', 'view_channel', 'embed_links']
+        bot_permissions = channel.permissions_for(guild.me)
+        has_all_permissions = all(getattr(bot_permissions, perm, False) for perm in required_permissions)
+
+        permissions_status = [
+            f"{'✅' if getattr(bot_permissions, perm, False) else '❌'} {perm.replace('_', ' ').title()}"
+            for perm in required_permissions
+        ]
+        permissions_message = "\n".join(permissions_status)
+
+        return has_all_permissions, permissions_message
 
     # MARK: on_ready
     async def on_ready(self):
@@ -86,17 +111,22 @@ class MyClient(discord.Client):
     # MARK: on_guild_join
     async def on_guild_join(self, guild):
         msg = 'Hi, if youre a mod you can setup the bot by using the **/settings** slash command'
-        if guild.system_channel:
+        has_permissions, _ = self.check_channel_permissions(guild.system_channel)
+        default_channel = None
+
+        if guild.system_channel and has_permissions:
             await guild.system_channel.send(msg)
+            default_channel = guild.system_channel.id
         else:
             for channel in guild.text_channels:
                 if channel.permissions_for(guild.me).send_messages:
                     await channel.send(msg)
-                break
+                    default_channel = channel.id
+                    break
 
         Database.insert_discord_server([{
             'server': guild.id,
-            'channel': guild.system_channel.id if guild.system_channel else None,
+            'channel': default_channel,
             'server_name': guild.name,
             'population' : len([member for member in guild.members if not member.bot])
         }])
@@ -353,11 +383,21 @@ def setup(modules):
                     )
                     
                 async def callback(self, interaction: discord.Integration):
-                    # await client.get_channel(self.values[0].id).send('This is the channel that the updates will be send to')
+                    selected_channel = interaction.guild.get_channel(self.values[0].id)
+                    has_permissions, permissions_message = client.check_channel_permissions(selected_channel)
+
+                    if not has_permissions:
+                        msg_d = "I don't have all the required permission to send messages in that channel."
+                        msg_f = "I need at least the following permissions to work correctly:"
+                        embed = discord.Embed(title="🔒 Missing permissions 🔒", description=f"{msg_d}", color=0x00aff4)
+                        embed.add_field(name=f"{msg_f}\n", value=f"{permissions_message}", inline=True)
+                        await interaction.response.send_message(embed=embed, view=Settings_buttons(), ephemeral=True)
+                        return
+
                     Database.insert_discord_server([{
                         'server': interaction.guild_id,
-                        'channel': self.values[0].id
-                        }])
+                        'channel': selected_channel.id
+                    }])
                     await interaction.response.send_message(f"The update channel has been changed to {self.values[0]}", ephemeral=True)
 
             url_view = discord.ui.View()
@@ -384,7 +424,7 @@ def setup(modules):
                             ]
                         ]
 
-                    if len(options)>25: logger.error("RoleSelect: server %s has more then 25 role options")
+                    if len(options)>25: logger.error("RoleSelect: server %s has more then 25 role options", interaction.guild_id)
                     default = role_id if role_id is not None else None
 
                     if default:
