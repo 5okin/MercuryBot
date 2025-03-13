@@ -20,7 +20,7 @@ class Main(Store):
         )
 
 
-    def request_data(self, url=None):
+    async def request_data(self, url=None):
         """
         get data for psplus
         """
@@ -45,14 +45,14 @@ class Main(Store):
         except Exception as e:
             self.logger.critical("Data acquisition failed %s", e)
 
-        return self.compare(json_data)
+        return await self.compare(json_data)
 
 
     async def get(self):
         """
         psplus get
         """
-        if self.request_data(self.url):
+        if await self.request_data(self.url):
             return 1
         return 0
 

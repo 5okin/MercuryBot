@@ -135,7 +135,7 @@ class Main(Store):
         #                                         game_image, offer_from, offer_until)
 
         self.giveaway(json_data)
-        return self.compare(json_data)
+        return await self.compare(json_data)
 
     #MARK: get
     async def get(self):
@@ -148,17 +148,9 @@ class Main(Store):
             return 1
         return 0
 
-# https://stackoverflow.com/questions/52245922/is-it-more-efficient-to-use-create-task-or-gather
-# Do it so that epic and gog are downloaded side by side
-# Do it so that gog pages are downloaded side by side.
 
 if __name__ == "__main__":
     a = Main()
     asyncio.run(a.get())
     print(a.data)
 
-# a = Main()
-# a.get()
-# print(a.data)
-# https://stackoverflow.com/questions/54088263/runtimewarning-enable-tracemalloc-to-get-the-object-allocation-traceback-with-a
-# 40 -> 13, 15 ... 3 times quicker with async

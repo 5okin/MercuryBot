@@ -27,7 +27,7 @@ class Main(Store):
 
 
     #MARK: process_data 
-    def process_data(self, games_num):
+    async def process_data(self, games_num):
         """
         Steam process data
         """
@@ -66,19 +66,14 @@ class Main(Store):
                     game_image = soup.find("meta", property="og:image").get("content")
                     json_data = makejson.data(json_data, game_name, 1, game_url, game_image, offer_from, end_date_object, productType=productType)
 
-        return self.compare(json_data)
-        # else:
-        # # If theres no new deals update
-        #     self.data.clear()
-        #     self.image = None
-        #     return 0
+        return await self.compare(json_data)
 
     #MARK: get
     async def get(self):
         '''
         Steam get
         '''
-        if self.process_data(self.request_data(self.url)['total_count']):
+        if await self.process_data(self.request_data(self.url)['total_count']):
             # self.image = self.image_twitter = self.make_gif_image()
             return 1
         return 0

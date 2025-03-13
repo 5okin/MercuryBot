@@ -2,6 +2,7 @@ import json
 import asyncio
 import io
 import imageio
+import aiohttp
 import numpy as np
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
@@ -107,35 +108,49 @@ class Store:
         return None
 
 
-    #MARK: make_gif_image
-    def make_gif_image(self, wide=False, status=1, size=1):
-        '''
-        Creates a gif off of a list of urls containing images
+    async def fetch_image(self, session, url):
+        """Fetch an image asynchronously and return a BytesIO object."""
+        async with session.get(url) as response:
+            if response.status == 200:
+                return io.BytesIO(await response.read())
+            return None
 
-        -----------
-        wide
-            If not set its defaults to class image
-        -----------
-        '''
+
+    # MARK: make_gif_image
+    async def make_gif_image(self, wide=False, status=1, size=1):
+        """Creates a GIF and MP4 asynchronously."""
 
         if not self.data:
-            return 0
-        
-        if(wide):
-            images = 'wideImage'
-        else:
-            images = 'image'
+            return None
 
+        images_key = 'wideImage' if wide else 'image'
+
+        async with aiohttp.ClientSession() as session:
+            image_futures = [
+                self.fetch_image(session, game[images_key]) for game in self.data if game['activeDeal'] == status
+            ]
+            image_bytes_list = await asyncio.gather(*image_futures)
+
+        image_bytes_list = [img_bytes for img_bytes in image_bytes_list if img_bytes]
+
+        if not image_bytes_list:
+            return None
+
+        # Run image processing in a separate thread (non-blocking)
+        arr, arr_mp4 = await asyncio.to_thread(self.process_images, image_bytes_list, size)
+
+        self.video = arr_mp4  # Store the MP4 buffer
+        return arr
+
+    def process_images(self, image_bytes_list, size):
+        
         arr = io.BytesIO()
         arr_mp4 = io.BytesIO()
-        img, *imgs = [
-            Image.open(urlopen(game[images]))
-            for game in self.data
-            if game['activeDeal'] == status
-        ]
+
+        # Open images with PIL
+        img, *imgs = [Image.open(img_bytes) for img_bytes in image_bytes_list]
 
         img.thumbnail((img.size[0]//size, img.size[1]//size))
-
         for im in imgs:
             im.thumbnail((im.size[0]//size, im.size[1]//size))
 
@@ -145,22 +160,20 @@ class Store:
         writer = imageio.get_writer(arr_mp4, fps=5, format='mp4')
         frame_duration = 3
 
-        for game in self.data:
-            if game['activeDeal'] == status:
-                image_url = game[images]
-                image = Image.open(urlopen(image_url))
-                image.thumbnail((image.size[0]//size, image.size[1]//size))
-                image_np = np.array(image)
+        for img_bytes in image_bytes_list:
+            image = Image.open(img_bytes)
+            image.thumbnail((image.size[0]//size, image.size[1]//size))
+            image_np = np.array(image)
 
-                # 3 seconds for every image
-                for _ in range(frame_duration * 5):
-                    writer.append_data(image_np)
-    
+            # 3 seconds for each frame
+            for _ in range(frame_duration * 5):
+                writer.append_data(image_np)
+
         writer.close()
         arr_mp4.seek(0)
-        self.video = arr_mp4
 
-        return arr
+        return arr, arr_mp4
+
 
     #MARK: get_date
     def get_date(self, data, status='start', returnAsRelative=False):
@@ -193,12 +206,12 @@ class Store:
             return f"{month} {day}"
         return None
 
-    def set_images(self):
-        self.image = self.image_twitter = self.make_gif_image()
+    async def set_images(self):
+        self.image = self.image_twitter = await self.make_gif_image()
 
 
     #MARK: compare
-    def compare(self, json_data):
+    async def compare(self, json_data):
         """
         Compare local deals with current deals online
         """
@@ -227,17 +240,17 @@ class Store:
             if match is True:
                 if len(local_titles) > len(online_titles):
                     self.data = json_data.copy()
-                    self.set_images()
+                    await self.set_images()
                 return 0
             else:
                 self.data = json_data
-                self.set_images()
+                await self.set_images()
                 return 1
 
         # Data is empty but theres data online (1st run)
         elif json_data and not self.data:
             self.data = json_data
-            self.set_images()
+            await self.set_images()
             return 1
 
         # Theres no data online

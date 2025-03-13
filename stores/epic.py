@@ -24,7 +24,7 @@ class Main(Store):
         )
 
     #MARK: process_data
-    def process_data(self, pages):
+    async def process_data(self, pages):
         """
         Main epic scraper
         """
@@ -119,7 +119,7 @@ class Main(Store):
                                                         endDate,
                                                         wide_image_url)
             i += 1
-        return self.compare(json_data)
+        return await self.compare(json_data)
 
     #MARK: resize images
     @staticmethod
@@ -228,10 +228,10 @@ class Main(Store):
                 print("self.data was empty")
                 await asyncio.sleep(60)
 
-    def set_images(self):
+    async def set_images(self):
         self.image = self.create_combined_gif()
-        self.image_mobile = self.make_gif_image()
-        self.image_twitter = self.make_gif_image(True, size=2)
+        self.image_mobile = await self.make_gif_image()
+        self.image_twitter = await self.make_gif_image(True, size=2)
 
     #MARK: get
     async def get(self):
@@ -241,7 +241,7 @@ class Main(Store):
         returns 0 if nothing changed 
         returns 1 if new data was found
         """
-        if self.process_data(self.request_data(self.page)):
+        if await self.process_data(self.request_data(self.page)):
             return 1
         return 0
 
