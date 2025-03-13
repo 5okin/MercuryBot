@@ -58,6 +58,11 @@ class MyClient(discord.Client):
                 - bool: True if the bot has all required permissions, otherwise False.
                 - str: A formatted message listing each required permission with a ✅ or ❌.
         """
+
+        #  It is possible for system channel not to exist on a guild.
+        if channel is None:
+            return False, "Channel does not exist"
+
         guild = channel.guild
         required_permissions  = ['send_messages', 'view_channel', 'embed_links']
         bot_permissions = channel.permissions_for(guild.me)
