@@ -133,6 +133,7 @@ class MyClient(discord.Client):
             'server': guild.id,
             'channel': default_channel,
             'server_name': guild.name,
+            'joined': datetime.now(),
             'population' : len([member for member in guild.members if not member.bot])
         }])
 
