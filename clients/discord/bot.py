@@ -64,7 +64,7 @@ class MyClient(discord.Client):
             return False, "Channel does not exist"
 
         guild = channel.guild
-        required_permissions  = ['send_messages', 'view_channel', 'embed_links']
+        required_permissions  = ['view_channel', 'send_messages', 'embed_links', 'attach_files']
         bot_permissions = channel.permissions_for(guild.me)
         has_all_permissions = all(getattr(bot_permissions, perm, False) for perm in required_permissions)
 
@@ -395,8 +395,10 @@ def setup(modules):
                     if not has_permissions:
                         msg_d = "I don't have all the required permission to send messages in that channel."
                         msg_f = "I need at least the following permissions to work correctly:"
+                        msg_g = "Please update and click the set channel button again!"
                         embed = discord.Embed(title="🔒 Missing permissions 🔒", description=f"{msg_d}", color=0x00aff4)
-                        embed.add_field(name=f"{msg_f}\n", value=f"{permissions_message}", inline=True)
+                        embed.add_field(name=msg_f, value=f"{permissions_message}\n", inline=False)
+                        embed.add_field(name=msg_g, value="", inline=False)
                         await interaction.response.send_message(embed=embed, view=Settings_buttons(), ephemeral=True)
                         return
 
