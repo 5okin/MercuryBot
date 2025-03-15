@@ -15,8 +15,18 @@ class MyClient():
         return super(MyClient, cls).__new__(cls)
 
     def __init__(self):
+        self.name = 'blueSky'
         self.client = Client()
         self.client.login(environment.BSKY_USER, environment.BSKY_PASSWORD)
+
+
+    def get_follower_count(self) -> int:
+        """Returns the number of followers of the Bluesky account."""
+        try:
+            profile = self.client.get_profile(environment.BSKY_USER)
+            return {"name": self.name, "followers_count": profile.followers_count}
+        except Exception:
+            logger.error("Bluesky failed to retrieve follower count")
 
     #MARK: format post
     def format_post(self, store) -> str:
@@ -48,3 +58,12 @@ class MyClient():
         except Exception as e:
             logger.error("Failed to create Bluesky post %s", str(e))
             return None
+
+
+if __name__ == "__main__":
+    from utils import environment
+    
+    bsky = MyClient()
+
+    number = bsky.get_follower_count()
+    print(number)

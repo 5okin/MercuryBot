@@ -18,9 +18,17 @@ class MyClient():
         return super(MyClient, cls).__new__(cls)
 
     def __init__(self):
+        self.name = 'twitter'
         self.client_v1 = self.get_x_v1()
         self.client_v2 = self.get_x_v2()
 
+    def get_follower_count(self) -> int:
+        """Returns the number of followers of the twitter account."""
+        try:
+            user = self.client_v2.get_me(user_fields=["public_metrics"])
+            return {"name": self.name, "followers_count": user.data.public_metrics["followers_count"]}
+        except Exception:
+            logger.warning("Twitter failed to retrieve follower count")
 
     # MARK: Setup V2
     def get_x_v1(self) -> tweepy.API:

@@ -29,6 +29,7 @@ class Database(object):
         Database.servers = client['servers'+dev]
         Database.deals = client['deals'+dev]
         Database.feedback = client['feedback'+dev]
+        Database.social = Database.servers.social
         Database.images = Database.deals.images
 
 
@@ -184,3 +185,11 @@ class Database(object):
         }
         ])
         return list(total_population)[0]['total_population']
+    
+    @staticmethod
+    def update_social_followers(social):
+        '''
+        Updates the number of followers on social media
+        '''
+        filter_criteria = {"social":social.get('name')}
+        Database.servers['social'].update_one(filter_criteria, {"$set":{"followers":social.get('followers_count')}}, upsert=True)

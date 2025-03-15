@@ -112,11 +112,13 @@ async def send_games_notification(store) -> None:
     if store.twitter_notification and x:
         tweet_url = x.tweet(store)
         await discord.dm_logs("Tweet", tweet_url)
+        Database.update_social_followers(x.get_follower_count())
 
     # The other tweet about it...
     if store.bsky_notification and bsky:
         bsky_url = bsky.post(store)
         await discord.dm_logs("Bluesky", bsky_url)
+        Database.update_social_followers(bsky.get_follower_count())
 
     try:
         servers_data = Database.get_discord_servers()
