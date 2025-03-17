@@ -1,6 +1,13 @@
-[![Static Badge](https://img.shields.io/badge/Discord-%235765f2?logo=discord&logoColor=%23f7f7f7)](https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot)
-[![Static Badge](https://img.shields.io/badge/-%23222222?logo=x&logoColor=%23f7f7f7)](https://x.com/_MercuryBot_)
-[![Static Badge](https://img.shields.io/badge/Bluesky-%231185fe?style=flat&logo=bluesky&logoColor=%23ffffff)](https://bsky.app/profile/mercurybot.bsky.social)
+<div align="center">
+  <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
+    <img src="https://img.shields.io/endpoint?url=https://testendpoint-production.up.railway.app/api/stats/discordservers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
+  <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
+    <img src="https://img.shields.io/endpoint?url=https://testendpoint-production.up.railway.app/api/stats/discordusers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
+  <a href="https://x.com/_MercuryBot_">
+    <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Ftestendpoint-production.up.railway.app%2Fapi%2Fstats%2Ftwitter&style=for-the-badge&logo=x"></a>
+  <a href="https://bsky.app/profile/mercurybot.bsky.social">
+    <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Ftestendpoint-production.up.railway.app%2Fapi%2Fstats%2Fbluesky&style=for-the-badge&logo=bluesky"></a>
+</div>
 
 # MercuryBot
 
@@ -82,7 +89,7 @@ Discord             |  X            |  Bluesky
 
 - When setting a channel, you will be notified if you select a channel that the bot lacks permissions for.
 <p align='center'>
- <image src="https://github.com/user-attachments/assets/99ebcc9c-2326-4001-abac-943ca76bfa2c">
+ <image src="https://github.com/user-attachments/assets/331c84e4-4a2f-424d-aabb-3361bef62722">
 <p>
 
 - The `Set role` button allowes you set the role that will be pinged when a notification is send, you can choose not to ping any roles.
@@ -95,7 +102,28 @@ Discord             |  X            |  Bluesky
  <image src="https://github.com/user-attachments/assets/4a468df7-1ae5-4b7a-9457-15b8b90f6cf1">
 <p>
 
-
+## Project Structure
+```
+📁 MercuryBot
+│── 📂 clients
+│ ├── 📜 discord.py     # Discord bot implementation
+│ ├── 📜 bluesky.py     # Bluesky integration
+│ ├── 📜 twitter.py     # X (Twitter) integration
+│── 📂 stores
+│ ├── 📜 epic_games.py  # Epic Games store handler
+│ ├── 📜 steam.py       # Steam store handler
+│ ├── 📜 gog.py         # GOG store handler
+│ ├── 📜 ps_plus.py     # PlayStation Plus store handler
+│── 📂 utils
+│ ├── 📜 logger.py      # Logging utility
+│ ├── 📜 helpers.py     # Helper functions
+│── 📜 main.py          # Main entry point of the bot
+│── 📜 .env.example     # Environment configuration template
+│── 📜 requirements.txt # Python dependencies
+│── 📜 LICENSE          # License information
+│── 📜 Procfile         # Deployment process file
+│── 📜 README.md        # Project documentation
+```
 
 ## Running it on your own
 
