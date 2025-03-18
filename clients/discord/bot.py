@@ -239,18 +239,6 @@ def setup(modules):
                     await interaction.response.send_message(f"No free games on {store.name}", ephemeral=True)
 
 
-    # MARK: my roles select
-    class my_Roles_Select(discord.ui.Select):
-
-        def __init__(self, interaction: discord.Interaction):
-            options=[discord.SelectOption(label=f'{role.name}\t🧍{len(role.members)}') for role in interaction.guild.roles]
-            super().__init__(placeholder="Select an option",max_values=1,min_values=1,options=options)
-
-        
-        async def callback(self, interaction: discord.Interaction):
-            await interaction.response.send_message(content=f"Your choice is {self.values[0]}!",ephemeral=True)
-
-
     # MARK: Feedback
     @client.tree.command(description="Submit feedback")
     async def feedback(interaction: discord.Interaction):
@@ -425,25 +413,58 @@ def setup(modules):
 
         # MARK: role callback
         async def settings_role_callback(self, interaction: discord.Interaction):
-            class Roles_Select(discord.ui.Select):
+            role_id = None
+            guild_roles = [role for role in sorted(interaction.guild.roles, key=lambda r: r.name.lower()) if not role.managed ]
+
+            if Database.get_discord_server(interaction.guild_id):
+                role_id = Database.get_discord_server(interaction.guild_id).get('role')
+
+
+            async def handle_role_selection(interaction: discord.Integration, selected_value):
+                """
+                Handles the role selection process and updates the database accordingly.
+
+                Parameters:
+                - interaction (discord.Interaction): The interaction object representing the user's action.
+                - selected_value (str): The selected role ID as a string, or "None" if no role was selected.
+
+                Behavior:
+                - Converts the selected role ID to an integer (if valid).
+                - Updates the database with the selected role for the server.
+                - Sends a response indicating whether a role will be pinged.
+                """
+                role = int(selected_value) if selected_value and (selected_value != "None") else None
+                role_msg = "Notification will be send but no role will be pinged"
+                
+                if role and (int(role) == interaction.guild.default_role.id):
+                    role_msg = '@everyone'
+                elif role:
+                    role_msg = f'<@&{role}>'
+
+                Database.insert_discord_server([{
+                    'server': interaction.guild_id,
+                    'role': role
+                }])
+
+                await interaction.response.send_message(f"Ping {role_msg}" if role else role_msg, ephemeral=True)
+
+            class Custom_Roles_Select(discord.ui.Select):
+                async def callback(self, interaction: discord.Integration):
+                    await handle_role_selection(interaction, self.values[0])
+                
                 def __init__(self) -> None:
-                    role_id = None
-                    if Database.get_discord_server(interaction.guild_id):
-                        role_id = Database.get_discord_server(interaction.guild_id).get('role')
-
-                        options=[
-                            discord.SelectOption(label="Dont ping a role", value="None"),
-                            *[
-                                discord.SelectOption(
-                                    label=f'{(role.name).replace("@", "")} 🧍{len(role.members)}', 
-                                    value=role.id
-                                )
-                                for role in sorted(interaction.guild.roles, key=lambda r: r.name.lower())
-                                if not role.managed
-                            ]
+                    options=[
+                        discord.SelectOption(label="Dont ping a role", value="None"),
+                        *[
+                            discord.SelectOption(
+                                label=f'{(role.name).replace("@", "")} 🧍{len(role.members)}', 
+                                value=role.id
+                            )
+                            for role in sorted(interaction.guild.roles, key=lambda r: r.name.lower())
+                            if not role.managed
                         ]
+                    ]
 
-                    if len(options)>25: logger.error("RoleSelect: server %s has more then 25 role options", interaction.guild_id)
                     default = role_id if role_id is not None else None
 
                     if default:
@@ -460,26 +481,32 @@ def setup(modules):
                         disabled=False,
                     )
 
+            class Default_Roles_Select(discord.ui.RoleSelect):
                 async def callback(self, interaction: discord.Integration):
-                    role = int(self.values[0]) if len(self.values) and (self.values[0] != "None") else None
+                    role = self.values[0].id if len(self.values) else "None"
+                    await handle_role_selection(interaction, role)
 
-                    if role and (int(self.values[0]) == interaction.guild.default_role.id):
-                        role_name = '@everyone'
-                    elif role:
-                        role_name = f'<@&{role}>'
+                def __init__(self) -> None:
 
-                    Database.insert_discord_server([{
-                        'server': interaction.guild_id,
-                        'role': role
-                    }])
-                    if role:
-                        await interaction.response.send_message(f"Ping {role_name}", ephemeral=True)
-                    else:
-                        await interaction.response.send_message(f"Notification will be send but no role will be pinged", 
-                                                                ephemeral=True)
+                    default = [discord.Object(id=role_id)] if role_id is not None else []
+                    super().__init__(
+                        placeholder="🔍 Select a role...",
+                        min_values=0,
+                        max_values=1,
+                        custom_id="select_roles",
+                        disabled=False,
+                        default_values = default
+                    )
+
 
             url_view = discord.ui.View()
-            url_view.add_item(Roles_Select())
+
+            if len(guild_roles)+2 < 25:
+                url_view.add_item(Custom_Roles_Select())
+            else:
+                logger.warning("Server %s has more then 25 role options used Default Roles Select", interaction.guild_id)
+                url_view.add_item(Default_Roles_Select())
+    
             await interaction.response.send_message(view=url_view, ephemeral=True)
 
         # MARK: store callback
