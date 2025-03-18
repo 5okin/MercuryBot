@@ -9,6 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "main",
+            "console": "internalConsole",
             "justMyCode": false,
         },
         {
