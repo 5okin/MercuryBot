@@ -144,8 +144,19 @@ class MyClient(discord.Client):
             'population' : len([member for member in guild.members if not member.bot])
         }])
 
+
+    # MARK: on_guild_remove
     async def on_guild_remove(self, guild):
         Database.remove_server(guild.id)
+        try:
+            if guild.owner:
+                await guild.owner.send(
+                    f"Hello {guild.owner.name}, we noticed that the bot has been removed from **{guild.name}**.\n"
+                    "We’d love to hear why! Please use `/feedback` to share your thoughts. 😊"
+                )
+        except Exception as e:
+            logger.info("Failed to send feedback request to guild owner")
+
 
     #MARK: dm_logs
     async def dm_logs(self, logTitle: str, logPayload: str) -> None:

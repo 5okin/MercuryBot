@@ -230,7 +230,7 @@ class Store:
                 for game in self.data if game['activeDeal']
             ]
 
-            self.logger.info("Store Compare", extra={
+            self.logger.info("Store Compare: %s", self.name, extra={
                 '_Online' : online_titles,
                 '_Local': local_titles
             })
