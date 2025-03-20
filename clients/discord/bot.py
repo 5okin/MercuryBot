@@ -495,6 +495,9 @@ def setup(modules):
             class Default_Roles_Select(discord.ui.RoleSelect):
                 async def callback(self, interaction: discord.Integration):
                     role = self.values[0].id if len(self.values) else "None"
+                    logger.warning("Server %s has more then 25 role options used Default Roles Select", 
+                                   interaction.guild_id, 
+                                   extra = {'_selected_role' : role})
                     await handle_role_selection(interaction, role)
 
                 def __init__(self) -> None:
@@ -515,7 +518,6 @@ def setup(modules):
             if len(guild_roles)+2 < 25:
                 url_view.add_item(Custom_Roles_Select())
             else:
-                logger.warning("Server %s has more then 25 role options used Default Roles Select", interaction.guild_id)
                 url_view.add_item(Default_Roles_Select())
     
             await interaction.response.send_message(view=url_view, ephemeral=True)

@@ -44,7 +44,7 @@ class Main(Store):
                 if (game['catalogNs']['mappings'] is not None) and (len(game['catalogNs']['mappings'])):
                     product_url = game['catalogNs']['mappings'][0]['pageSlug']
                     game_url = self.url + product_url
-                elif game['productSlug'] != "[]":
+                elif game['productSlug'] and game['productSlug'] != "[]":
                     # When gift is opened (Xmas, etc) productSlug is []
                     product_url = game['productSlug']
                     game_url = self.url + product_url
