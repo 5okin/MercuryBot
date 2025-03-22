@@ -30,40 +30,43 @@ class Main(Store):
         )
 
     #MARK: giveaway
-    def giveaway(self, json_data):
+    async def giveaway(self, json_data):
         '''
         Search gog front page for giveaways
         '''
-        html_content = urlopen(Request(self.base_url, headers={'User-Agent': 'Mozilla'}))
-        soup = BeautifulSoup(html_content, 'html.parser')
-        game_url = None
-        game_id = None
-        giveaway = soup.find(id="giveaway")
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.base_url, headers={'User-Agent': 'Mozilla'}) as response:
+                html_content = await response.text()
 
-        if giveaway:
-            self.logger.debug('Theres a giveaway')
-            game_url = self.base_url + giveaway['ng-href'] if giveaway.get('ng-href') is not None else None
+            soup = BeautifulSoup(html_content, 'html.parser')
+            game_url = None
+            game_id = None
+            giveaway = soup.find(id="giveaway")
 
-            giveaway = giveaway.find("a", {"class": "giveaway__overlay-link"})
             if giveaway:
-                game_url = giveaway['href'] if giveaway.get('href') is not None else None
+                self.logger.debug('Theres a giveaway')
+                game_url = self.base_url + giveaway['ng-href'] if giveaway.get('ng-href') is not None else None
+                giveaway = giveaway.find("a", {"class": "giveaway__overlay-link"})
+                
+                if giveaway:
+                    game_url = giveaway['href'] if giveaway.get('href') is not None else None
 
-            if game_url:
-                game_page = BeautifulSoup(urlopen(game_url),'html.parser')
-                game_id = game_page.find("div",{"card-product" : True}).attrs["card-product"]
-                offer_until = game_page.find("span",class_="product-actions__time").text.rsplit(' ', 1)[0]
-                offer_until = self.parse_date(offer_until, ["%d/%m/%Y %H:%M", "%m/%d/%Y %H:%M"])
-        
-            api_search = urlopen(f"https://api.gog.com/v2/games/{game_id}")
-            games = json.loads(api_search.read().decode())
-            game_title = games['_embedded']['product']['title']
-            game_image = games['_links']['boxArtImage']['href']
-            game_url = 'https://www.gog.com/#giveaway'
-            offer_from  = datetime.now()
+                if game_url:
+                    game_page = BeautifulSoup(urlopen(game_url),'html.parser')
+                    game_id = game_page.find("div",{"card-product" : True}).attrs["card-product"]
+                    offer_until = game_page.find("span",class_="product-actions__time").text.rsplit(' ', 1)[0]
+                    offer_until = self.parse_date(offer_until, ["%d/%m/%Y %H:%M", "%m/%d/%Y %H:%M"])
+            
+                api_search = urlopen(f"https://api.gog.com/v2/games/{game_id}")
+                games = json.loads(api_search.read().decode())
+                game_title = games['_embedded']['product']['title']
+                game_image = games['_links']['boxArtImage']['href']
+                game_url = 'https://www.gog.com/#giveaway'
+                offer_from  = datetime.now()
 
-            json_data = makejson.data(json_data, game_title, 1, game_url, game_image, offer_from, offer_until)
-        else:
-            return
+                json_data = makejson.data(json_data, game_title, 1, game_url, game_image, offer_from, offer_until)
+            else:
+                return
 
 
     def create_urls(self):
@@ -134,7 +137,7 @@ class Main(Store):
         #                 json_data = makejson.data(json_data, game_name, 1, game_url,
         #                                         game_image, offer_from, offer_until)
 
-        self.giveaway(json_data)
+        await self.giveaway(json_data)
         return await self.compare(json_data)
 
     #MARK: get
@@ -142,9 +145,7 @@ class Main(Store):
         '''
         Gog get method
         '''
-        # self.create_urls()
         if await self.process_data():
-            # await asyncio.sleep(50)
             return 1
         return 0
 
