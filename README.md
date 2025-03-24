@@ -1,12 +1,12 @@
 <div align="center">
   <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
-    <img src="https://img.shields.io/endpoint?url=https://testendpoint-production.up.railway.app/api/stats/discordservers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
+    <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/discordservers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
   <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
-    <img src="https://img.shields.io/endpoint?url=https://testendpoint-production.up.railway.app/api/stats/discordusers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
+    <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/discordusers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
   <a href="https://x.com/_MercuryBot_">
-    <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Ftestendpoint-production.up.railway.app%2Fapi%2Fstats%2Ftwitter&style=for-the-badge&logo=x"></a>
+    <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/twitter&style=for-the-badge&logo=x"></a>
   <a href="https://bsky.app/profile/mercurybot.bsky.social">
-    <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Ftestendpoint-production.up.railway.app%2Fapi%2Fstats%2Fbluesky&style=for-the-badge&logo=bluesky"></a>
+    <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/bluesky&style=for-the-badge&logo=bluesky"></a>
 </div>
 
 # MercuryBot
