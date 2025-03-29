@@ -48,20 +48,26 @@ class MyClient(discord.Client):
     # MARK: check_permissions 
     def check_channel_permissions(self, channel):
         """
-        Checks if the bot has the required permissions in a given channel.
+        Checks if the bot has the required permissions in a given channel and returns detailed information about the permissions.
 
         Args:
             channel (discord.TextChannel): The Discord text channel to check.
 
         Returns:
-            tuple: (bool, str)
-                - bool: True if the bot has all required permissions, otherwise False.
-                - str: A formatted message listing each required permission with a ✅ or ❌.
+            dict: A dictionary containing:
+            - 'has_all_permissions' (bool): True if the bot has all required permissions, otherwise False.
+            - 'permission_details' (dict): A dictionary where keys are permissions and values are booleans indicating permissions status.
+            - 'embed' (discord.Embed): An embed message listing the permissions and their statuses (✅ or ❌).
+
+        Notes:
+            - The method checks the following permissions: 'view_channel', 'send_messages', 'embed_links', 'attach_files'.
+            - If the bot does not have the required permissions, the embed will list each permission's status and provide instructions for updating permissions.
+            - If the channel does not exist, the method will return a message indicating so.
         """
 
         #  It is possible for system channel not to exist on a guild.
         if channel is None:
-            return False, "Channel does not exist"
+            return {"has_all_permissions": False, "permission_details": {}, "embed": "Channel does not exist"}
 
         guild = channel.guild
         required_permissions  = ['view_channel', 'send_messages', 'embed_links', 'attach_files']
@@ -74,14 +80,19 @@ class MyClient(discord.Client):
         ]
         permissions_message = "\n".join(permissions_status)
 
-        msg_d = "I don't have all the required permission to send messages in the selected channel."
+        msg_d = "I don't have all the required permission to send messages to the selected channel."
         msg_f = "I need at least the following permissions to work correctly:"
         msg_g = "Please update and click the set channel button again!"
         embed = discord.Embed(title="🔒 Missing permissions 🔒", description=f"{msg_d}", color=0x00aff4)
         embed.add_field(name=msg_f, value=f"{permissions_message}\n", inline=False)
         embed.add_field(name=msg_g, value="", inline=False)
 
-        return has_all_permissions, embed
+        permission_status = {
+            "has_all_permissions": has_all_permissions,
+            "permission_details": bot_permissions,
+            "embed": embed
+        }
+        return permission_status
 
     # MARK: on_ready
     async def on_ready(self):
@@ -123,18 +134,26 @@ class MyClient(discord.Client):
     # MARK: on_guild_join
     async def on_guild_join(self, guild):
         msg = 'Hi, if youre a mod you can setup the bot by using the **/settings** slash command'
-        has_permissions, _ = self.check_channel_permissions(guild.system_channel)
+        permissions = self.check_channel_permissions(guild.system_channel)
         default_channel = None
 
-        if guild.system_channel and has_permissions:
+        # Try to send on join message to system channel
+        if guild.system_channel and permissions['has_all_permissions']:
             await guild.system_channel.send(msg)
             default_channel = guild.system_channel.id
+
+        # Else try to find another text channel to post in
         else:
             for channel in guild.text_channels:
                 if channel.permissions_for(guild.me).send_messages:
                     await channel.send(msg)
                     default_channel = channel.id
-                    break
+                    return
+            owner = await self.fetch_user(guild.owner_id)
+            await owner.send(
+                f"Hello {owner.name}, we noticed that the bot does not have permissions to view any channel for **{guild.name}**.\n"
+                "Please give permissions to the bot so that you can start the setup process !!\n"
+                "After adding the bot to a channel you can run the `/settings` command to set it up how you wish !")
 
         Database.insert_discord_server([{
             'server': guild.id,
@@ -170,13 +189,13 @@ class MyClient(discord.Client):
         if self.ADMIN_USER:
             await self.ADMIN_USER.send(f"**{logTitle}** {logPayload}")
 
-            
 
     # MARK: store_messages
     async def store_messages(self, command, server, channel, role):
         for store in self.modules:
             if command in store.name:
                 message_to_show = getattr(messages, store.name)
+                server = self.get_guild(server)
                 if store.data:
                     #try:
                         if isinstance(store.image, io.BytesIO):
@@ -194,23 +213,38 @@ class MyClient(discord.Client):
 
                         channel = self.get_channel(channel)
 
-                        if role and role == self.get_guild(server).default_role.id:
+                        if role and role == server.default_role.id:
                             role = '@everyone'
                         elif role:
                             role = f' <@&{role}>'
 
                         default_txt = f'{store.service_name} has new free games'
-                        has_permissions, permissions_message = self.check_channel_permissions(channel)
+                        permissions = self.check_channel_permissions(channel)
 
-                        if has_permissions:
+                        if permissions['has_all_permissions']: 
                             await channel.send(
                                 default_txt + f' {role}' if role else default_txt, 
-                                embed=message_to_show(store), 
-                                view=footer_buttons(), 
+                                embed=message_to_show(store),
+                                view=footer_buttons(),
                                 file=file
                             )
+
+                        # Check if you can send a permissions notification msg
+                        elif permissions['permission_details'].send_messages:
+                            await channel.send(embed=permissions['embed'])
+
+                        # Check if you can send to system channel
+                        elif self.check_channel_permissions(server.system_channel)['permission_details'].send_messages:
+                            channel = server.system_channel
+                            await channel.send(embed=permissions['embed'])
+
+                        # Nothing worked send the owner a dm
                         else:
-                            await channel.send_message(embed=permissions_message)
+                            owner = await self.fetch_user(server.owner_id)
+                            await owner.send(
+                                f"Hello {owner.name}, we noticed that the bot does not have all the required permissions for **{server.name}**.\n"
+                                "The bot is unable to send game notifications without these permissions !!\n"
+                                "Please update the bot settings from your server using the `/settings` command and removing and re-adding the desired channel 😊")
 
 
 class footer_buttons(discord.ui.View):
@@ -313,7 +347,7 @@ def setup(modules):
         notifications = ''
         for store in client.modules:
             if store.id in notifications_str:
-                notifications += f'✔️ {store.name}\n'
+                notifications += f'✅ {store.name}\n'
             else:
                 notifications += f'❌ {store.name}\n'
 
@@ -369,9 +403,11 @@ def setup(modules):
             if server and server.get('channel'):
                 channel = client.get_channel(server['channel'])
                 embed = discord.Embed(title="⚙️ Test notification ⚙️", description=f"Notifications for games will be send to this channel", color=0x00aff4)
-                has_permissions, permissions_message = client.check_channel_permissions(channel)
+                
+                # has_permissions, permissions_message = client.check_channel_permissions(channel)
+                permissions = client.check_channel_permissions(channel)
 
-                if has_permissions:
+                if permissions['has_all_permissions']:
                     if server.get("role") and (server.get("role") == interaction.guild.default_role.id):
                         await channel.send(f'Pinging role @everyone for test', embed=embed)
                     elif server.get("role"):
@@ -380,7 +416,7 @@ def setup(modules):
                         await channel.send(embed=embed)
                     await interaction.response.send_message("I've send a test notification message !", ephemeral=True)
                 else:
-                    await interaction.response.send_message(embed=permissions_message, view=Settings_buttons(), ephemeral=True)
+                    await interaction.response.send_message(embed=permissions['embed'], view=Settings_buttons(), ephemeral=True)
             else:
                 await interaction.response.send_message("You have to set a channel first in order to test the notification", ephemeral=True)
 
@@ -406,10 +442,10 @@ def setup(modules):
                     
                 async def callback(self, interaction: discord.Integration):
                     selected_channel = interaction.guild.get_channel(self.values[0].id)
-                    has_permissions, permissions_message = client.check_channel_permissions(selected_channel)
+                    permissions = client.check_channel_permissions(selected_channel)
 
-                    if not has_permissions:
-                        await interaction.response.send_message(embed=permissions_message, view=Settings_buttons(), ephemeral=True)
+                    if not permissions['has_all_permissions']:
+                        await interaction.response.send_message(embed=permissions['embed'], view=Settings_buttons(), ephemeral=True)
                         return
 
                     Database.insert_discord_server([{
