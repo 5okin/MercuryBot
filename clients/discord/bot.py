@@ -67,7 +67,14 @@ class MyClient(discord.Client):
 
         #  It is possible for system channel not to exist on a guild.
         if channel is None:
-            return {"has_all_permissions": False, "permission_details": {}, "embed": "Channel does not exist"}
+            # object to match discords API response to channel permissions
+            class PermissionDetails:
+                def __init__(self):
+                        self.view_channel = False
+                        self.send_messages = False
+                        self.embed_links = False
+                        self.attach_files = False
+            return {"has_all_permissions": False, "permission_details": PermissionDetails(), "embed": "Channel does not exist"}
 
         guild = channel.guild
         required_permissions  = ['view_channel', 'send_messages', 'embed_links', 'attach_files']
@@ -81,16 +88,21 @@ class MyClient(discord.Client):
         permissions_message = "\n".join(permissions_status)
 
         msg_d = "I don't have all the required permission to send messages to the selected channel."
-        msg_f = "I need at least the following permissions to work correctly:"
+        msg_f = "I need at least the following permissions to work correctly"
         msg_g = "Please update and click the set channel button again!"
         embed = discord.Embed(title="🔒 Missing permissions 🔒", description=f"{msg_d}", color=0x00aff4)
-        embed.add_field(name=msg_f, value=f"{permissions_message}\n", inline=False)
+        embed.add_field(name=msg_f, value=f"\n{permissions_message}\n", inline=False)
         embed.add_field(name=msg_g, value="", inline=False)
+
+        text_message = f"**{embed.title}**\n{embed.description}\n"
+        for field in embed.fields:
+            text_message += f"**{field.name}**: {field.value}\n"
 
         permission_status = {
             "has_all_permissions": has_all_permissions,
             "permission_details": bot_permissions,
-            "embed": embed
+            "embed": embed,
+            "text_message": text_message
         }
         return permission_status
 
@@ -231,12 +243,12 @@ class MyClient(discord.Client):
 
                         # Check if you can send a permissions notification msg
                         elif permissions['permission_details'].send_messages:
-                            await channel.send(embed=permissions['embed'])
+                            await channel.send(content=permissions['text_message'])
 
                         # Check if you can send to system channel
                         elif self.check_channel_permissions(server.system_channel)['permission_details'].send_messages:
                             channel = server.system_channel
-                            await channel.send(embed=permissions['embed'])
+                            await channel.send(content=permissions['text_message'])
 
                         # Nothing worked send the owner a dm
                         else:
@@ -326,8 +338,15 @@ def setup(modules):
         '''
         Return bot settings
         '''
-        embed = settings_embed(interaction)
-        await interaction.response.send_message(embed=embed, view=Settings_buttons(), ephemeral=True)
+        try:
+            embed = settings_embed(interaction)
+            await interaction.response.send_message(embed=embed, view=Settings_buttons(), ephemeral=True)
+        except:
+            logger.error("Failed discord command /settings", 
+                extra={
+                    '_server_id': interaction.guild_id
+                }
+            )
 
 
     def settings_embed(interaction):
