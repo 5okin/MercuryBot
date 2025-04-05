@@ -156,23 +156,28 @@ class MyClient(discord.Client):
 
         # Else try to find another text channel to post in
         else:
+            channel_found = False
             for channel in guild.text_channels:
                 if channel.permissions_for(guild.me).send_messages:
                     await channel.send(msg)
                     default_channel = channel.id
-                    return
-            owner = await self.fetch_user(guild.owner_id)
-            await owner.send(
-                f"Hello {owner.name}, we noticed that the bot does not have permissions to view any channel for **{guild.name}**.\n"
-                "Please give permissions to the bot so that you can start the setup process !!\n"
-                "After adding the bot to a channel you can run the `/settings` command to set it up how you wish !")
+                    channel_found = True
+                    break
+            
+            if not channel_found:
+                owner = await self.fetch_user(guild.owner_id)
+                await owner.send(
+                    f"Hello {owner.name}, we noticed that the bot does not have permissions to view any channel for **{guild.name}**.\n"
+                    "Please give permissions to the bot so that you can start the setup process !!\n"
+                    "After adding the bot to a channel you can run the `/settings` command to set it up how you wish !")
 
         Database.insert_discord_server([{
             'server': guild.id,
             'channel': default_channel,
             'server_name': guild.name,
             'joined': datetime.now(),
-            'population' : len([member for member in guild.members if not member.bot])
+            'population' : len([member for member in guild.members if not member.bot]),
+            'notification_settings': 1
         }])
 
 
@@ -279,8 +284,12 @@ def setup(modules):
     @app_commands.describe(store_choice='Select the store you want to view')
     async def store_select(interaction: discord.Interaction, store_choice: app_commands.Choice[str]):
 
-        mobile = (interaction.guild.get_member(interaction.user.id)).is_on_mobile()
+        mobile = False
 
+        # Check if the command was not send in a DM
+        if not isinstance(interaction.channel, discord.DMChannel):
+            mobile = (interaction.guild.get_member(interaction.user.id)).is_on_mobile()
+          
         for store in client.modules:
             if store_choice.value in store.name:
                 message_to_show = getattr(messages, store.name)
@@ -338,6 +347,11 @@ def setup(modules):
         '''
         Return bot settings
         '''
+        # Check if the command was send in a DM
+        if isinstance(interaction.channel, discord.DMChannel):
+            await interaction.response.send_message("Please use the `/settings` command from the server the bot is in.", ephemeral=True)
+            return
+
         try:
             embed = settings_embed(interaction)
             await interaction.response.send_message(embed=embed, view=Settings_buttons(), ephemeral=True)
