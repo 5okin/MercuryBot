@@ -148,7 +148,7 @@ class Store:
         arr_mp4 = io.BytesIO()
 
         # Open images with PIL
-        img, *imgs = [Image.open(img_bytes) for img_bytes in image_bytes_list]
+        img, *imgs = [Image.open(img_bytes).convert("RGB") for img_bytes in image_bytes_list]
 
         img.thumbnail((img.size[0]//size, img.size[1]//size))
         for im in imgs:
@@ -161,8 +161,12 @@ class Store:
         frame_duration = 3
 
         for img_bytes in image_bytes_list:
-            image = Image.open(img_bytes)
+            image = Image.open(img_bytes).convert("RGB")
             image.thumbnail((image.size[0]//size, image.size[1]//size))
+            width, height = image.size
+            new_width = ((width + 16 - 1) // 16) * 16
+            new_height = ((height + 16 - 1) // 16) * 16
+            image = image.resize((new_width, new_height))
             image_np = np.array(image)
 
             # 3 seconds for each frame
