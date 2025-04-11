@@ -20,6 +20,8 @@ class Main(Store):
         GoG store
         """
         self.base_url = 'https://www.gog.com'
+        self.dlcUrl = 'https://www.gog.com/#giveaway'
+        self.giveawayUrl = self.dlcUrl
         self.urls = []
         super().__init__(
             name = 'gog',
@@ -61,7 +63,7 @@ class Main(Store):
                 games = json.loads(api_search.read().decode())
                 game_title = games['_embedded']['product']['title']
                 game_image = games['_links']['boxArtImage']['href']
-                game_url = 'https://www.gog.com/#giveaway'
+                game_url = self.giveawayUrl
                 offer_from  = datetime.now()
 
                 json_data = makejson.data(json_data, game_title, 1, game_url, game_image, offer_from, offer_until)

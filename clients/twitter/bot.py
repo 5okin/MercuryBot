@@ -19,6 +19,8 @@ class MyClient():
 
     def __init__(self):
         self.name = 'twitter'
+        self.TWEET_MAX = 280
+        self.TCO_URL_LENGTH = 23
         self.client_v1 = self.get_x_v1()
         self.client_v2 = self.get_x_v2()
 
@@ -51,39 +53,101 @@ class MyClient():
             access_token_secret = environment.X_ACCESS_TOKEN_SECRET,
         )
         return client
-    # MARK: twitter txt
-    def format_tweet(self, store, minify=False) -> str:
+    
 
+    def _format_deal_line(self, data, store, include_link=True):
+        """
+        Format a single deal line with title, optional end date, and optional link.
+    
+        Returns:
+            Tuple of formatted deal string and calculated tweet length impact.
+        """
+        title = data['title']
+        link = data['url']
+        end_date = store.get_date(data, 'end', True)
+
+        line = "• " + f"{title}\n"
+        if end_date:
+            line += f"Until: {end_date}\n"
+            if (include_link):
+                line += f"{link}\n\n"
+
+        length = len(line) + self.TCO_URL_LENGTH - (len(link) if include_link else 0)
+        return line, length
+
+
+    def _format_default(self, store):
+        """
+        Format tweet with all active deals listed individually, including their links and end dates.
+        """
         txt = f'🕹️ Free now on {store.name} 🕹️\n\n'
+        tweet_length = len(txt)
 
         for data in store.data:
-            title = data['title']
-            link = data['url']
-            end_date = store.get_date(data, 'end', True)
-            active_deal = data.get('activeDeal', False)
+            if not data.get('activeDeal', False):
+                continue
 
-            if active_deal and (not minify or data.get('type') == 'game'):
-                line = "• " + f"{title}\n"
-                if end_date:
-                    line += f"Until: {end_date}\n"
-                line += f"{link}"
-                txt += f"{line}\n\n"
-
-        if (minify):
-            dlcCount = sum(1 for obj in store.data if obj.get('type') != "game")
-            txt += f"• {dlcCount} free DLC's \n{store.dlcUrl}"
-        return txt.strip()
+            line, length = self._format_deal_line(data, store)
+            txt += line
+            tweet_length += length
+        return txt, tweet_length
     
+
+    def _format_group_dlc(self, store, include_link=True):
+        """
+        Format tweet by listing only games individually, then summarizing DLCs with a single grouped link.
+        """
+        txt = f'🕹️ Free now on {store.name} 🕹️\n\n'
+        tweet_length = len(txt)
+
+        for data in store.data:
+            if not data.get('activeDeal', False) or data.get('type') != 'game':
+                continue
+
+            line, length = self._format_deal_line(data, store, include_link)
+            txt += line
+            tweet_length += length
+
+        dlcCount = sum(1 for obj in store.data if obj.get('type') != "game")
+        if dlcCount:
+            dlc_line = f"• {dlcCount} free DLC's \n{store.dlcUrl}"
+            txt += dlc_line
+            tweet_length += len(dlc_line) - len(store.dlcUrl) + self.TCO_URL_LENGTH
+        return txt, tweet_length
+    
+
+    def _format_group_all(self, store):
+        """
+        Format tweet by displaying only a grouped giveaway link, without listing individual items.
+        """
+        txt = f'🕹️ Free now on {store.name} 🕹️\n\n{store.giveawayUrl}'
+        tweet_length = len(txt) - len(store.giveawayUrl) + self.TCO_URL_LENGTH
+        return txt, tweet_length
+        
+
+    def _format_tweet(self, store, group_mode=0) -> str:
+        if group_mode == 1:
+            return self._format_group_dlc(store)
+        elif group_mode == 2:
+            return self._format_group_dlc(store, include_link=False)
+        elif group_mode == 3:
+            return self._format_group_all(store)
+        return self._format_default(store)
+    
+
+    def tweet_txt(self, store) -> str:
+        for mode in range(3):
+            txt, length = self._format_tweet(store, group_mode=mode)
+            if length <= 280:
+                return txt
+        raise Exception("Tweet content exceeds 280 characters for all modes") 
+
+        
     # MARK: Tweet
     def tweet(self, store) -> str:
         try:
             media_id: str = None
-            txt_string = self.format_tweet(store)
-
-            if len(txt_string) > 280:
-                txt_string = self.format_tweet(store, True)
-                if len(txt_string) > 280:
-                    logger.error("Tweet content exceeds 280 characters, even in minified form")
+            txt = self.tweet_txt(store)
 
             if (store.image_twitter):
                 store.image_twitter.seek(0)
@@ -91,7 +155,7 @@ class MyClient():
                 media = self.client_v1.media_upload(filename='image', file=store.image_twitter)
                 media_id = [media.media_id_string]
 
-            tweetNow = self.client_v2.create_tweet(text=txt_string, media_ids=media_id)
+            tweetNow = self.client_v2.create_tweet(text=txt, media_ids=media_id)
             tweetUrl = f'https://twitter.com/user/status/{ tweetNow.data["id"] }'
             logger.info("twitter: /%s", tweetUrl)
             
@@ -108,7 +172,7 @@ if __name__ == "__main__":
     current_info = "Until: Jun 20, Idle Champions of the Forgotten Realms, Redout 2"
     media_path = "img.gif"
 
-    formatted_string = x.format_tweet(current_info)
+    formatted_string = x._format_tweet(current_info)
 
     print(formatted_string)
     x.tweet(formatted_string, media_path)

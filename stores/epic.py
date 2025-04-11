@@ -1,3 +1,4 @@
+
 from datetime import datetime
 from urllib.request import urlopen
 import io
@@ -14,6 +15,8 @@ class Main(Store):
     def __init__(self):
         self.online_data = []
         self.page = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions'
+        self.dlcUrl = 'https://store.epicgames.com/en-US/free-games'
+        self.giveawayUrl = 'https://store.epicgames.com/en-US/free-games'
         super().__init__(
             name = 'epic',
             id = '1',

@@ -14,6 +14,7 @@ class Main(Store):
     def __init__(self):
         self.gamesInfoApi = 'https://store.steampowered.com/api/appdetails?appids'
         self.dlcUrl = 'https://store.steampowered.com/search/?maxprice=free&category1=21&specials=1'
+        self.giveawayUrl = 'https://store.steampowered.com/search/?maxprice=free&specials=1&ndl=1'
         super().__init__(
             name = 'steam',
             id = '3',
