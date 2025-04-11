@@ -373,7 +373,7 @@ def setup(modules):
         elif (server and server.get('role')):
             role = '<@&'+str(server.get('role'))+'>'
         else:
-            role = 'None'
+            role = '`None`'
         
         notifications_str = str(server['notification_settings'] if server and server.get('notification_settings') else '')
 
@@ -513,7 +513,8 @@ def setup(modules):
                 - Updates the database with the selected role for the server.
                 - Sends a response indicating whether a role will be pinged.
                 """
-                role = int(selected_value) if selected_value and (selected_value != "None") else None
+                value = selected_value[0] if selected_value else "None"
+                role = int(value) if value and (value != "None") else None
                 role_msg = "Notification will be send but no role will be pinged"
                 
                 if role and (int(role) == interaction.guild.default_role.id):
@@ -530,7 +531,7 @@ def setup(modules):
 
             class Custom_Roles_Select(discord.ui.Select):
                 async def callback(self, interaction: discord.Integration):
-                    await handle_role_selection(interaction, self.values[0])
+                    await handle_role_selection(interaction, self.values)
                 
                 def __init__(self) -> None:
                     options=[
