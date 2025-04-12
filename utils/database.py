@@ -171,20 +171,20 @@ class Database(object):
         else:
             print('image not found')
 
-    @staticmethod
-    def get_population():
-        '''
-        Retruns the total number of people the bot is serving
-        '''
-        total_population = Database.servers['discord'].aggregate([
-        {
-            "$group": {
-                "_id": 1,
-                "total_population": {"$sum": {"$ifNull": ["$population", 0]}}
-            }
-        }
-        ])
-        return list(total_population)[0]['total_population']
+    # @staticmethod
+    # def get_population():
+    #     '''
+    #     Retruns the total number of people the bot is serving
+    #     '''
+    #     total_population = Database.servers['discord'].aggregate([
+    #     {
+    #         "$group": {
+    #             "_id": 1,
+    #             "total_population": {"$sum": {"$ifNull": ["$population", 0]}}
+    #         }
+    #     }
+    #     ])
+    #     return list(total_population)[0]['total_population']
     
     @staticmethod
     def update_social_followers(social):

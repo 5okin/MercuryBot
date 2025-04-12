@@ -16,8 +16,6 @@ class MyClient(discord.Client):
     def __init__(self, modules):
         self.modules = modules
         intents = discord.Intents.default()
-        intents.members = True
-        intents.presences = True
         self.ADMIN_USER = None
         self.DEV_GUILD = None
         super().__init__(
@@ -117,20 +115,10 @@ class MyClient(discord.Client):
         for guild in not_in_guilds:
             Database.remove_server(guild)
 
-        # Update server populations
-        for guild in self.guilds:
-            Database.insert_discord_server([{
-                'server': guild.id,
-                # 'channel': guild.system_channel.id if guild.system_channel else None,
-                # 'server_name': guild.name,
-                'population' : len([member for member in guild.members if not member.bot])
-            }])
-
         if self.ADMIN_USER:
-            await self.ADMIN_USER.send(f"**Status** {self.user} `Started/Restarted and ready`, "
-                                       f"connected to {len(self.guilds)} servers with {Database.get_population()} people")
+            await self.ADMIN_USER.send(f"**Status** {self.user} `Started/Restarted and ready`, connected to {len(self.guilds)} servers")
         else:
-            logger.info("%s Started/Restarted and ready, connected to %s servers with %s people", format(self.user), len(self.guilds), Database.get_population())
+            logger.info("%s Started/Restarted and ready, connected to %s servers", format(self.user), len(self.guilds))
         
         # Upload animated avatar (only needs to be run once)
         if os.path.exists('avatar.gif'):
@@ -176,7 +164,6 @@ class MyClient(discord.Client):
             'channel': default_channel,
             'server_name': guild.name,
             'joined': datetime.now(),
-            'population' : len([member for member in guild.members if not member.bot]),
             'notification_settings': 1
         }])
 
@@ -287,14 +274,14 @@ def setup(modules):
         mobile = False
 
         # Check if the command was not send in a DM
-        if not isinstance(interaction.channel, discord.DMChannel):
-            mobile = (interaction.guild.get_member(interaction.user.id)).is_on_mobile()
+        # if not isinstance(interaction.channel, discord.DMChannel):
+        #     mobile = (interaction.guild.get_member(interaction.user.id)).is_on_mobile()
           
         for store in client.modules:
             if store_choice.value in store.name:
                 message_to_show = getattr(messages, store.name)
                 if store.data:
-                    image = store.image_mobile if mobile and bool(store.image_mobile) else store.image
+                    image = store.image
                     if isinstance(image, io.BytesIO):
                         image.seek(0)
                         file = discord.File(image, filename='img.' + store.image_type.lower())
@@ -538,7 +525,7 @@ def setup(modules):
                         discord.SelectOption(label="Dont ping a role", value="None"),
                         *[
                             discord.SelectOption(
-                                label=f'{(role.name).replace("@", "")} 🧍{len(role.members)}', 
+                                label=f'{(role.name).replace("@", "")}', 
                                 value=role.id
                             )
                             for role in sorted(interaction.guild.roles, key=lambda r: r.name.lower())
