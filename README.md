@@ -1,8 +1,6 @@
 <div align="center">
   <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
     <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/discordservers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
-  <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
-    <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/discordusers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
   <a href="https://x.com/_MercuryBot_">
     <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/twitter&style=for-the-badge&logo=x"></a>
   <a href="https://bsky.app/profile/mercurybot.bsky.social">
@@ -11,7 +9,7 @@
 
 # MercuryBot
 
-MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab titles for free.
+MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab titles for free. Discover more on our [website](https://5okin.github.io/mercurybot-web/).
 
 <br>
 
