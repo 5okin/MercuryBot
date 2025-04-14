@@ -120,23 +120,22 @@ async def send_games_notification(store) -> None:
         await discord.dm_logs("Bluesky", bsky_url)
         Database.update_social_followers(bsky.get_follower_count())
 
-    try:
-        servers_data = Database.get_discord_servers()
-        for server in servers_data:
+    servers_data = Database.get_discord_servers()
+    for server in servers_data:
+        try:
             # Check server notification settings
             if str(store.id) in str(server.get('notification_settings')):
                 if server.get('channel'):
-                    #print(f"{server.get('channel')} has role {server.get('role')}")
                     await discord.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'))
-    except:
-        logger.error("Failed to send notification", 
-                     extra={
-                     '_store_name': getattr(store, 'name', 'unkown'),
-                     '_server_name':server.get('server_name', 'unkown'),
-                     '_server_id': server.get('server', 'unkown'),
-                     '_server_channel': server.get('channel', 'unkown'),
-                     }
-        )
+        except:
+            logger.error("Failed to send notification", 
+                    extra={
+                    '_store_name': getattr(store, 'name', 'unkown'),
+                    '_server_name':server.get('server_name', 'unkown'),
+                    '_server_id': server.get('server', 'unkown'),
+                    '_server_channel': server.get('channel', 'unkown'),
+                    }
+            )
 
 #MARK: Scheduler loop
 async def scrape_scheduler() -> None:
