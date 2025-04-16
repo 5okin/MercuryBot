@@ -237,18 +237,20 @@ class MyClient(discord.Client):
                         elif permissions['permission_details'].send_messages:
                             await channel.send(content=permissions['text_message'])
 
-                        # Check if you can send to system channel
-                        elif self.check_channel_permissions(server.system_channel)['permission_details'].send_messages:
-                            channel = server.system_channel
-                            await channel.send(content=permissions['text_message'])
-
-                        # Nothing worked send the owner a dm
                         else:
-                            owner = await self.fetch_user(server.owner_id)
-                            await owner.send(
-                                f"Hello {owner.name}, we noticed that the bot does not have all the required permissions for **{server.name}**.\n"
-                                "The bot is unable to send game notifications without these permissions !!\n"
-                                "Please update the bot settings from your server using the `/settings` command and removing and re-adding the desired channel 😊")
+                            permissions = self.check_channel_permissions(server.system_channel)
+                            # Check if you can send to system channel
+                            if permissions['permission_details'].send_messages:
+                                channel = server.system_channel
+                                await channel.send(content=permissions['text_message'])
+
+                            # Nothing worked send the owner a dm
+                            else:
+                                owner = await self.fetch_user(server.owner_id)
+                                await owner.send(
+                                    f"Hello {owner.name}, we noticed that the bot does not have all the required permissions for **{server.name}**.\n"
+                                    "The bot is unable to send game notifications without these permissions !!\n"
+                                    "Please update the bot settings from your server using the `/settings` command and removing and re-adding the desired channel 😊")
 
 
 class footer_buttons(discord.ui.View):
@@ -500,8 +502,7 @@ def setup(modules):
                 - Updates the database with the selected role for the server.
                 - Sends a response indicating whether a role will be pinged.
                 """
-                value = selected_value[0] if selected_value else "None"
-                role = int(value) if value and (value != "None") else None
+                role = int(selected_value) if selected_value and (selected_value != "None") else None
                 role_msg = "Notification will be send but no role will be pinged"
                 
                 if role and (int(role) == interaction.guild.default_role.id):
@@ -518,7 +519,8 @@ def setup(modules):
 
             class Custom_Roles_Select(discord.ui.Select):
                 async def callback(self, interaction: discord.Integration):
-                    await handle_role_selection(interaction, self.values)
+                    if not self.values : self.values.append("None")
+                    await handle_role_selection(interaction, self.values[0])
                 
                 def __init__(self) -> None:
                     options=[
