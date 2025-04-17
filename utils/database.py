@@ -169,7 +169,7 @@ class Database(object):
             pil_img = io.BytesIO(img['data'])
             return pil_img
         else:
-            print('image not found')
+            logger.error("Image not found")
 
     # @staticmethod
     # def get_population():
@@ -191,5 +191,8 @@ class Database(object):
         '''
         Updates the number of followers on social media
         '''
-        filter_criteria = {"social":social.get('name')}
-        Database.servers['social'].update_one(filter_criteria, {"$set":{"followers":social.get('followers_count')}}, upsert=True)
+        if social:
+            filter_criteria = {"social":social.get('name')}
+            Database.servers['social'].update_one(filter_criteria, {"$set":{"followers":social.get('followers_count')}}, upsert=True)
+        else:
+            logger.warning("No social data provided, skipping update.")
