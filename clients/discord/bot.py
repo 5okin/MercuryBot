@@ -310,7 +310,6 @@ def setup(modules):
         )
 
         async def on_submit(self, interaction: discord.Interaction):
-            await interaction.response.send_message(f'Thanks for your feedback, {interaction.user}!', ephemeral=True)
 
             feedback_payload = {
             'server': interaction.guild_id,
@@ -318,15 +317,16 @@ def setup(modules):
             'timestamp': datetime.now(),
             'feedback': str(self.feedback.value)
             }
-
             Database.add_feedback(feedback_payload)
 
-            await client.get_user(362361984026542083)\
-                .send(f"**Feedback**\n`{feedback_payload['feedback']}`")
+            if interaction.client.ADMIN_USER:
+                await interaction.client.ADMIN_USER.send(f"**Feedback**\n`{feedback_payload['feedback']}`")
+            
+            await interaction.response.send_message(f'Thanks for your feedback, {interaction.user}!', ephemeral=True)
 
         async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
             await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
-            traceback.print_exception(type(error), error, error.__traceback__)
+            logger.error("Failed discord command /settings", extra={'_server_id': interaction.guild_id})
 
 
     # MARK: Settings
