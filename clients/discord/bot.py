@@ -72,7 +72,12 @@ class MyClient(discord.Client):
                         self.send_messages = False
                         self.embed_links = False
                         self.attach_files = False
-            return {"has_all_permissions": False, "permission_details": PermissionDetails(), "embed": "Channel does not exist"}
+            embed = discord.Embed(
+                title="❌ Channel Not Found",
+                description="The selected channel does not exist or I can't access it",
+                color=0xff0000
+            )
+            return {"has_all_permissions": False, "permission_details": PermissionDetails(), "embed": embed}
 
         guild = channel.guild
         required_permissions  = ['view_channel', 'send_messages', 'embed_links', 'attach_files']
