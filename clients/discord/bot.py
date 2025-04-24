@@ -528,18 +528,21 @@ def setup(modules):
                     await handle_role_selection(interaction, self.values[0])
                 
                 def __init__(self) -> None:
+                    rolesNoneEmoji = discord.PartialEmoji(name="rolesNone", id=os.getenv('DISCORD_ROLES_NONE'))
+                    rolesAtEmoji = discord.PartialEmoji(name="roles", id=os.getenv('DISCORD_ROLES_AT'))
+                    rolesAllEmoji = discord.PartialEmoji(name="rolesAll", id=os.getenv('DISCORD_ROLES_ALL'))
                     options=[
-                        discord.SelectOption(label="Dont ping a role", value="None"),
+                        discord.SelectOption(label="Dont ping a role", value="None", emoji=rolesNoneEmoji),
                         *[
                             discord.SelectOption(
-                                label=f'{(role.name).replace("@", "")}', 
-                                value=role.id
+                                label = f'{(role.name).replace("@", "")}', 
+                                value = role.id,
+                                emoji = rolesAllEmoji if role.name == '@everyone' else rolesAtEmoji
                             )
                             for role in sorted(interaction.guild.roles, key=lambda r: r.name.lower())
                             if not role.managed
                         ]
                     ]
-
                     default = role_id if role_id is not None else None
 
                     if default:
@@ -556,33 +559,8 @@ def setup(modules):
                         disabled=False,
                     )
 
-            class Default_Roles_Select(discord.ui.RoleSelect):
-                async def callback(self, interaction: discord.Integration):
-                    role = self.values[0].id if len(self.values) else "None"
-                    logger.warning("Server %s has more then 25 role options used Default Roles Select", 
-                                   interaction.guild_id, 
-                                   extra = {'_selected_role' : role})
-                    await handle_role_selection(interaction, role)
-
-                def __init__(self) -> None:
-
-                    default = [discord.Object(id=role_id)] if role_id is not None else []
-                    super().__init__(
-                        placeholder="🔍 Select a role...",
-                        min_values=0,
-                        max_values=1,
-                        custom_id="select_roles",
-                        disabled=False,
-                        default_values = default
-                    )
-
-
             url_view = discord.ui.View()
-
-            if len(guild_roles)+2 < 25:
-                url_view.add_item(Custom_Roles_Select())
-            else:
-                url_view.add_item(Default_Roles_Select())
+            url_view.add_item(Custom_Roles_Select())
     
             await interaction.response.send_message(view=url_view, ephemeral=True)
 
@@ -593,15 +571,18 @@ def setup(modules):
                     server = Database.get_discord_server(interaction.guild_id)
                     notifications_str = str(server['notification_settings'] if server and server.get('notification_settings') else '')
 
-                    options= [
-                        discord.SelectOption(
-                            default=store.id in notifications_str, 
-                            label=f'{store.service_name}',
+                    options = []
+                    for store in client.modules:
+                        kwargs = {
+                            "default": store.id in notifications_str,
+                            "label": f"{store.service_name}",
                             # description=f'Receive notifications for {store.service_name}',
-                            value=store.name
-                        )
-                        for store in client.modules
-                    ]
+                            "value": store.name,
+                        }
+                        if store.discord_emoji:
+                            kwargs["emoji"] = discord.PartialEmoji(name=store.name, id=store.discord_emoji)
+
+                        options.append(discord.SelectOption(**kwargs))
 
                     super().__init__(
                         placeholder="Select the stores you want to receive notifications for", 

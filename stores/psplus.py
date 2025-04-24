@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, os
 from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup
 from stores._store import Store
@@ -15,6 +15,7 @@ class Main(Store):
         super().__init__(
             name = 'psplus',
             id = '4',
+            discord_emoji = os.getenv('DISCORD_PSPLUS_EMOJI'),
             service_name = 'PlayStation Plus',
             url = 'https://www.playstation.com/en-gr/ps-plus/whats-new/'
         )

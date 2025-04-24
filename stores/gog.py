@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from datetime import datetime
 from urllib.error import URLError, HTTPError
 from urllib.request import urlopen, Request
@@ -26,8 +27,9 @@ class Main(Store):
         super().__init__(
             name = 'gog',
             id = '2',
-            twitter_notification=True,
-            service_name = 'GoG',
+            twitter_notification = True,
+            discord_emoji = os.getenv('DISCORD_GOG_EMOJI'),
+            service_name = 'gog',
             url = 'https://www.gog.com/games/ajax/filtered?mediaType=game&page=1&price=discounted'
         )
 

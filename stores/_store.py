@@ -28,6 +28,7 @@ class Store:
                 video: IO = None,
                 image_type: str = 'GIF',
                 scheduler_time: int = 1800,
+                discord_emoji: int = 0,
                 twitter_notification: bool = False,
                 bsky_notification: bool = False
                 ):
@@ -42,6 +43,7 @@ class Store:
         self.image_twitter = image_twitter
         self.video = video
         self.image_type = image_type
+        self.discord_emoji = discord_emoji
         self.scheduler_time = scheduler_time
         self.twitter_notification = twitter_notification
         self.bsky_notification = bsky_notification

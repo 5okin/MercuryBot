@@ -1,7 +1,7 @@
 
 from datetime import datetime
 from urllib.request import urlopen
-import io
+import io, os
 import asyncio
 from PIL import Image
 from utils import makejson
@@ -20,6 +20,7 @@ class Main(Store):
         super().__init__(
             name = 'epic',
             id = '1',
+            discord_emoji = os.getenv('DISCORD_EPIC_EMOJI'),
             twitter_notification = True,
             bsky_notification = True,
             service_name = 'Epic Games',

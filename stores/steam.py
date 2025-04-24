@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, os
 from urllib.request import urlopen, Request, HTTPCookieProcessor, build_opener
 from bs4 import BeautifulSoup
 from stores._store import Store
@@ -18,6 +18,7 @@ class Main(Store):
         super().__init__(
             name = 'steam',
             id = '3',
+            discord_emoji = os.getenv('DISCORD_STEAM_EMOJI'),
             twitter_notification=True,
             service_name = 'Steam',
             scheduler_time=7200,
