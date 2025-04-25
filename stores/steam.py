@@ -43,7 +43,7 @@ class Main(Store):
                         ) + "&count=50&dynamic_data=&sort_by=_ASC&maxprice=free&snr=1_7_7_2300_7"
                         "&specials=1&infinite=1")
 
-                data = self.request_data(url)
+                data = await self.request_data(url)
                 soup = BeautifulSoup(data['results_html'], 'html.parser')
                 games = soup.findAll("a", {"class": "search_result_row ds_collapse_flag"})
 
@@ -53,7 +53,7 @@ class Main(Store):
                     game_name = game.find("span", {"class": "title"}).text
                     game_url = game['href']
                     appId = game['data-ds-appid']
-                    productType = self.request_data(f'{self.gamesInfoApi}={appId}')[appId]['data']['type']
+                    productType = (await self.request_data(f'{self.gamesInfoApi}={appId}'))[appId]['data']['type']
                     data = urlopen(Request(game_url))
                     soup = BeautifulSoup(data, 'html.parser')
                     end_date = soup.find("p", {"class":"game_purchase_discount_quantity"})
@@ -75,9 +75,10 @@ class Main(Store):
         '''
         Steam get
         '''
-        if await self.process_data(self.request_data(self.url)['total_count']):
-            # self.image = self.image_twitter = self.make_gif_image()
-            return 1
+        response = await self.request_data(self.url)
+        if response and 'total_count' in response:
+            if await self.process_data(response['total_count']):
+                return 1
         return 0
 
 if __name__ == "__main__":

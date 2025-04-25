@@ -245,7 +245,7 @@ class Main(Store):
         returns 0 if nothing changed 
         returns 1 if new data was found
         """
-        if await self.process_data(self.request_data(self.page)):
+        if await self.process_data(await self.request_data(self.page)):
             return 1
         return 0
 

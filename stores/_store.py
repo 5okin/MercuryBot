@@ -49,16 +49,18 @@ class Store:
         self.bsky_notification = bsky_notification
 
 
-    def request_data(self, url=None):
+    async def request_data(self, url=None):
         """
         Simple json getter
         """
         try:
-            data = urlopen(Request(url, headers={'User-Agent': 'Mozilla'}))
-            data = json.loads(data.read().decode())
-            return data
-        except (URLError, HTTPError) as e:
-            self.logger.debug("Request to %s failed %s", self.service_name, e)
+            timeout = aiohttp.ClientTimeout(total=10)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(url, headers={'User-Agent': 'Mozilla'}) as response:
+                    response.raise_for_status()
+                    return await response.json()
+        except:
+            self.logger.warning("Request to %s failed", self.service_name)
             return False
 
     def make_image(self):
