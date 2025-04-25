@@ -1,9 +1,8 @@
 # coding=utf-8
 
 import os
-import sys
+import time
 import asyncio
-import traceback
 import importlib
 
 from utils.database import Database
@@ -120,6 +119,9 @@ async def send_games_notification(store) -> None:
         await discord.dm_logs("Bluesky", bsky_url)
         Database.update_social_followers(bsky.get_follower_count())
 
+    start_time = time.time()
+    logger.info("Started sending Discord notifications...")
+
     servers_data = Database.get_discord_servers()
     for server in servers_data:
         try:
@@ -136,6 +138,10 @@ async def send_games_notification(store) -> None:
                     '_server_channel': server.get('channel', 'unkown'),
                     }
             )
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    logger.info(f"Finished sending Discord notifications to {len(servers_data)} servers. Time taken: {elapsed_time:.2f} seconds")
 
 #MARK: Scheduler loop
 async def scrape_scheduler() -> None:
