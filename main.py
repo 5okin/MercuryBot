@@ -42,7 +42,7 @@ def load_modules() -> list:
 
 load_modules()
 
-discord = discord.setup(modules)
+discord = discord.MyClient(modules)
 x = twitter.MyClient()
 bsky = blueSky.MyClient()
 

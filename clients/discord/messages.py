@@ -1,5 +1,4 @@
 import discord
-from datetime import datetime
 
 
 footer = ""
@@ -20,13 +19,8 @@ def epic(store, mobile=False):
         title = deal['title']
         link = deal['url']
 
-        # scrape_images.scrapeimages(title, data['image'])
-
         if deal['activeDeal']:
-            # startDate = get_date(data['startDate'])
             now_end_date = store.get_date(deal, 'end', True)
-            # now_end_date = get_date(deal['endDate'], True)
-
             # all_freenow += "• " + f"[**{title}**]({link})\n‎ [Launcher](com.epicgames.launcher://store/p/tomb-raider)\n"
             # all_freenow += "• " + f"[**{title}**]({link})\n‎" + "<com.epicgames.launcher://store/p/tomb-raider>\n"
             all_freenow += "• " + f"[**{title}**]({link})\n‎"
@@ -45,9 +39,6 @@ def epic(store, mobile=False):
         embed_var.add_field(name=f'\u200B\n**Up Next**', value=f"‎‎‎{game_details}\n\n{all_upnext}‎", inline=True)
     embed_var.set_footer(text=footer)
 
-    # embed_var.set_image(url='https://cdn.discordapp.com/attachments/827564503930765315/829040412060418078/img.jpg')
-    # embed_var.set_footer(text= footer)
-    # f.close()
     return embed_var
 
 
@@ -59,7 +50,6 @@ def gog(store, mobile=False):
         title = deal['title']
         link = deal['url']
         end_date = store.get_date(deal, 'end', True)
-        # all_freenow += "• " + f"[**{title}**]({link})\n‎"
         embed_var.add_field(name=f'\u200B\n', value=f"[**{title}**]({link})\nUntil: {end_date}", inline=False)
 
     embed_var.set_image(url="attachment://img.gif")
