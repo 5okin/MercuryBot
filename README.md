@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
+  <a href="https://discord.com/oauth2/authorize?client_id=827564914733350942">
     <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/discordservers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
   <a href="https://x.com/_MercuryBot_">
     <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/twitter&style=for-the-badge&logo=x"></a>
@@ -15,14 +15,14 @@ MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that moni
 
 <div align="center">
     <a href="https://x.com/_MercuryBot_"><img src="https://github.com/user-attachments/assets/e1d13e8e-93fc-49a0-99f1-6f03b74fae59" alt="X Link"></a>
-    <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot"><img src="https://github.com/user-attachments/assets/aaf0d3f0-eecc-4e87-9004-11171d68da00" alt="Discord Link"></a>
+    <a href="https://discord.com/oauth2/authorize?client_id=827564914733350942"><img src="https://github.com/user-attachments/assets/aaf0d3f0-eecc-4e87-9004-11171d68da00" alt="Discord Link"></a>
     <a href="https://bsky.app/profile/mercurybot.bsky.social"><img src="https://github.com/user-attachments/assets/64235e24-fc43-4305-b047-5e392e18c4c6" alt="Bluesky Link"></a>
 </div>
 
 <br>
 
 <p align='center'>
-    <a href= "https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot"> 
+    <a href= "https://discord.com/oauth2/authorize?client_id=827564914733350942"> 
     <img src="https://github.com/5okin/MercuryBot/assets/70406237/34d1a800-4dd5-4915-a02d-9c884848fcb3"></a>
 <p><br>
 
@@ -57,7 +57,7 @@ Discord             |  X            |  Bluesky
 
 ### How to use
 
-1. Invite MercuryBot to your Discord server. [<img src="https://github.com/5okin/MercuryBot/assets/70406237/9fbf5218-d5bc-476a-8892-2496a1bbe1ba">](https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot)
+1. Invite MercuryBot to your Discord server. [<img src="https://github.com/5okin/MercuryBot/assets/70406237/9fbf5218-d5bc-476a-8892-2496a1bbe1ba">](https://discord.com/oauth2/authorize?client_id=827564914733350942=bot)
 
 2. Run the `/settings` slash command and configure the bot:
 
