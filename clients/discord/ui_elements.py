@@ -3,7 +3,7 @@ import discord
 import asyncio
 from datetime import datetime
 from utils.database import Database
-from .embeds import settings_embed, settings_success
+from .embeds import settings_embed, settings_success, feedback_embed
 from utils import environment
 
 logger = environment.logging.getLogger("bot.discord")
@@ -12,14 +12,25 @@ logger = environment.logging.getLogger("bot.discord")
 # MARK: FooterButtons
 class FooterButtons(discord.ui.View):
     def __init__(self):
-        super().__init__()
-        button_vote = discord.ui.Button(label='Rate Us', style=discord.ButtonStyle.url, emoji='⭐', url='https://top.gg/bot/827564914733350942')
+        super().__init__(timeout=None)
+        self.add_item(RateUsButton())
         button_donate = discord.ui.Button(label='Donate', style=discord.ButtonStyle.url, emoji='💰',url='https://google.com')
         button_invite = discord.ui.Button(label='Invite', style=discord.ButtonStyle.url, emoji='🤖',url='https://discord.com/oauth2/authorize?client_id=827564914733350942')
-        self.add_item(button_vote)
         #self.add_item(button_donate)
         self.add_item(button_invite)
 
+
+class RateUsButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label='Rate Us', style=discord.ButtonStyle.primary, emoji='⭐', custom_id="rate_us_button")
+
+    async def callback(self, interaction: discord.Interaction):
+        if not interaction.response.is_done():
+            await interaction.response.send_message(
+                embed=feedback_embed(),
+                view=FeedBackView(),
+                ephemeral=True
+            )
 
 # MARK: BackButton
 class BackButton(discord.ui.Button):
@@ -35,7 +46,17 @@ class BackButton(discord.ui.Button):
             embed=settings_embed(self.client, interaction),
             view=Settings_buttons(self.client, settings_message=self.settings_message)
         )
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
+
+
+# MARK: FeedBackButton
+class FeedbackButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Submit Feedback", style=discord.ButtonStyle.primary)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(FeedbackModal())
 
 
 # MARK: FeedbackModal
@@ -68,18 +89,48 @@ class FeedbackModal(discord.ui.Modal, title='Feedback'):
         logger.error("Failed discord command /settings", extra={'_server_id': interaction.guild_id})
 
 
+# MARK: FeedBackView
+class FeedBackView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.add_item(discord.ui.Button(label="Vote on Top.gg", url="https://top.gg/bot/827564914733350942/vote"))
+        self.add_item(discord.ui.Button(label="See on discord discoverer", url="https://discord.com/discovery/applications/827564914733350942"))
+        self.add_item(discord.ui.Button(label="Join Support Server", url="https://discord.com/invite/AH8vQQJvGM"))
+        self.add_item(FeedbackButton())
+
+
 # MARK: Settings_buttons
 class Settings_buttons(discord.ui.View):
     def __init__(self, client, settings_message=None):
-        super().__init__()
+        super().__init__(timeout=300)
         self.client = client
         self.settings_message = settings_message
+        self.message = None
 
-        # Create buttons
         self.add_item(self.create_test_button())
         self.add_item(self.create_channel_button())
         self.add_item(self.create_role_button())
         self.add_item(self.create_store_button())
+
+    async def on_timeout(self):
+        self.client = None
+        self.settings_message = None
+        
+        for item in self.children:
+            item.disabled = True
+        try:
+            if self.message:
+                if self.message.embeds:
+                    expired_embed = self.message.embeds[0].copy()
+                    expired_embed.color = discord.Color.red()
+                    text = "This session has expired. Please run the `/settings` again !"
+                    expired_embed.set_footer(text="")
+                    expired_embed.add_field(name="🔴🔴🔴🔴", value=f"{text}", inline=False)
+                    await self.message.edit(embed=expired_embed, view=self)
+                self.message = None
+        except:
+            logger.error("Failed to cleanup after /Settings embed")
+
 
     def create_test_button(self):
         button = discord.ui.Button(
@@ -217,7 +268,8 @@ class Channel_Select(discord.ui.ChannelSelect):
             embed=settings_embed(self.client, interaction, change_note="Channel updated!"),
             view=Settings_buttons(self.client, settings_message=self.settings_message)
         )
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
 
 # MARK: Role select
@@ -304,8 +356,9 @@ class Role_Select(discord.ui.Select):
             content=None,
             embed=settings_embed(self.client, interaction, change_note="Role updated !"),
             view=Settings_buttons(self.client, settings_message=self.settings_message)
-            )
-        await interaction.response.defer()
+        )
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
 
 # MARK: Store select
@@ -368,7 +421,7 @@ class Store_Select(discord.ui.Select):
         # view.add_item(updated_selector)
 
         # embed = discord.Embed(title="✅ Stores updated ✅", description="", color=0x009933)
-        embed = settings_success("")
+        embed = settings_success()
         await self.settings_message.edit(content=None, embed=embed, view=None)
         
         await asyncio.sleep(1)
@@ -376,5 +429,6 @@ class Store_Select(discord.ui.Select):
             content=None,
             embed=settings_embed(self.client, interaction, change_note="Stores updated!"),
             view=Settings_buttons(self.client, settings_message=self.settings_message)
-            )
-        await interaction.response.defer()
+        )
+        if not interaction.response.is_done():
+            await interaction.response.defer()

@@ -31,14 +31,25 @@ def settings_embed(client, interaction, change_note=None):
     if change_note:
         embed.set_footer(text=f"☑️ {change_note} ☑️")
     else:
-        embed.set_footer(text="❗This message will automatically update when changes are made❗")
+        embed.set_footer(text="This message will automatically update when changes are made❗")
     return embed
 
     #   embed = settings_success(message=f"Role set to: {role_msg}")
-def settings_success(message):
+def settings_success(message=""):
     embed = discord.Embed(
         title=f"✅ Settings Updated ✅",
         description=message,
         color=0x009933
         )
+    return embed
+
+
+def feedback_embed():
+    embed = discord.Embed(title="We’d love your feedback! 💬", color=0x00aff4)
+    embed.set_thumbnail(url="https://5okin.github.io/mercurybot-web/images/mercury_avatar.gif")
+    embed.add_field(name="top.gg", value="Vote and leave feedback on top.gg so others can discover the bot!", inline=True)
+    embed.add_field(name="Discord Discoverer", value="Take a sneak peek right here on discord !", inline=False)
+    embed.add_field(name="Submit feedback", value="Send Feedback straight to the developer without leaving discord", inline=False)
+    embed.add_field(name="Join the Support server", value="Need help setting up or have a question? Stop by and ask—we're here to help!", inline=False)
+    embed.add_field(name="Support on github", value="MercuryBot is [Open-source at github!](https://github.com/5okin/MercuryBot)", inline=False)
     return embed

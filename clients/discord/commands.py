@@ -2,8 +2,8 @@ import io
 import discord
 from discord import app_commands
 import clients.discord.messages as messages
-from .ui_elements import FeedbackModal, FooterButtons, Settings_buttons
-from .embeds import settings_embed
+from .ui_elements import FooterButtons, Settings_buttons, FeedBackView
+from .embeds import settings_embed, feedback_embed
 from utils import environment
 
 logger = environment.logging.getLogger("bot.discord")
@@ -40,7 +40,7 @@ def define_commands(self):
     # MARK: Feedback
     @self.tree.command(description="Submit feedback")
     async def feedback(interaction: discord.Interaction):
-        await interaction.response.send_modal(FeedbackModal())
+        await interaction.response.send_message(embed=feedback_embed(), view=FeedBackView(), ephemeral=True)
 
     # MARK: Settings
     @app_commands.default_permissions(manage_guild=True)
@@ -58,13 +58,13 @@ def define_commands(self):
             if not interaction.response.is_done():
                 await interaction.response.defer(thinking=True, ephemeral=True)
 
+            view = Settings_buttons(self)
             embed = settings_embed(self, interaction)
-            message = await interaction.followup.send(embed=embed, view=Settings_buttons(self), ephemeral=True)
-
-            # message = await interaction.original_response()
+            message = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+            view.message = message
             await message.edit(view=Settings_buttons(self, settings_message=message))
         except:
-            logger.error("Failed discord command /settings", 
+            logger.warning("Failed discord command /settings", 
                 extra={
                     '_server_id': interaction.guild_id
                 }

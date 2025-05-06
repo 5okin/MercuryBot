@@ -2,6 +2,7 @@ import os
 from utils.database import Database
 from datetime import datetime
 from utils import environment
+from .ui_elements import FooterButtons
 
 logger = environment.logging.getLogger("bot.discord")
 
@@ -11,6 +12,7 @@ def setup_events(client):
     # MARK: on_ready
     @client.event
     async def on_ready():
+        client.add_view(FooterButtons())
         # Check if connected to all guilds stored in db, only applicable if removed while bot was offline
         servers_data = Database.get_discord_servers()
         guild_ids = [server.id for server in client.guilds]
