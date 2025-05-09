@@ -123,12 +123,14 @@ async def send_games_notification(store) -> None:
     logger.info("Started sending Discord notifications...")
 
     servers_data = Database.get_discord_servers()
+    servers_notified = 0
     for server in servers_data:
         try:
             # Check server notification settings
             if str(store.id) in str(server.get('notification_settings')):
                 if server.get('channel'):
                     await discord.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'))
+                    servers_notified+=1
         except:
             logger.error("Failed to send notification", 
                     extra={
@@ -141,7 +143,7 @@ async def send_games_notification(store) -> None:
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-    logger.info(f"Finished sending Discord notifications to {len(servers_data)} servers. Time taken: {elapsed_time:.2f} seconds")
+    logger.info(f"Finished sending Discord notifications to {servers_notified}/{len(servers_data)} servers. Time taken: {elapsed_time:.2f} seconds")
 
 #MARK: Scheduler loop
 async def scrape_scheduler() -> None:
