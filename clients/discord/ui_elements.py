@@ -102,7 +102,7 @@ class FeedBackView(discord.ui.View):
 # MARK: Settings_buttons
 class Settings_buttons(discord.ui.View):
     def __init__(self, client, settings_message=None):
-        super().__init__(timeout=300)
+        super().__init__(timeout=270)
         self.client = client
         self.settings_message = settings_message
         self.message = None
@@ -127,6 +127,8 @@ class Settings_buttons(discord.ui.View):
                     expired_embed.set_footer(text="")
                     expired_embed.add_field(name="🔴🔴🔴🔴", value=f"{text}", inline=False)
                     await self.message.edit(embed=expired_embed, view=self)
+                await asyncio.sleep(60)
+                await self.message.delete()
                 self.message = None
         except:
             logger.error("Failed to cleanup after /Settings embed")
@@ -249,15 +251,14 @@ class Channel_Select(discord.ui.ChannelSelect):
                 view=view
             )
             return
+        
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
         Database.insert_discord_server([{
             'server': interaction.guild.id,
             'channel': selected_channel.id
         }])
-
-        # updated_selector = Channel_Select(self.client, settings_message=self.settings_message, default=selected_channel.id)
-        # view = discord.ui.View()
-        # view.add_item(updated_selector)
 
         embed = settings_success(message=f"Channel set to: <#{str(selected_channel.id)}>")
         await self.settings_message.edit(content=None, embed=embed, view=None)
@@ -268,8 +269,6 @@ class Channel_Select(discord.ui.ChannelSelect):
             embed=settings_embed(self.client, interaction, change_note="Channel updated!"),
             view=Settings_buttons(self.client, settings_message=self.settings_message)
         )
-        if not interaction.response.is_done():
-            await interaction.response.defer()
 
 
 # MARK: Role select
@@ -330,6 +329,9 @@ class Role_Select(discord.ui.Select):
         self.settings_message = settings_message
 
     async def callback(self, interaction: discord.Interaction):
+        if not interaction.response.is_done():
+            await interaction.response.defer()
+
         selected_value = self.values[0]
         role = int(selected_value) if selected_value and (selected_value != "None") else None
         
@@ -343,10 +345,6 @@ class Role_Select(discord.ui.Select):
             'server': interaction.guild_id,
             'role': role
         }])
-        
-        # updated_selector = Role_Select(self.client, interaction, default=role, settings_message=self.settings_message)
-        # view = discord.ui.View()
-        # view.add_item(updated_selector)
 
         embed = settings_success(message=f"Role set to: {role_msg}")
         await self.settings_message.edit(content=None, embed=embed, view=None)
@@ -357,8 +355,6 @@ class Role_Select(discord.ui.Select):
             embed=settings_embed(self.client, interaction, change_note="Role updated !"),
             view=Settings_buttons(self.client, settings_message=self.settings_message)
         )
-        if not interaction.response.is_done():
-            await interaction.response.defer()
 
 
 # MARK: Store select
@@ -403,6 +399,9 @@ class Store_Select(discord.ui.Select):
         self.settings_message = settings_message
 
     async def callback(self, interaction: discord.Interaction):
+        if not interaction.response.is_done():
+            await interaction.response.defer()
+
         selected_stores = self.values
         store_ids = [store.id for store in self.client.modules if store.name in selected_stores]
 
@@ -420,7 +419,6 @@ class Store_Select(discord.ui.Select):
         # view = discord.ui.View()
         # view.add_item(updated_selector)
 
-        # embed = discord.Embed(title="✅ Stores updated ✅", description="", color=0x009933)
         embed = settings_success()
         await self.settings_message.edit(content=None, embed=embed, view=None)
         
@@ -430,5 +428,3 @@ class Store_Select(discord.ui.Select):
             embed=settings_embed(self.client, interaction, change_note="Stores updated!"),
             view=Settings_buttons(self.client, settings_message=self.settings_message)
         )
-        if not interaction.response.is_done():
-            await interaction.response.defer()
