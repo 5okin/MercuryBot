@@ -200,7 +200,9 @@ class Settings_buttons(discord.ui.View):
                     await channel.send(embed=embed)
                 await interaction.response.defer()
             else:
-                await interaction.response.send_message(embed=permissions['embed'], view=Settings_buttons(), ephemeral=True)
+                if not interaction.response.is_done():
+                    await interaction.response.defer()
+                await self.settings_message.edit(embed=permissions['embed'], view=Settings_buttons(self.client, self.settings_message))
         else:
             await interaction.response.send_message("You have to set a channel first in order to test the notification", ephemeral=True)
 
