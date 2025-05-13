@@ -3,6 +3,7 @@ import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from utils import environment
+from datetime import datetime, timezone
 
 logger = environment.logging.getLogger("bot.database")
 
@@ -87,11 +88,20 @@ class Database(object):
         Removes the server from the database when the bot is kicked.
         Important so it doesnt try to send messages to a server its no longer connected to.
         '''
+        server = Database.servers['discord'].find_one({'server': guildId})
+        
+        joined_date = server.get('joined')
+        duration = 0
+        if joined_date:
+            duration = datetime.now(timezone.utc) - joined_date.replace(tzinfo=timezone.utc)
+
         result = Database.servers['discord'].delete_one({'server': guildId})
 
         # Check if the document was deleted successfully
         if result.deleted_count == 1:
-            logger.info('Document deleted successfully for %s', guildId)
+            logger.info('Document deleted successfully for %s', guildId,
+                        extra={'_Joined for:': duration, '_detailed': server}    
+            )
         else:
             logger.info('No server found.')
 
