@@ -49,7 +49,7 @@ class Store:
         self.bsky_notification = bsky_notification
 
 
-    async def request_data(self, url=None):
+    async def request_data(self, url=None, mode='json'):
         """
         Simple json getter
         """
@@ -58,10 +58,17 @@ class Store:
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.get(url, headers={'User-Agent': 'Mozilla'}) as response:
                     response.raise_for_status()
-                    return await response.json()
+                    if mode == 'json':
+                        return await response.json()
+                    elif mode == 'text':
+                        return await response.text()
+                    else:
+                        raise ValueError(f"Unsupported mode: {mode}")                    
+ 
         except:
             self.logger.warning("Request to %s failed", self.service_name)
             return False
+
 
     def make_image(self):
         '''

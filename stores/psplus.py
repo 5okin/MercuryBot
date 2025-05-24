@@ -21,11 +21,11 @@ class Main(Store):
         )
 
 
-    async def request_data(self, url=None):
+    async def process_data(self):
         """
         get data for psplus
         """
-        data = urlopen(Request(self.url))
+        data = await self.request_data(self.url, mode="text")
         soup = BeautifulSoup(data, 'html.parser')
         games = soup.find("div", {"class": "content-grid layout__3--a"})
         games = games.select("div[class^='box']")
@@ -53,7 +53,7 @@ class Main(Store):
         """
         psplus get
         """
-        if await self.request_data(self.url):
+        if await self.process_data():
             return 1
         return 0
 
