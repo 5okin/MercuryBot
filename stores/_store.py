@@ -147,35 +147,32 @@ class Store:
         return arr
 
     def process_images(self, image_bytes_list, size):
+
+        def make_divisible_by_16(width, height):
+            return (width + 15) // 16 * 16, (height + 15) // 16 * 16
         
         arr = io.BytesIO()
         arr_mp4 = io.BytesIO()
 
         # Open images with PIL
-        img, *imgs = [Image.open(img_bytes).convert("RGB") for img_bytes in image_bytes_list]
+        imgs = [Image.open(img_bytes).convert("RGB") for img_bytes in image_bytes_list]
 
-        img.thumbnail((img.size[0]//size, img.size[1]//size))
-        for im in imgs:
-            im.thumbnail((im.size[0]//size, im.size[1]//size))
+        target_width = min(img.width for img in imgs) // size
+        target_height = min(img.height for img in imgs) // size
 
-        img.save(fp=arr, format='GIF', append_images=imgs, save_all=True, duration=2000, loop=0)
+        video_width, video_height = make_divisible_by_16(target_width, target_height)
+        resized_imgs = [img.resize((video_width, video_height)) for img in imgs]
+
+        resized_imgs[0].save(fp=arr, format='GIF', append_images=resized_imgs[1:], save_all=True, duration=2000, loop=0)
 
         # Create MP4
         writer = imageio.get_writer(arr_mp4, fps=5, format='mp4')
         frame_duration = 3
 
-        for img_bytes in image_bytes_list:
-            image = Image.open(img_bytes).convert("RGB")
-            image.thumbnail((image.size[0]//size, image.size[1]//size))
-            width, height = image.size
-            new_width = ((width + 16 - 1) // 16) * 16
-            new_height = ((height + 16 - 1) // 16) * 16
-            image = image.resize((new_width, new_height))
-            image_np = np.array(image)
-
+        for img in resized_imgs:
             # 3 seconds for each frame
             for _ in range(frame_duration * 5):
-                writer.append_data(image_np)
+                writer.append_data(np.array(img))
 
         writer.close()
         arr_mp4.seek(0)

@@ -56,7 +56,6 @@ class Main(Store):
                     game_url = 'https://store.epicgames.com/en-US/free-games'
 
                 # Get the game image
-
                 try:
                     tall_image_url: str = None
                     wide_image_url: str = None
@@ -64,30 +63,14 @@ class Main(Store):
                     # Loop through the key images
                     for j, image in enumerate(game['keyImages']):
                         image_type = image['type']
-                        
-                        # Check for the wide image for Twitter
-                        if image_type == 'OfferImageWide':
+
+                        if wide_image_url and tall_image_url:
+                            break
+
+                        if "Tall" in image_type:
+                            tall_image_url = image['url']
+                        elif "Wide" in image_type:
                             wide_image_url = image['url']
-
-                        priority_types = ['VaultOpened', 'DieselStoreFrontTall', 'Thumbnail', 'DieselStoreFrontWide', 'VaultClosed']
-                        while priority_types and not tall_image_url:
-                            current_priority = priority_types.pop(0)
-                            
-                            if image_type == current_priority:
-                                if image_type == 'VaultClosed' and j + 2 < len(game['keyImages']):
-                                    tall_image_url = game['keyImages'][j + 2]['url']
-                                else:
-                                    tall_image_url = image['url']
-                                break
-                        
-                        # if wide_image_url and tall_image_url:
-                        #     break
-
-                    # Ensure that if one is None, it takes the value of the other
-                    if wide_image_url is None and tall_image_url is not None:
-                        wide_image_url = tall_image_url
-                    elif tall_image_url is None and wide_image_url is not None:
-                        tall_image_url = wide_image_url
 
                 except Exception as e:
                     tall_image_url = wide_image_url = game['keyImages'][0]['url']
