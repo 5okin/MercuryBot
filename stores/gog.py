@@ -38,39 +38,38 @@ class Main(Store):
         '''
         Search gog front page for giveaways
         '''
-        async with aiohttp.ClientSession() as session:
-            async with session.get(self.base_url, headers={'User-Agent': 'Mozilla'}) as response:
-                html_content = await response.text()
+        html_content = await self.request_data(self.base_url, 'text')
 
+        giveaway = None
+        if html_content:
             soup = BeautifulSoup(html_content, 'html.parser')
             game_url = None
             game_id = None
             giveaway = soup.find(id="giveaway")
 
-            if giveaway:
-                self.logger.debug('Theres a giveaway')
-                game_url = self.base_url + giveaway['ng-href'] if giveaway.get('ng-href') is not None else None
-                giveaway = giveaway.find("a", {"class": "giveaway__overlay-link"})
-                
-                if giveaway:
-                    game_url = giveaway['href'] if giveaway.get('href') is not None else None
-
-                if game_url:
-                    game_page = BeautifulSoup(urlopen(game_url),'html.parser')
-                    game_id = game_page.find("div",{"card-product" : True}).attrs["card-product"]
-                    offer_until = game_page.find("span",class_="product-actions__time").text.rsplit(' ', 1)[0]
-                    offer_until = self.parse_date(offer_until, ["%d/%m/%Y %H:%M", "%m/%d/%Y %H:%M"])
+        if giveaway:
+            self.logger.debug('Theres a giveaway')
+            game_url = self.base_url + giveaway['ng-href'] if giveaway.get('ng-href') is not None else None
+            giveaway = giveaway.find("a", {"class": "giveaway__overlay-link"})
             
-                api_search = urlopen(f"https://api.gog.com/v2/games/{game_id}")
-                games = json.loads(api_search.read().decode())
-                game_title = games['_embedded']['product']['title']
-                game_image = games['_links']['boxArtImage']['href']
-                game_url = self.giveawayUrl
-                offer_from  = datetime.now()
+            if giveaway:
+                game_url = giveaway['href'] if giveaway.get('href') is not None else None
 
-                json_data = makejson.data(json_data, game_title, 1, game_url, game_image, offer_from, offer_until)
-            else:
-                return
+            if game_url:
+                game_page = BeautifulSoup(urlopen(game_url),'html.parser')
+                game_id = game_page.find("div",{"card-product" : True}).attrs["card-product"]
+                offer_until = game_page.find("span",class_="product-actions__time").text.rsplit(' ', 1)[0]
+                offer_until = self.parse_date(offer_until, ["%d/%m/%Y %H:%M", "%m/%d/%Y %H:%M"])
+        
+            games = await self.request_data(f"https://api.gog.com/v2/games/{game_id}")
+            game_title = games['_embedded']['product']['title']
+            game_image = games['_links']['boxArtImage']['href']
+            game_url = self.giveawayUrl
+            offer_from  = datetime.now()
+
+            json_data = makejson.data(json_data, game_title, 1, game_url, game_image, offer_from, offer_until)
+        else:
+            return
 
 
     def create_urls(self):
@@ -84,17 +83,17 @@ class Main(Store):
         self.logger.debug('GoG scraped: %s pages', total_number_of_pages)
 
 
-    async def request_data(self, session, url):
-        try:
-            async with session.get(url) as response:
-                if response.status != 200:
-                    return None
-                else:
-                    self.urls.remove(url)
-                    json_response = await response.json()
-                    return json.loads(json.dumps(json_response))
-        except Exception as e:
-            self.logger.error('Gog request data broke: %s', str(e))
+    # async def request_data(self, session, url):
+    #     try:
+    #         async with session.get(url) as response:
+    #             if response.status != 200:
+    #                 return None
+    #             else:
+    #                 self.urls.remove(url)
+    #                 json_response = await response.json()
+    #                 return json.loads(json.dumps(json_response))
+    #     except Exception as e:
+    #         self.logger.error('Gog request data broke: %s', str(e))
 
     async def client_session(self):
         '''
