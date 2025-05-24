@@ -8,7 +8,7 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from typing import List, Optional, IO
 from PIL import Image
-from utils import environment
+from utils import environment, database
 from datetime import datetime, timedelta
 
 
@@ -227,6 +227,15 @@ class Store:
         """
         Compare local deals with current deals online
         """
+        working_off= 'local'
+
+        if json_data and not self.data:
+            # If self.data is None, then maybe the last run it was removed because site was down / missed deal
+            # Check with database data to make sure the "new" deal isnt actually the old/prev deal.
+            database_data = database.Database.find(self.name)
+            self.data = database_data
+            working_off = 'database'
+            
         # Theres local data and data online
         if json_data and self.data:
 
@@ -253,17 +262,14 @@ class Store:
                 if len(local_titles) > len(online_titles):
                     self.data = json_data.copy()
                     await self.set_images()
+                elif working_off == 'database':
+                    self.data = json_data
+                    await self.set_images()
                 return 0
             else:
                 self.data = json_data
                 await self.set_images()
                 return 1
-
-        # Data is empty but theres data online (1st run)
-        elif json_data and not self.data:
-            self.data = json_data
-            await self.set_images()
-            return 1
 
         # Theres no data online
         elif not json_data:
