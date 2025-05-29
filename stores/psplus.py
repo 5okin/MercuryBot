@@ -27,7 +27,7 @@ class Main(Store):
         """
         data = await self.request_data(self.url, mode="text")
         soup = BeautifulSoup(data, 'html.parser')
-        games = soup.find("div", {"class": "content-grid layout__3--a"})
+        games = soup.findAll("section", {"id": "monthly-games"})[1]
         games = games.select("div[class^='box']")
         json_data = []
 
@@ -59,6 +59,12 @@ class Main(Store):
 
 
 if __name__ == "__main__":
+    from utils.database import Database
+    from utils import environment
+
     a = Main()
+    Database([a])
+    Database.connect(environment.DB)
+
     asyncio.run(a.get())
     print(a.data)
