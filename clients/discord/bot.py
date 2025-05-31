@@ -105,7 +105,7 @@ class MyClient(discord.Client):
 
         text_message = f"**{embed.title}**\n{embed.description}\n"
         for field in embed.fields:
-            text_message += f"**{field.name}**: {field.value}\n"
+            text_message += f"**{field.name}** {field.value}\n"
 
         permission_status = {
             "has_all_permissions": has_all_permissions,
@@ -136,53 +136,65 @@ class MyClient(discord.Client):
                 message_to_show = getattr(messages, store.name)
                 server = self.get_guild(server)
                 if store.data:
-                    #try:
-                        if isinstance(store.image, io.BytesIO):
-                            store.image.seek(0)
-                            file = discord.File(store.image, filename='img.' + store.image_type.lower())
+                    if isinstance(store.image, io.BytesIO):
+                        store.image.seek(0)
+                        file = discord.File(store.image, filename='img.' + store.image_type.lower())
+                    else:
+                        img = io.BytesIO()
+                        store.image.save(img, format=store.image_type)
+                        img.seek(0)
+                        if store.image_type == 'JPEG':
+                            filetype = 'jpg'
                         else:
-                            img = io.BytesIO()
-                            store.image.save(img, format=store.image_type)
-                            img.seek(0)
-                            if store.image_type == 'JPEG':
-                                filetype = 'jpg'
-                            else:
-                                filetype = store.image_type.lower()
-                            file = discord.File(img, filename='img.' + filetype)
+                            filetype = store.image_type.lower()
+                        file = discord.File(img, filename='img.' + filetype)
 
-                        channel = self.get_channel(channel)
+                    channel = self.get_channel(channel)
 
-                        if role and role == server.default_role.id:
-                            role = '@everyone'
-                        elif role:
-                            role = f' <@&{role}>'
+                    if role and role == server.default_role.id:
+                        role = '@everyone'
+                    elif role:
+                        role = f' <@&{role}>'
 
-                        default_txt = f'{store.service_name} has new free games'
-                        permissions = self.check_channel_permissions(channel)
+                    default_txt = f'{store.service_name} has new free games'
+                    permissions = self.check_channel_permissions(channel)
 
-                        if permissions['has_all_permissions']: 
-                            await channel.send(
-                                default_txt + f' {role}' if role else default_txt, 
-                                embed=message_to_show(store),
-                                view=FooterButtons(),
-                                file=file
-                            )
+                    if permissions['has_all_permissions']: 
+                        await channel.send(
+                            default_txt + f' {role}' if role else default_txt, 
+                            embed=message_to_show(store),
+                            view=FooterButtons(),
+                            file=file
+                        )
 
-                        # Check if you can send a permissions notification msg
-                        elif permissions['permission_details'].send_messages:
+                    # Check if you can send a permissions notification msg to selected channel
+                    elif permissions['permission_details'].send_messages:
+                        await channel.send(content=permissions['text_message'])
+
+                    else:
+                        # Check if you can send permissions notification msg to system channel
+                        if server.system_channel and server.system_channel.permissions_for(server.me).send_messages:
+                            channel = server.system_channel
                             await channel.send(content=permissions['text_message'])
 
+                        # Try sending permissions notification msg to server owner as dm
                         else:
-                            permissions = self.check_channel_permissions(server.system_channel)
-                            # Check if you can send to system channel
-                            if permissions['permission_details'].send_messages:
-                                channel = server.system_channel
-                                await channel.send(content=permissions['text_message'])
-
-                            # Nothing worked send the owner a dm
-                            else:
-                                owner = await self.fetch_user(server.owner_id)
+                            owner = await self.fetch_user(server.owner_id)
+                            try:
                                 await owner.send(
                                     f"Hello {owner.name}, we noticed that the bot does not have all the required permissions for **{server.name}**.\n"
                                     "The bot is unable to send game notifications without these permissions !!\n"
                                     "Please update the bot settings from your server using the `/settings` command and removing and re-adding the desired channel 😊")
+                            except discord.Forbidden:
+                                # Try sending permissions notification msg to any server channel:
+                                logger.info("Could not DM the server owner %s: %s.", owner.name, server.owner_id, extra={
+                                    '_store_name': getattr(store, 'name', 'unkown'),
+                                    '_server_name':server.name,
+                                    '_server_id': server.id,
+                                })
+                                for public_channel in server.text_channels:
+                                    if public_channel.permissions_for(server.me).send_messages:
+                                        await public_channel.send(content=permissions['text_message'])
+                                        logger.info("Send permission notification for %s to public channel", server.id)
+                                        return
+                                logger.warning("Failed to notify server %s for permission problems", server.id)
