@@ -52,22 +52,24 @@ def setup_events(client):
 
         # Else try to find another text channel to post in
         else:
-            channel_found = False
             for channel in guild.text_channels:
                 if channel.permissions_for(guild.me).send_messages:
                     await channel.send(msg)
                     default_channel = channel.id
-                    channel_found = True
                     break
             
-            if not channel_found:
+        if not default_channel:
+            try:
                 owner = await client.fetch_user(guild.owner_id)
                 await owner.send(
                     f"Hello {owner.name}, we noticed that the bot does not have permissions to view any channel for **{guild.name}**.\n"
                     "Please give permissions to the bot so that you can start the setup process !!\n"
                     "Click on the 3 dots next to a channel name / Edit channel / Permissions"
                     "After adding the bot to a channel you can run the `/settings` command to set it up how you wish !")
-
+            except Exception as e:
+                logger.warning("Could not send welcome message using any method for %s", guild.id,
+                            extra={'_error:': e})
+        
         Database.insert_discord_server([{
             'server': guild.id,
             'channel': default_channel,

@@ -4,7 +4,7 @@ from utils.database import Database
 
 def settings_embed(client, interaction, change_note=None):
     server = Database.get_discord_server(interaction.guild_id)
-    channel = '<#'+str(server.get('channel'))+'>' if server and server.get('channel') else 'None'
+    channel = '<#'+str(server.get('channel'))+'>' if server and server.get('channel') else '`None`'
     
     if (server.get('role') == interaction.guild.default_role.id):
         role = '@everyone'

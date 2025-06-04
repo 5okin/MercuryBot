@@ -89,6 +89,10 @@ class Database(object):
         Important so it doesnt try to send messages to a server its no longer connected to.
         '''
         server = Database.servers['discord'].find_one({'server': guildId})
+
+        if not server:
+            logger.info('Document for server %s was not found', guildId)
+            return
         
         joined_date = server.get('joined')
         duration = 0
