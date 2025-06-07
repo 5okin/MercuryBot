@@ -15,7 +15,7 @@ class MyClient():
         return super(MyClient, cls).__new__(cls)
 
     def __init__(self):
-        self.name = 'blueSky'
+        self.name = 'bluesky'
         self.client = Client()
         self.client.login(environment.BSKY_USER, environment.BSKY_PASSWORD)
 
