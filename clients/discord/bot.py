@@ -69,16 +69,17 @@ class MyClient(discord.Client):
             # object to match discords API response to channel permissions
             class PermissionDetails:
                 def __init__(self):
-                        self.view_channel = False
-                        self.send_messages = False
-                        self.embed_links = False
-                        self.attach_files = False
+                    self.view_channel = False
+                    self.send_messages = False
+                    self.embed_links = False
+                    self.attach_files = False
             embed = discord.Embed(
                 title="❌ Channel Not Found",
                 description="The selected channel does not exist or I can't access it",
                 color=0xff0000
             )
-            return {"has_all_permissions": False, "permission_details": PermissionDetails(), "embed": embed}
+            msg = "**❌ Channel Not Found**\nThe selected channel does not exist or I can't access it\n"
+            return {"has_all_permissions": False, "permission_details": PermissionDetails(), "embed": embed, "text_message": msg}
 
         guild = channel.guild
         required_permissions  = ['view_channel', 'send_messages', 'embed_links', 'attach_files']
@@ -159,7 +160,7 @@ class MyClient(discord.Client):
                     default_txt = f'{store.service_name} has new free games'
                     permissions = self.check_channel_permissions(channel)
 
-                    if permissions['has_all_permissions']: 
+                    if permissions['has_all_permissions']:
                         await channel.send(
                             default_txt + f' {role}' if role else default_txt, 
                             embed=message_to_show(store),
@@ -172,10 +173,11 @@ class MyClient(discord.Client):
                         await channel.send(content=permissions['text_message'])
 
                     else:
-                        # Check if you can send permissions notification msg to system channel
-                        if server.system_channel and server.system_channel.permissions_for(server.me).send_messages:
-                            channel = server.system_channel
-                            await channel.send(content=permissions['text_message'])
+                        # Check if you can send permissions notification embed or msg to system channel
+                        if server.system_channel and server.system_channel.permissions_for(server.me).embed_links:
+                            await server.system_channel.send(embed=permissions['embed'])
+                        elif server.system_channel.permissions_for(server.me).send_messages:
+                            await server.system_channel.send(content=permissions['text_message'])
 
                         # Try sending permissions notification msg to server owner as dm
                         else:
@@ -188,6 +190,7 @@ class MyClient(discord.Client):
                             except discord.Forbidden:
                                 # Try sending permissions notification msg to any server channel:
                                 logger.info("Could not DM the server owner %s: %s.", owner.name, server.owner_id, extra={
+                                    '_channel': channel,
                                     '_store_name': getattr(store, 'name', 'unkown'),
                                     '_server_name':server.name,
                                     '_server_id': server.id,
