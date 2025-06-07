@@ -1,4 +1,5 @@
 import os
+import asyncio
 from utils.database import Database
 from datetime import datetime
 from utils import environment
@@ -21,6 +22,14 @@ def setup_events(client):
         not_in_guilds = [server for server in servers_data_ids if server not in guild_ids]
         for guild in not_in_guilds:
             Database.remove_server(guild)
+
+        # Update server populations
+        for guild in client.guilds:
+            payload = ([{
+                'server': guild.id,
+                'population' : guild.member_count
+            }])
+            await asyncio.to_thread(Database.insert_discord_server, payload)
 
         if client.ADMIN_USER:
             await client.ADMIN_USER.send(f"**Status** {client.user} `Started/Restarted and ready`, connected to {len(client.guilds)} servers")
