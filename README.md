@@ -1,6 +1,8 @@
 <div align="center">
   <a href="https://discord.com/oauth2/authorize?client_id=827564914733350942">
     <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/discordservers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
+  <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
+    <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/discordusers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
   <a href="https://x.com/_MercuryBot_">
     <img src="https://img.shields.io/endpoint?url=https://shieldsio-api-production.up.railway.app/api/stats/twitter&style=for-the-badge&logo=x"></a>
   <a href="https://bsky.app/profile/mercurybot.bsky.social">
@@ -67,7 +69,7 @@ Discord             |  X            |  Bluesky
     - `Set stores`: Set the store you wish to receive notifications for.
 
 <p align='center'>
-    <image src="https://github.com/user-attachments/assets/d90ebcab-0676-4a47-a15a-c99368281d8b">
+    <image src="https://github.com/user-attachments/assets/7ac02668-ed91-41ae-b12a-576788b64b99">
 <p>
 
 3. Enjoy automatic alerts for new free games on various platforms.
@@ -87,7 +89,7 @@ Discord             |  X            |  Bluesky
 
 - When setting a channel, you will be notified if you select a channel that the bot lacks permissions for.
 <p align='center'>
- <image src="https://github.com/user-attachments/assets/331c84e4-4a2f-424d-aabb-3361bef62722">
+ <image src="https://github.com/user-attachments/assets/29d6541a-dfb3-4456-bcf2-7db7d02b0f74">
 <p>
 
 - The `Set role` button allowes you set the role that will be pinged when a notification is send, you can choose not to ping any roles.
@@ -97,7 +99,7 @@ Discord             |  X            |  Bluesky
 
 - The `Set stores` button allows you change the stores for which you receive notifications.
 <p align='center'>
- <image src="https://github.com/user-attachments/assets/4a468df7-1ae5-4b7a-9457-15b8b90f6cf1">
+ <image src="https://github.com/user-attachments/assets/f3c16310-3439-4a11-afaf-5413b0dbfcf9">
 <p>
 
 ## Project Structure
