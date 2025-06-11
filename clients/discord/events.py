@@ -84,6 +84,7 @@ def setup_events(client):
             'channel': default_channel,
             'server_name': guild.name,
             'joined': datetime.now(),
+            'population': guild.member_count,
             'notification_settings': 1
         }])
 
