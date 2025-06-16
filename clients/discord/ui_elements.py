@@ -334,7 +334,7 @@ class Role_Select(discord.ui.Select):
         if not interaction.response.is_done():
             await interaction.response.defer()
 
-        selected_value = self.values[0]
+        selected_value = self.values[0] if len(self.values) else "None"
         role = int(selected_value) if selected_value and (selected_value != "None") else None
         
         role_msg = "I wont ping anyone"
