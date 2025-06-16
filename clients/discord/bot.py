@@ -176,7 +176,7 @@ class MyClient(discord.Client):
                         # Check if you can send permissions notification embed or msg to system channel
                         if server.system_channel and server.system_channel.permissions_for(server.me).embed_links:
                             await server.system_channel.send(embed=permissions['embed'])
-                        elif server.system_channel.permissions_for(server.me).send_messages:
+                        elif server.system_channel and server.system_channel.permissions_for(server.me).send_messages:
                             await server.system_channel.send(content=permissions['text_message'])
 
                         # Try sending permissions notification msg to server owner as dm
