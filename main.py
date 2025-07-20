@@ -4,6 +4,7 @@ import os
 import time
 import asyncio
 import importlib
+import psutil, tracemalloc
 
 from utils.database import Database
 from utils import environment
@@ -46,6 +47,17 @@ discord = discord.MyClient(modules)
 x = twitter.MyClient()
 bsky = blueSky.MyClient()
 
+
+def log_memory(tag=""):
+    process = psutil.Process(os.getpid())
+    mem = process.memory_info().rss / (1024 * 1024)
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
+
+    extra = {f'_{i+1}': top_stats[i] for i in range(min(5, len(top_stats)))}
+    logger.info(f"[{tag}] RAM Usage: {mem:.2f} MB", extra = extra)
+
+
 #MARK: Update
 async def update(update_store=None) -> None:
     '''
@@ -61,9 +73,11 @@ async def update(update_store=None) -> None:
         if update_store:
             logger.info("Updating store: %s", update_store.name)
             if await update_store.get():
+                log_memory('Before store update')
                 Database.overwrite_deals(update_store.name, update_store.data)
                 Database.add_image(update_store)
                 await send_games_notification(update_store)
+                log_memory('After store Update')
             else:
                 logger.debug("No new games to for %s", update_store.name)
     except:
@@ -104,8 +118,7 @@ async def send_games_notification(store) -> None:
     '''
     Send games notifications
     '''
-
-    await discord.wait_until_ready()
+    log_memory('Before send notification')
 
     # tweet about it...
     if store.twitter_notification and x:
@@ -144,6 +157,7 @@ async def send_games_notification(store) -> None:
     end_time = time.time()
     elapsed_time = end_time - start_time
     logger.info(f"Finished sending Discord notifications to {servers_notified}/{len(servers_data)} servers. Time taken: {elapsed_time:.2f} seconds")
+    log_memory('After send notification')
 
 #MARK: Scheduler loop
 async def scrape_scheduler() -> None:
@@ -161,6 +175,7 @@ async def scrape_scheduler() -> None:
 
     while tasks:
         logger.debug("tasks=%s", [task.get_name() for task in tasks])
+        logger.info("Active tasks: %s", [task.get_name() for task in asyncio.all_tasks()])
         
         finished, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
         # print(f"{finished=}\n{pending=}\n{tasks=}")
@@ -186,6 +201,8 @@ async def scrape_scheduler() -> None:
 #MARK: main
 if __name__ == "__main__":
     #load_dotenv(override=True)
+    tracemalloc.start()
+    log_memory('Start')
 
     try:
         logger.info('Modules: %s', ', '.join(['%s' % store.name for store in modules]))
