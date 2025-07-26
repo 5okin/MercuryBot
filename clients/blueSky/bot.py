@@ -20,18 +20,20 @@ class MyClient():
         self.client.login(environment.BSKY_USER, environment.BSKY_PASSWORD)
 
 
-    def get_follower_count(self) -> int:
+    def get_follower_count(self) -> dict[str, int | str]:
         """Returns the number of followers of the Bluesky account."""
         try:
             profile = self.client.get_profile(environment.BSKY_USER)
             return {"name": self.name, "followers_count": profile.followers_count}
         except Exception:
             logger.error("Bluesky failed to retrieve follower count")
+            return {}
 
     #MARK: format post
     def format_post(self, store) -> str:
         txt = client_utils.TextBuilder()
-        txt.text(f'🕹️ Free now on {store.name} 🕹️\n\n')
+        txt.text("🕹️ ").tag('Free now', 'freegames')
+        txt.text(" on ").tag(store.name, store.name).text(" 🕹️\n\n")
 
         end_date = store.get_date(store.data[0], 'end', True)
         txt.text(f'Free now until: {str(end_date)}\n\n')
@@ -45,7 +47,7 @@ class MyClient():
         return txt
 
     #MARK: Post
-    def post(self, store) -> str:
+    def post(self, store) -> str|None:
         try:
             txt_string = self.format_post(store)
             post = self.client.send_video(text=txt_string, video=store.video, video_alt='game photos')
@@ -57,7 +59,7 @@ class MyClient():
 
         except Exception as e:
             logger.error("Failed to create Bluesky post %s", str(e))
-            return None
+            return "Failed"
 
 
 if __name__ == "__main__":

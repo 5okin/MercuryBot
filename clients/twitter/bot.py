@@ -24,13 +24,14 @@ class MyClient():
         self.client_v1 = self.get_x_v1()
         self.client_v2 = self.get_x_v2()
 
-    def get_follower_count(self) -> int:
+    def get_follower_count(self) -> dict[str, int | str]:
         """Returns the number of followers of the twitter account."""
         try:
             user = self.client_v2.get_me(user_fields=["public_metrics"])
             return {"name": self.name, "followers_count": user.data.public_metrics["followers_count"]}
         except Exception:
             logger.warning("Twitter failed to retrieve follower count")
+            return {}
 
     # MARK: Setup V2
     def get_x_v1(self) -> tweepy.API:
@@ -80,7 +81,7 @@ class MyClient():
         """
         Format tweet with all active deals listed individually, including their links and end dates.
         """
-        txt = f'🕹️ Free now on {store.name} 🕹️\n\n'
+        txt = f'🕹️ #FreeGames now on #{store.name} 🕹️\n\n'
         tweet_length = len(txt)
 
         for data in store.data:
@@ -93,11 +94,11 @@ class MyClient():
         return txt, tweet_length
     
 
-    def _format_group_dlc(self, store, include_link=True):
+    def _format_group_dlc(self, store, include_link=True) -> tuple[str, int]:
         """
         Format tweet by listing only games individually, then summarizing DLCs with a single grouped link.
         """
-        txt = f'🕹️ Free now on {store.name} 🕹️\n\n'
+        txt = f'🕹️ #FreeGames on #{store.name} 🕹️\n\n'
         tweet_length = len(txt)
 
         for data in store.data:
@@ -116,16 +117,16 @@ class MyClient():
         return txt, tweet_length
     
 
-    def _format_group_all(self, store):
+    def _format_group_all(self, store) -> tuple[str, int]:
         """
         Format tweet by displaying only a grouped giveaway link, without listing individual items.
         """
-        txt = f'🕹️ Free now on {store.name} 🕹️\n\n{store.giveawayUrl}'
+        txt = f'🕹️ #FreeGames on #{store.name} 🕹️\n\n{store.giveawayUrl}'
         tweet_length = len(txt) - len(store.giveawayUrl) + self.TCO_URL_LENGTH
         return txt, tweet_length
         
 
-    def _format_tweet(self, store, group_mode=0) -> str:
+    def _format_tweet(self, store, group_mode=0) -> tuple[str, int]:
         if group_mode == 1:
             return self._format_group_dlc(store)
         elif group_mode == 2:
@@ -163,7 +164,7 @@ class MyClient():
 
         except Exception as e:
             logger.error("Failed to create tweet: %s", str(e))
-            return None
+            return "Failed"
 
 
 if __name__ == "__main__":
