@@ -1,7 +1,6 @@
 # coding=utf-8
 
 import os
-import time
 import asyncio
 import importlib
 import psutil, tracemalloc
@@ -118,7 +117,7 @@ async def send_games_notification(store) -> None:
     '''
     Send games notifications
     '''
-    log_memory('Before send notification')
+    log_memory('Before send social notification')
 
     # tweet about it...
     if store.twitter_notification and x:
@@ -132,32 +131,9 @@ async def send_games_notification(store) -> None:
         await discord.dm_logs("Bluesky", bsky_url)
         Database.update_social_followers(bsky.get_follower_count())
 
-    start_time = time.time()
-    logger.info("Started sending Discord notifications...")
-
-    servers_data = Database.get_discord_servers()
-    servers_notified = 0
-    for server in servers_data:
-        try:
-            # Check server notification settings
-            if str(store.id) in str(server.get('notification_settings')):
-                if server.get('channel'):
-                    await discord.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'))
-                    servers_notified+=1
-        except:
-            logger.error("Failed to send notification", 
-                    extra={
-                    '_store_name': getattr(store, 'name', 'unkown'),
-                    '_server_name':server.get('server_name', 'unkown'),
-                    '_server_id': server.get('server', 'unkown'),
-                    '_server_channel': server.get('channel', 'unkown'),
-                    }
-            )
-
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    logger.info(f"Finished sending Discord notifications to {servers_notified}/{len(servers_data)} servers. Time taken: {elapsed_time:.2f} seconds")
-    log_memory('After send notification')
+    log_memory('Before send discord notification')
+    await discord.send_notifications(store)
+    log_memory('Done with notification')
 
 #MARK: Scheduler loop
 async def scrape_scheduler() -> None:
@@ -176,6 +152,7 @@ async def scrape_scheduler() -> None:
     while tasks:
         logger.debug("tasks=%s", [task.get_name() for task in tasks])
         logger.info("Active tasks: %s", [task.get_name() for task in asyncio.all_tasks()])
+        log_memory('Scrape Loop')
         
         finished, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
         # print(f"{finished=}\n{pending=}\n{tasks=}")

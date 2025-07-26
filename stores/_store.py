@@ -1,4 +1,3 @@
-import json
 import asyncio
 import io
 import imageio
@@ -63,8 +62,7 @@ class Store:
                     elif mode == 'text':
                         return await response.text()
                     else:
-                        raise ValueError(f"Unsupported mode: {mode}")                    
- 
+                        raise ValueError(f"Unsupported mode: {mode}")
         except:
             self.logger.warning("Request to %s failed", self.service_name)
             return False
@@ -97,7 +95,7 @@ class Store:
         
     
     def parse_date(self, date_str, date_formats):
-        '''
+        """
         Returns a date object according to given formats
 
         Parameters:
@@ -107,7 +105,6 @@ class Store:
         Returns:
         - A datetime object.
         """
-        '''
 
         if isinstance(date_str, str):
             for fmt in date_formats:
@@ -150,6 +147,7 @@ class Store:
         # Run image processing in a separate thread (non-blocking)
         arr, arr_mp4 = await asyncio.to_thread(self.process_images, image_bytes_list, size)
 
+        del image_bytes_list
         self.video = arr_mp4  # Store the MP4 buffer
         return arr
 
@@ -184,6 +182,7 @@ class Store:
         writer.close()
         arr_mp4.seek(0)
 
+        del resized_imgs, imgs, img
         return arr, arr_mp4
 
 
@@ -258,7 +257,7 @@ class Store:
             # Check if online deals exist in local
             match = all(title in local_titles for title in online_titles)
 
-            if match is True:
+            if match:
                 if len(local_titles) > len(online_titles):
                     self.data = json_data.copy()
                     await self.set_images()

@@ -1,7 +1,10 @@
-import io
+import os, time, tempfile
 import discord
 from discord import app_commands
 from utils import environment
+import psutil, tracemalloc
+from io import BytesIO
+from utils.database import Database
 import clients.discord.messages as messages
 from .commands import define_commands
 from .ui_elements import FooterButtons
@@ -130,25 +133,62 @@ class MyClient(discord.Client):
             await self.ADMIN_USER.send(f"**{logTitle}** {logPayload}")
 
 
+    def create_discord_file_from_bytesio(self, image: BytesIO, image_type: str) -> discord.File:
+        """
+        Writes a BytesIO image to a temporary file and returns a discord.File for sending discord notifications.
+
+        :param image: BytesIO object containing image data
+        :param image_type: Image format/extension (e.g., 'PNG', 'JPEG', 'GIF')
+        :return: discord.File ready to be sent
+        """
+        image.seek(0)
+        ext = 'jpg' if image_type.upper() == 'JPEG' else image_type.lower()
+
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.' + ext, delete=False)
+        tmp_file.write(image.read())
+        tmp_file.flush()
+        tmp_file.seek(0)
+
+        return discord.File(tmp_file.name, filename=f'img.{ext}')
+
+
+    # MARK: send notifications
+    async def send_notifications(self, store):
+        start_time = time.time()
+        logger.info("Started sending Discord notifications...")
+
+        servers_data = Database.get_discord_servers()
+        file = self.create_discord_file_from_bytesio(store.image, store.image_type)
+        servers_notified = 0
+        for server in servers_data:
+            try:
+                # Check server notification settings
+                if str(store.id) in str(server.get('notification_settings')):
+                    if server.get('channel'):
+                        await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
+                        servers_notified+=1
+            except:
+                logger.error("Failed to send notification", 
+                    extra={
+                    '_store_name': getattr(store, 'name', 'unkown'),
+                    '_server_name':server.get('server_name', 'unkown'),
+                    '_server_id': server.get('server', 'unkown'),
+                    '_server_channel': server.get('channel', 'unkown'),
+                    }
+                )
+        os.remove(file.fp.name)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        logger.info(f"Finished sending Discord notifications to {servers_notified}/{len(servers_data)} servers. Time taken: {elapsed_time:.2f} seconds")
+
+
     # MARK: store_messages
-    async def store_messages(self, command, server, channel, role):
+    async def store_messages(self, command, server, channel, role, file):
         for store in self.modules:
             if command in store.name:
                 message_to_show = getattr(messages, store.name)
                 server = self.get_guild(server)
                 if store.data:
-                    if isinstance(store.image, io.BytesIO):
-                        store.image.seek(0)
-                        file = discord.File(store.image, filename='img.' + store.image_type.lower())
-                    else:
-                        img = io.BytesIO()
-                        store.image.save(img, format=store.image_type)
-                        img.seek(0)
-                        if store.image_type == 'JPEG':
-                            filetype = 'jpg'
-                        else:
-                            filetype = store.image_type.lower()
-                        file = discord.File(img, filename='img.' + filetype)
 
                     channel = self.get_channel(channel)
 
