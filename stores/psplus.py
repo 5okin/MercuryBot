@@ -30,6 +30,8 @@ class Main(Store):
         games = soup.findAll("section", {"id": "monthly-games"})[1]
         games = games.select("div[class^='box']")
         json_data = []
+        soup.decompose()
+        del soup
 
         if not games: return self.logger.critical('PSplus isn\'t returning any deals!')
         try:

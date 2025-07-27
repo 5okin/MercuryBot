@@ -46,6 +46,8 @@ class Main(Store):
                 data = await self.request_data(url)
                 soup = BeautifulSoup(data['results_html'], 'html.parser')
                 games = soup.findAll("a", {"class": "search_result_row ds_collapse_flag"})
+                soup.decompose()
+                del soup
 
                 # Get new deals
                 for game in games:
@@ -67,6 +69,8 @@ class Main(Store):
                     offer_from  = datetime.now()
                     game_image = soup.find("meta", property="og:image").get("content")
                     json_data = makejson.data(json_data, game_name, 1, game_url, game_image, offer_from, end_date_object, productType=productType)
+                    soup.decompose()
+                    del soup
 
         return await self.compare(json_data)
 

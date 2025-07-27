@@ -46,6 +46,8 @@ class Main(Store):
             game_url = None
             game_id = None
             giveaway = soup.find(id="giveaway")
+            soup.decompose()
+            del soup
 
         if giveaway:
             self.logger.debug('Theres a giveaway')
