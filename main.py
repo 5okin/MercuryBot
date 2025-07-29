@@ -43,6 +43,8 @@ def load_modules() -> list:
 load_modules()
 
 discord = discord.MyClient(modules)
+Database.initialize(modules)
+Database.connect(environment.DB)
 x = twitter.MyClient()
 bsky = blueSky.MyClient()
 
@@ -65,8 +67,6 @@ async def update(update_store=None) -> None:
     Parameters:
         update_store (store object): The store to update
     '''
-    Database(modules)
-    Database.connect(environment.DB)
 
     try:
         if update_store:
@@ -87,11 +87,6 @@ async def initialize() -> None:
     '''
     --- APP START / RESTART ---
     '''
-    # await client.wait_until_ready()
-
-    # Connect to database (deals)
-    Database(modules)
-    Database.connect(environment.DB)
 
     for store in modules:
         # If there's data for this store on the db get it

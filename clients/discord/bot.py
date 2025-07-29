@@ -156,17 +156,17 @@ class MyClient(discord.Client):
     async def send_notifications(self, store):
         start_time = time.time()
         logger.info("Started sending Discord notifications...")
-
         servers_data = Database.get_discord_servers()
-        file = self.create_discord_file_from_bytesio(store.image, store.image_type)
         servers_notified = 0
         for server in servers_data:
             try:
                 # Check server notification settings
                 if str(store.id) in str(server.get('notification_settings')):
                     if server.get('channel'):
+                        file = self.create_discord_file_from_bytesio(store.image, store.image_type)
                         await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
                         servers_notified+=1
+                        os.remove(file.fp.name)
             except:
                 logger.error("Failed to send notification", 
                     extra={
@@ -176,7 +176,6 @@ class MyClient(discord.Client):
                     '_server_channel': server.get('channel', 'unkown'),
                     }
                 )
-        os.remove(file.fp.name)
         end_time = time.time()
         elapsed_time = end_time - start_time
         logger.info(f"Finished sending Discord notifications to {servers_notified}/{len(servers_data)} servers. Time taken: {elapsed_time:.2f} seconds")

@@ -8,30 +8,29 @@ from datetime import datetime, timezone
 logger = environment.logging.getLogger("bot.database")
 
 class Database(object):
-
     store_list = []
     load_dotenv(override=True)
     CONNECTION_STRING = os.getenv('DB_CONNECTION_STRING')
-    #print(f'{CONNECTION_STRING=}')
-    deals = None
-    images = None
-
-    def __init__(self, modules):
-        for store in modules:
-            self.store_list.append(store.name)
+    _client = None
 
 
-    @staticmethod
-    def connect(dev):
+    @classmethod
+    def initialize(cls, modules):
+        cls.store_list = [store.name for store in modules]
+
+
+    @classmethod
+    def connect(cls, dev):
         '''
         Connect to mongoDB and setup collections
         '''
-        client = MongoClient(Database.CONNECTION_STRING)
-        Database.servers = client['servers'+dev]
-        Database.deals = client['deals'+dev]
-        Database.feedback = client['feedback'+dev]
-        Database.social = Database.servers.social
-        Database.images = Database.deals.images
+        if cls._client is None:
+            cls._client = MongoClient(cls.CONNECTION_STRING)
+            cls.servers = cls._client['servers'+dev]
+            cls.deals = cls._client['deals'+dev]
+            cls.feedback = cls._client['feedback'+dev]
+            cls.social = cls.servers.social
+            cls.images = cls.deals.images
 
 
     @staticmethod
