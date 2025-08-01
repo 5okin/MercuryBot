@@ -1,5 +1,5 @@
 import asyncio
-import io
+import io,os
 import imageio
 import aiohttp
 import numpy as np
@@ -9,7 +9,9 @@ from typing import List, Optional, IO
 from PIL import Image
 from utils import environment, database
 from datetime import datetime, timedelta
-
+import psutil, tracemalloc
+import objgraph
+import gc
 
 class Store:
     """
@@ -148,6 +150,8 @@ class Store:
         arr, arr_mp4 = await asyncio.to_thread(self.process_images, image_bytes_list, size)
 
         del image_bytes_list
+        gc.collect()
+
         self.video = arr_mp4  # Store the MP4 buffer
         return arr
 
@@ -158,33 +162,39 @@ class Store:
         
         arr = io.BytesIO()
         arr_mp4 = io.BytesIO()
+        imgs = []
+        resized_imgs = []
 
-        # Open images with PIL
-        imgs = [Image.open(img_bytes).convert("RGB") for img_bytes in image_bytes_list]
+        try:
+            imgs = [Image.open(img_bytes).convert("RGB") for img_bytes in image_bytes_list]
+            target_width = min(img.width for img in imgs) // size
+            target_height = min(img.height for img in imgs) // size
+            video_width, video_height = make_divisible_by_16(target_width, target_height)
+            resized_imgs = [img.resize((video_width, video_height)) for img in imgs]
 
-        target_width = min(img.width for img in imgs) // size
-        target_height = min(img.height for img in imgs) // size
+            resized_imgs[0].save(fp=arr, format='GIF', append_images=resized_imgs[1:], save_all=True, duration=2000, loop=0)
+            arr.seek(0)
 
-        video_width, video_height = make_divisible_by_16(target_width, target_height)
-        resized_imgs = [img.resize((video_width, video_height)) for img in imgs]
-
-        resized_imgs[0].save(fp=arr, format='GIF', append_images=resized_imgs[1:], save_all=True, duration=2000, loop=0)
-
-        # Create MP4
-        writer = imageio.get_writer(arr_mp4, fps=5, format='mp4')
-        frame_duration = 3
-
-        for img in resized_imgs:
-            # 3 seconds for each frame
-            for _ in range(frame_duration * 5):
-                writer.append_data(np.array(img))
-
-        writer.close()
-        arr_mp4.seek(0)
-
-        del resized_imgs, imgs, img
+            # Create MP4
+            writer = imageio.get_writer(arr_mp4, fps=5, format='mp4')
+            frame_duration = 3
+            for img in resized_imgs:
+                for _ in range(frame_duration * 5): # 3 seconds @ 5 fps
+                    writer.append_data(np.array(img))
+            writer.close()
+            arr_mp4.seek(0)
+        
+        finally:
+            # Close all image objects
+            for img in imgs + resized_imgs:
+                try:
+                    img.close()
+                except Exception:
+                    pass
+            del imgs, resized_imgs, img
+            gc.collect()
+        
         return arr, arr_mp4
-
 
     #MARK: get_date
     def get_date(self, data, status='start', returnAsRelative=False):
