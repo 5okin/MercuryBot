@@ -6,6 +6,7 @@ import asyncio
 from PIL import Image
 from utils import makejson
 from stores._store import Store
+import gc
 
 
 class Main(Store):
@@ -135,10 +136,16 @@ class Main(Store):
 
         # Separate images to 2 list according to if it's free now or in the future
         for game in self.data:
-            if game['activeDeal']:
-                curr_images.append(Image.open(urlopen(game['image'])))
-            else:
-                next_images.append(Image.open(urlopen(game['image'])))
+
+            with urlopen(game['image']) as response:
+                image_bytes = response.read()
+                image = Image.open(io.BytesIO(image_bytes))
+                image.load()  # Ensure the image is fully loaded
+
+                if game['activeDeal']:
+                    curr_images.append(image)
+                else:
+                    next_images.append(image)
 
         curr_images = self.resize_images(curr_images)
         next_images = self.resize_images(next_images)
@@ -160,7 +167,7 @@ class Main(Store):
                     new_image.paste(next_images[len(next_images) - 1], (image.size[0], 0))
                     combined_images.append(new_image)
 
-        if len(curr_images) < len(next_images):
+        else:
             for index, image in enumerate(next_images):
                 if index < len(curr_images):
                     new_image = Image.new('RGB',
@@ -177,8 +184,18 @@ class Main(Store):
                     new_image.paste(image, (curr_images[len(curr_images) - 1].size[0], 0))
                     combined_images.append(new_image)
 
-        combined_images[0].save(arr, format='GIF', append_images=combined_images[1:], save_all=True, duration=2000,
-                                loop=0)
+        combined_images[0].save(arr, format='GIF', append_images=combined_images[1:], save_all=True, duration=2000, loop=0)
+        arr.seek(0)
+        
+        for img in curr_images + next_images:
+            try:
+                img.close()
+            except Exception:
+                pass
+        
+        del curr_images, next_images, combined_images
+        gc.collect()
+
         return arr
 
     #MARK: Scheduler

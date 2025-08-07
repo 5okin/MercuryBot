@@ -13,3 +13,4 @@ tweepy~=4.14.0
 atproto~=0.0.56
 moviepy~=2.1.1
 psutil~=7.0.0
+objgraph~=3.6.2

@@ -16,11 +16,13 @@ logger = environment.logging.getLogger("bot.discord")
 class MyClient(discord.Client):
     def __init__(self, modules):
         self.modules = modules
-        intents = discord.Intents.default()
+        intents = discord.Intents.none()
+        intents.guilds = True
         self.ADMIN_USER = None
         self.DEV_GUILD = None
         super().__init__(
             intents = intents,
+            message_cache_size=0,
             activity = discord.Activity(type=discord.ActivityType.watching, name="out for free games")
         )
         self.tree = app_commands.CommandTree(self)
