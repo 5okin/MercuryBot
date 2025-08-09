@@ -48,16 +48,32 @@ Database.connect(environment.DB)
 x = twitter.MyClient()
 bsky = blueSky.MyClient()
 
-
+# MARK: Memory logger
 def log_memory(tag=""):
     process = psutil.Process(os.getpid())
     mem = process.memory_info().rss / (1024 * 1024)
     snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
+    stats_lineno = snapshot.statistics('lineno')
+    stats_traceback = snapshot.statistics('traceback')
+    extra = {}
 
-    extra = {f'_{i+1}': top_stats[i] for i in range(min(5, len(top_stats)))}
-    logger.info(f"[{tag}] RAM Usage: {mem:.2f} MB", extra = extra)
+    for i, stat in enumerate(stats_lineno[:5], 1):
+        frame = stat.traceback[0]
+        extra[f'_lineno_{i}'] = (
+            f"{frame.filename}:{frame.lineno} "
+            f"| size={stat.size / 1024:.1f} KiB | count={stat.count}"
+        )
 
+    for i, stat in enumerate(stats_traceback[:5], 1):
+        frames = [f"{frame.filename}:{frame.lineno}" for frame in stat.traceback]
+        full_tb = " -> ".join(frames)
+        extra[f'_traceback_{i}'] = (
+            f"{frames[0]} "
+            f"| size={stat.size / 1024:.1f} KiB | count={stat.count} "
+            f"| trace={full_tb}"
+        )
+
+    logger.info(f"[{tag}] RAM Usage: {mem:.2f} MB", extra=extra)
 
 #MARK: Update
 async def update(update_store=None) -> None:
@@ -173,7 +189,7 @@ async def scrape_scheduler() -> None:
 #MARK: main
 if __name__ == "__main__":
     #load_dotenv(override=True)
-    tracemalloc.start()
+    tracemalloc.start(25)
     log_memory('Start')
 
     try:
