@@ -53,11 +53,19 @@ def log_memory(tag=""):
     process = psutil.Process(os.getpid())
     mem = process.memory_info().rss / (1024 * 1024)
     snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
+    stats_lineno = snapshot.statistics('lineno')
+    stats_traceback = snapshot.statistics('traceback')
+    extra = {}
 
-    extra = {f'_{i+1}': top_stats[i] for i in range(min(5, len(top_stats)))}
-    logger.info(f"[{tag}] RAM Usage: {mem:.2f} MB", extra = extra)
+    for i, stat in enumerate(stats_lineno[:5], 1):
+        extra[f'_lineno_{i}'] = f"{stat.traceback[0].filename}:{stat.traceback[0].lineno} | size={stat.size / 1024:.1f} KiB | count={stat.count}"
 
+    for i, stat in enumerate(stats_traceback[:5], 1):
+        tb_first = stat.traceback[0]
+        tb_full = " > ".join([f"{frame.filename}:{frame.lineno}" for frame in stat.traceback])
+        extra[f'_traceback_{i}'] = f"{tb_first.filename}:{tb_first.lineno} | size={stat.size / 1024:.1f} KiB | count={stat.count} | path={tb_full}"
+
+    logger.info(f"[{tag}] RAM Usage: {mem:.2f} MB", extra=extra)
 
 #MARK: Update
 async def update(update_store=None) -> None:
