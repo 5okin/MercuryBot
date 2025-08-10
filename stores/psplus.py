@@ -25,24 +25,25 @@ class Main(Store):
         """
         get data for psplus
         """
-        data = await self.request_data(self.url, mode="text")
-        soup = BeautifulSoup(data, 'html.parser')
-        games = soup.findAll("section", {"id": "monthly-games"})[1]
-        games = games.select("div[class^='box']")
+        data = await self.request_data(self.url, mode="html")
+        monthly_games_sections = data.xpath('//section[@id="monthly-games"]')
+        games_section = monthly_games_sections[1]
+        games = games_section.xpath('.//div[starts-with(@class, "box")]')
         json_data = []
-        soup.decompose()
-        del soup
 
         if not games: return self.logger.critical('PSplus isn\'t returning any deals!')
         try:
             for game in games:
-                title = game.find("h3", {"class":"txt-style-medium-title txt-block-paragraph__title"}).text.strip()
-                game_button = game.find("a", {"role":"button"})
-                if game_button and 'href' in game_button.attrs:
-                    game_url = self.base_url + game.find("a", {"role":"button"})['href']
+                title_el = game.xpath('.//h3[contains(@class, "txt-style-medium-title") and contains(@class, "txt-block-paragraph__title")]')
+                title = title_el[0].text_content().strip()
+                game_button = game.xpath('.//a[@role="button"]')
+
+                if game_button and 'href' in game_button[0].attrib:
+                    game_url = self.base_url + game_button[0].attrib['href']
                 else:
                     game_url = 'https://store.playstation.com'
-                game_image = game.findAll("source")[2]['srcset']
+
+                game_image = (game.xpath('.//source'))[2].attrib.get('srcset')
                 offer_from  = datetime.now()
                 json_data = makejson.data(json_data, title, 1, game_url, game_image, offer_from)
         except Exception as e:
@@ -65,8 +66,6 @@ if __name__ == "__main__":
     from utils import environment
 
     a = Main()
-    Database([a])
-    Database.connect(environment.DB)
 
     asyncio.run(a.get())
     print(a.data)

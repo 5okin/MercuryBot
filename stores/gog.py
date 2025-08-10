@@ -38,21 +38,13 @@ class Main(Store):
         '''
         Search gog front page for giveaways
         '''
-        html_content = await self.request_data(self.base_url, 'text')
-
-        giveaway = None
-        if html_content:
-            soup = BeautifulSoup(html_content, 'html.parser')
-            game_url = None
-            game_id = None
-            giveaway = soup.find(id="giveaway")
-            soup.decompose()
-            del soup
+        tree = await self.request_data(self.base_url, mode='html')
+        giveaway = tree.find(".//*[@id='giveaway']")
 
         if giveaway:
             self.logger.debug('Theres a giveaway')
-            game_url = self.base_url + giveaway['ng-href'] if giveaway.get('ng-href') is not None else None
-            giveaway = giveaway.find("a", {"class": "giveaway__overlay-link"})
+            game_url = self.base_url + giveaway.get('ng-href') if giveaway.get('ng-href') is not None else None
+            giveaway = giveaway.find(".//a[@class='giveaway__overlay-link']")
             
             if giveaway:
                 game_url = giveaway['href'] if giveaway.get('href') is not None else None

@@ -37,10 +37,7 @@ class Main(Store):
             return False
 
         json_data = []
-
-        i = 0
         game_list = pages['data']['Catalog']['searchStore']['elements']
-        #while i < len(game_list):
         for game in game_list:
 
             if game['promotions'] is not None:
@@ -106,7 +103,7 @@ class Main(Store):
                                                         startDate,
                                                         endDate,
                                                         wide_image_url)
-            i += 1
+        del game_list
         return await self.compare(json_data)
 
     #MARK: resize images

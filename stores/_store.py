@@ -3,6 +3,7 @@ import io,os
 import imageio
 import aiohttp
 import numpy as np
+from lxml import html
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from typing import List, Optional, IO
@@ -63,6 +64,11 @@ class Store:
                         return await response.json()
                     elif mode == 'text':
                         return await response.text()
+                    elif mode == 'html':
+                        html_bytes = await response.read()
+                        tree = html.parse(io.BytesIO(html_bytes))
+                        del html_bytes
+                        return tree
                     else:
                         raise ValueError(f"Unsupported mode: {mode}")
         except:
