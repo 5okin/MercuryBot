@@ -57,12 +57,14 @@ class CustomFormatter(logging.Formatter):
         # Automatically add traceback for errors or critical logs
         if record.levelno >= logging.WARNING: 
             log_record['file'] = f'{record.pathname} :{record.lineno}'
-            log_record["traceback"] = traceback.format_exc()
 
-            if record.exc_info and sys.exc_info()[0] is not None:
+            if sys.exc_info()[0] is not None:
+                log_record["traceback"] = str(traceback.format_exc())
                 log_record["exception_type"] = str(sys.exc_info()[0])
-                log_record["exception_message"] = str(sys.exc_info()[1]) 
-            
+                log_record["exception_message"] = str(sys.exc_info()[1])
+            else:
+                log_record["traceback"] = None
+
         # Add any extra fields
         for key, value in record.__dict__.items():
             if key.startswith("_"):

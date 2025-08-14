@@ -3,7 +3,7 @@
 import os
 import asyncio
 import importlib
-import psutil, tracemalloc
+import psutil, tracemalloc, gc
 
 from utils.database import Database
 from utils import environment
@@ -13,12 +13,7 @@ import clients.twitter.bot as twitter
 import clients.blueSky.bot as blueSky
 
 logger = environment.logging.getLogger("bot.main")
-
 shutdown_flag_is_set = False
-
-# --- Change status --- #
-status = ['Still', 'in', 'Development']
-
 modules = []
 
 #MARK: load modules
@@ -27,8 +22,7 @@ def load_modules() -> list:
 
     stores_dir = os.path.join( os.path.dirname(os.path.abspath(__file__)), "stores")
     for i in sorted(os.listdir(stores_dir)):
-        module_name = os.path.splitext(i)[0]
-        module_extension = os.path.splitext(i)[1]
+        module_name, module_extension = os.path.splitext(i)
         if module_extension == ".py" and not module_name.startswith('_'):
             try:
                 imported_module = importlib.import_module(f"stores.{module_name}")
@@ -48,32 +42,19 @@ Database.connect(environment.DB)
 x = twitter.MyClient()
 bsky = blueSky.MyClient()
 
+
 # MARK: Memory logger
 def log_memory(tag=""):
+    tracemalloc.start(25)
     process = psutil.Process(os.getpid())
     mem = process.memory_info().rss / (1024 * 1024)
-    snapshot = tracemalloc.take_snapshot()
-    stats_lineno = snapshot.statistics('lineno')
-    stats_traceback = snapshot.statistics('traceback')
-    extra = {}
+    top_stats = tracemalloc.take_snapshot().statistics('lineno')
 
-    for i, stat in enumerate(stats_lineno[:5], 1):
-        frame = stat.traceback[0]
-        extra[f'_lineno_{i}'] = (
-            f"{frame.filename}:{frame.lineno} "
-            f"| size={stat.size / 1024:.1f} KiB | count={stat.count}"
-        )
+    extra = {f'_{i+1}': top_stats[i] for i in range(min(15, len(top_stats)))}
+    logger.info(f"[{tag}] RAM Usage: {mem:.2f} MB", extra = extra)
+    del top_stats
+    tracemalloc.stop()
 
-    for i, stat in enumerate(stats_traceback[:5], 1):
-        frames = [f"{frame.filename}:{frame.lineno}" for frame in stat.traceback]
-        full_tb = " -> ".join(frames)
-        extra[f'_traceback_{i}'] = (
-            f"{frames[0]} "
-            f"| size={stat.size / 1024:.1f} KiB | count={stat.count} "
-            f"| trace={full_tb}"
-        )
-
-    logger.info(f"[{tag}] RAM Usage: {mem:.2f} MB", extra=extra)
 
 #MARK: Update
 async def update(update_store=None) -> None:
@@ -88,13 +69,12 @@ async def update(update_store=None) -> None:
         if update_store:
             logger.info("Updating store: %s", update_store.name)
             if await update_store.get():
-                log_memory('Before store update')
                 Database.overwrite_deals(update_store.name, update_store.data)
                 Database.add_image(update_store)
                 await send_games_notification(update_store)
-                log_memory('After store Update')
             else:
                 logger.debug("No new games to for %s", update_store.name)
+            await update_store.close_session()
     except:
         logger.error("Failed to update store")
 
@@ -144,6 +124,7 @@ async def send_games_notification(store) -> None:
 
     log_memory('Before send discord notification')
     await discord.send_notifications(store)
+    gc.collect()
     log_memory('Done with notification')
 
 #MARK: Scheduler loop
@@ -163,7 +144,7 @@ async def scrape_scheduler() -> None:
     while tasks:
         logger.debug("tasks=%s", [task.get_name() for task in tasks])
         logger.info("Active tasks: %s", [task.get_name() for task in asyncio.all_tasks()])
-        log_memory('Scrape Loop')
+        log_memory('Before Scrape Loop')
         
         finished, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
         # print(f"{finished=}\n{pending=}\n{tasks=}")
@@ -179,6 +160,8 @@ async def scrape_scheduler() -> None:
         finished.clear()
         tasks = pending.copy()
         pending.clear()
+        gc.collect()
+        log_memory('After Scrape Loop')
 
         if shutdown_flag_is_set:
             print("Braking scrape_scheduler()")
@@ -188,17 +171,14 @@ async def scrape_scheduler() -> None:
 
 #MARK: main
 if __name__ == "__main__":
-    #load_dotenv(override=True)
-    tracemalloc.start(25)
     log_memory('Start')
 
     try:
-        logger.info('Modules: %s', ', '.join(['%s' % store.name for store in modules]))
+        logger.info('Modules: %s', ', '.join(store.name for store in modules))
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-        #loop.create_task(test_commands())
         loop.create_task(discord.start(environment.DISCORD_BOT_TOKEN))
         loop.create_task(initialize())
         loop.create_task(scrape_scheduler())

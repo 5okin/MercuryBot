@@ -191,7 +191,6 @@ class Main(Store):
                 pass
         
         del curr_images, next_images, combined_images
-        gc.collect()
 
         return arr
 
@@ -223,7 +222,7 @@ class Main(Store):
                     await asyncio.sleep(delta.total_seconds())
                 # if deal doesn't end in the next 24 hours check if the games changed every 30-minutes
                 else:
-                    await asyncio.sleep(1800)
+                    await asyncio.sleep(self.scheduler_time)
                     return self
             else:
                 print("self.data was empty")

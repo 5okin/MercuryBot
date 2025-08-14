@@ -49,6 +49,7 @@ class Store:
         self.scheduler_time = scheduler_time
         self.twitter_notification = twitter_notification
         self.bsky_notification = bsky_notification
+        self._session = None
 
 
     async def request_data(self, url=None, mode='json'):
@@ -56,24 +57,34 @@ class Store:
         Simple json getter
         """
         try:
-            timeout = aiohttp.ClientTimeout(total=10)
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.get(url, headers={'User-Agent': 'Mozilla'}) as response:
-                    response.raise_for_status()
-                    if mode == 'json':
-                        return await response.json()
-                    elif mode == 'text':
-                        return await response.text()
-                    elif mode == 'html':
-                        html_bytes = await response.read()
-                        tree = html.parse(io.BytesIO(html_bytes))
-                        del html_bytes
-                        return tree
-                    else:
-                        raise ValueError(f"Unsupported mode: {mode}")
+            await self.create_session()
+            async with self._session.get(url, headers={'User-Agent': 'Mozilla'}) as response:
+                response.raise_for_status()
+                if mode == 'json':
+                    return await response.json()
+                elif mode == 'text':
+                    return await response.text()
+                elif mode == 'html':
+                    html_bytes = await response.read()
+                    tree = html.parse(io.BytesIO(html_bytes))
+                    del html_bytes
+                    return tree
+                else:
+                    raise ValueError(f"Unsupported mode: {mode}")
         except:
             self.logger.warning("Request to %s failed", self.service_name)
             return False
+
+
+    async def close_session(self):
+        if self._session and not self._session.closed:
+            await self._session.close()
+            self._session = None
+
+
+    async def create_session(self):
+        if self._session is None or self._session.closed:
+            self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=20))
 
 
     def make_image(self):
@@ -87,7 +98,9 @@ class Store:
 
         if self.data:
             for game in self.data:
-                images.append(Image.open(urlopen(game['image'])))
+                with urlopen(game['image']) as img_stream:
+                    with Image.open(img_stream) as img:
+                        images.append(img.copy())
 
             for image in images:
                 new_img_size += image.size[0]
@@ -155,8 +168,13 @@ class Store:
         # Run image processing in a separate thread (non-blocking)
         arr, arr_mp4 = await asyncio.to_thread(self.process_images, image_bytes_list, size)
 
+        for b in image_bytes_list:
+            try:
+                b.close()
+            except:
+                pass
+
         del image_bytes_list
-        gc.collect()
 
         self.video = arr_mp4  # Store the MP4 buffer
         return arr
@@ -198,7 +216,6 @@ class Store:
                 except Exception:
                     pass
             del imgs, resized_imgs, img
-            gc.collect()
         
         return arr, arr_mp4
 
@@ -275,7 +292,7 @@ class Store:
 
             if match:
                 if len(local_titles) > len(online_titles):
-                    self.data = json_data.copy()
+                    self.data = json_data
                     await self.set_images()
                 elif working_off == 'database':
                     self.data = json_data

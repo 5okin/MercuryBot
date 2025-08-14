@@ -22,7 +22,9 @@ class MyClient(discord.Client):
         self.DEV_GUILD = None
         super().__init__(
             intents = intents,
-            message_cache_size=0,
+            max_messages=None,
+            member_cache_flags=discord.MemberCacheFlags.none(),
+            chunk_guilds_at_startup=False,
             activity = discord.Activity(type=discord.ActivityType.watching, name="out for free games")
         )
         self.tree = app_commands.CommandTree(self)
