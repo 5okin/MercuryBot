@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from urllib.request import urlopen
 import io, os
@@ -55,8 +54,8 @@ class Main(Store):
 
                 # Get the game image
                 try:
-                    tall_image_url: str = None
-                    wide_image_url: str = None
+                    tall_image_url = None
+                    wide_image_url = None
 
                     # Loop through the key images
                     for j, image in enumerate(game['keyImages']):
@@ -150,33 +149,24 @@ class Main(Store):
         if len(curr_images) >= len(next_images):
             for index, image in enumerate(curr_images):
                 if index < len(next_images):
-                    new_image = Image.new('RGB',
-                                        (image.size[0] + next_images[index].size[0],
-                                        image.size[1]),(47, 49, 54, 0))
+                    new_image = Image.new('RGB', (image.size[0] + next_images[index].size[0], image.size[1]), 0)
                     new_image.paste(image, (0, 0))
                     new_image.paste(next_images[index], (image.size[0], 0))
                     combined_images.append(new_image)
                 else:
-                    new_image = Image.new('RGB',
-                                        (image.size[0] + next_images[len(next_images) - 1].size[0],
-                                        image.size[1]),(47, 49, 54, 0))
+                    new_image = Image.new('RGB', (image.size[0] + next_images[len(next_images) - 1].size[0], image.size[1]), 0)
                     new_image.paste(image, (0, 0))
                     new_image.paste(next_images[len(next_images) - 1], (image.size[0], 0))
                     combined_images.append(new_image)
-
         else:
             for index, image in enumerate(next_images):
                 if index < len(curr_images):
-                    new_image = Image.new('RGB',
-                                        (curr_images[index].size[0] + next_images[index].size[0],
-                                        image.size[1]),(47, 49, 54, 0))
+                    new_image = Image.new('RGB', (curr_images[index].size[0] + next_images[index].size[0], image.size[1]), 0)
                     new_image.paste(curr_images[index], (0, 0))
                     new_image.paste(image, (curr_images[index].size[0], 0))
                     combined_images.append(new_image)
                 else:
-                    new_image = Image.new('RGB',
-                                        (curr_images[len(curr_images) - 1].size[0] + next_images[len(next_images) - 1].size[0],
-                                        image.size[1]), (47, 49, 54, 0))
+                    new_image = Image.new('RGB', (curr_images[len(curr_images) - 1].size[0] + image.size[0], image.size[1]), 0)
                     new_image.paste(curr_images[len(curr_images) - 1], (0, 0))
                     new_image.paste(image, (curr_images[len(curr_images) - 1].size[0], 0))
                     combined_images.append(new_image)
@@ -184,13 +174,14 @@ class Main(Store):
         combined_images[0].save(arr, format='GIF', append_images=combined_images[1:], save_all=True, duration=2000, loop=0)
         arr.seek(0)
         
-        for img in curr_images + next_images:
+        for img in curr_images + next_images + combined_images:
             try:
                 img.close()
             except Exception:
                 pass
         
         del curr_images, next_images, combined_images
+        gc.collect()
 
         return arr
 
