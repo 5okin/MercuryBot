@@ -137,11 +137,24 @@ class Store:
         return None
 
 
-    async def fetch_image(self, session, url):
+    async def fetch_image(self, url:str, max_height=300) -> Image.Image | None:
         """Fetch an image asynchronously and return a BytesIO object."""
-        async with session.get(url) as response:
-            if response.status == 200:
-                return io.BytesIO(await response.read())
+        try:
+            await self.create_session()
+            async with self._session.get(url) as response:
+                if response.status != 200:
+                    return None
+                image_data = await response.read()
+
+            buffer = io.BytesIO(image_data)
+            with Image.open(buffer) as img:
+                img = img.convert("RGB")
+                height_percent = (max_height / float(img.size[1]))
+                width_size = int((float(img.size[0]) * float(height_percent)))
+                img = img.resize((width_size, max_height), Image.LANCZOS)
+                return img.copy()
+        except Exception as e:
+            self.logger.warning(f"Failed to fetch image from {url}: {e}")
             return None
 
 
@@ -154,11 +167,10 @@ class Store:
 
         images_key = 'wideImage' if wide else 'image'
 
-        async with aiohttp.ClientSession() as session:
-            image_futures = [
-                self.fetch_image(session, game[images_key]) for game in self.data if game['activeDeal'] == status
-            ]
-            image_bytes_list = await asyncio.gather(*image_futures)
+        image_futures = [
+            self.fetch_image(game[images_key], 500) for game in self.data if game['activeDeal'] == status
+        ]
+        image_bytes_list = await asyncio.gather(*image_futures)
 
         image_bytes_list = [img_bytes for img_bytes in image_bytes_list if img_bytes]
 
@@ -179,22 +191,22 @@ class Store:
         self.video = arr_mp4  # Store the MP4 buffer
         return arr
 
-    def process_images(self, image_bytes_list, size):
+    def process_images(self, image_list, size):
+        arr = io.BytesIO()
+        arr_mp4 = io.BytesIO()
+        resized_imgs = []
+
+        if not image_list:
+            return arr, arr_mp4
 
         def make_divisible_by_16(width, height):
             return (width + 15) // 16 * 16, (height + 15) // 16 * 16
-        
-        arr = io.BytesIO()
-        arr_mp4 = io.BytesIO()
-        imgs = []
-        resized_imgs = []
 
         try:
-            imgs = [Image.open(img_bytes).convert("RGB") for img_bytes in image_bytes_list]
-            target_width = min(img.width for img in imgs) // size
-            target_height = min(img.height for img in imgs) // size
+            target_width = min(img.width for img in image_list) // size
+            target_height = min(img.height for img in image_list) // size
             video_width, video_height = make_divisible_by_16(target_width, target_height)
-            resized_imgs = [img.resize((video_width, video_height)) for img in imgs]
+            resized_imgs = [img.resize((video_width, video_height)) for img in image_list]
 
             resized_imgs[0].save(fp=arr, format='GIF', append_images=resized_imgs[1:], save_all=True, duration=2000, loop=0)
             arr.seek(0)
@@ -210,12 +222,12 @@ class Store:
         
         finally:
             # Close all image objects
-            for img in imgs + resized_imgs:
+            for img in resized_imgs:
                 try:
                     img.close()
                 except Exception:
                     pass
-            del imgs, resized_imgs, img
+            del resized_imgs
         
         return arr, arr_mp4
 

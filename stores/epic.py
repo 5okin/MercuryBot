@@ -72,7 +72,7 @@ class Main(Store):
                 except Exception as e:
                     tall_image_url = wide_image_url = game['keyImages'][0]['url']
 
-                # If Current deal
+                # Current deal
                 if game['promotions']['promotionalOffers']:
                     if game['price']['totalPrice']['fmtPrice']['discountPrice'] == "0":
                         offer = game['promotions']['promotionalOffers'][0]['promotionalOffers'][0]
@@ -87,7 +87,7 @@ class Main(Store):
                                                     endDate,
                                                     wide_image_url)
 
-                # If upcoming upcoming deal
+                # Upcoming deal
                 if game['promotions']['upcomingPromotionalOffers']:
                     for offer in game['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers']:
                         if offer['discountSetting']['discountPercentage'] == 0:
@@ -105,46 +105,29 @@ class Main(Store):
         del game_list
         return await self.compare(json_data)
 
-    #MARK: resize images
-    @staticmethod
-    def resize_images(images):
-        '''
-        Image resize
-        '''
-
-        for index, image in enumerate(images):
-            fixed_height = 300
-            height_percent = fixed_height / float(image.size[1])
-            width_size = int((float(image.size[0]) * float(height_percent)))
-            images[index] = image.resize((width_size, fixed_height))
-        return images
 
     #MARK: combined GIF
-    def create_combined_gif(self):
+    async def create_combined_gif(self):
         """
         Generates a gif from the given list of images
         """
-
         arr = io.BytesIO()
-        curr_images = []
-        next_images = []
-        combined_images = []
+        curr_images, next_images, combined_images = [], [], []
 
-        # Separate images to 2 list according to if it's free now or in the future
-        for game in self.data:
+        image_active = [
+            self.fetch_image(game['image']) for game in self.data if game['activeDeal'] == 1
+        ]
+        image_future = [
+            self.fetch_image(game['image']) for game in self.data if game['activeDeal'] == 0
+        ]        
+        
+        active_images, future_images = await asyncio.gather(
+            asyncio.gather(*image_active),
+            asyncio.gather(*image_future)
+        )
 
-            with urlopen(game['image']) as response:
-                image_bytes = response.read()
-                image = Image.open(io.BytesIO(image_bytes))
-                image.load()  # Ensure the image is fully loaded
-
-                if game['activeDeal']:
-                    curr_images.append(image)
-                else:
-                    next_images.append(image)
-
-        curr_images = self.resize_images(curr_images)
-        next_images = self.resize_images(next_images)
+        curr_images = [img for img in active_images if img]
+        next_images = [img for img in future_images if img]
 
         if len(curr_images) >= len(next_images):
             for index, image in enumerate(curr_images):
@@ -220,8 +203,8 @@ class Main(Store):
                 await asyncio.sleep(60)
 
     async def set_images(self):
-        self.image = self.create_combined_gif()
-        self.image_mobile = await self.make_gif_image()
+        self.image = await self.create_combined_gif()
+        # self.image_mobile = await self.make_gif_image()
         self.image_twitter = await self.make_gif_image(True, size=2)
 
     #MARK: get
