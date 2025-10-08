@@ -158,6 +158,7 @@ class MyClient(discord.Client):
 
     # MARK: send notifications
     async def send_notifications(self, store):
+        await self.wait_until_ready()
         start_time = time.time()
         logger.info("Started sending Discord notifications...")
         servers_data = Database.get_discord_servers()
