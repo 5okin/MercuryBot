@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from utils import environment, makejson
 from stores._store import Store
+from utils.database import Database
 
 
 class Main(Store):
@@ -41,20 +42,16 @@ class Main(Store):
         tree = await self.request_data(self.base_url, mode='html')
         giveaway = tree.find(".//*[@id='giveaway']")
 
-        if giveaway:
+        if giveaway is not None:
             self.logger.debug('Theres a giveaway')
-            game_url = self.base_url + giveaway.get('ng-href') if giveaway.get('ng-href') is not None else None
-            giveaway = giveaway.find(".//a[@class='giveaway__overlay-link']")
-            
-            if giveaway:
-                game_url = giveaway['href'] if giveaway.get('href') is not None else None
+            link = giveaway.find(".//a[@class='giveaway__overlay-link']")
 
-            if game_url:
-                game_page = BeautifulSoup(urlopen(game_url),'html.parser')
-                game_id = game_page.find("div",{"card-product" : True}).attrs["card-product"]
-                offer_until = game_page.find("span",class_="product-actions__time").text.rsplit(' ', 1)[0]
-                offer_until = self.parse_date(offer_until, ["%d/%m/%Y %H:%M", "%m/%d/%Y %H:%M"])
-        
+            game_data = await self.request_data(link.get('href'),'html')
+            root = game_data.getroot()
+            game_id = root.find(".//div[@card-product]").get("card-product")
+            offer_until = root.find(".//span[@class='product-actions__time']").text.rsplit(' ', 1)[0]
+            offer_until = self.parse_date(offer_until, ["%d/%m/%Y %H:%M", "%m/%d/%Y %H:%M"])              
+
             games = await self.request_data(f"https://api.gog.com/v2/games/{game_id}")
             game_title = games['_embedded']['product']['title']
             game_image = games['_links']['boxArtImage']['href']
@@ -148,6 +145,9 @@ class Main(Store):
 
 
 if __name__ == "__main__":
+    from utils.database import Database
+    Database.connect(environment.DB)
+    
     a = Main()
     asyncio.run(a.get())
     print(a.data)
