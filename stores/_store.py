@@ -271,7 +271,7 @@ class Store:
         """
         Compare local deals with current deals online
         """
-        working_off= 'local'
+        working_off = 'local'
 
         if json_data and not self.data:
             # If self.data is None, then maybe the last run it was removed because site was down / missed deal
@@ -281,7 +281,7 @@ class Store:
             working_off = 'database'
             
         # Theres local data and data online
-        if json_data and self.data:
+        if json_data:
 
             # Online data
             online_titles = [
