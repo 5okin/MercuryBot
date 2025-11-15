@@ -222,6 +222,10 @@ class Main(Store):
 
 if __name__ == "__main__":
     # run with python -m stores.epic
+    from utils import environment
+    from utils.database import Database
+    Database.connect(environment.DB)
+
     store = Main()
     asyncio.run(store.get())
     print(store.data)

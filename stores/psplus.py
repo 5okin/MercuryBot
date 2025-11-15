@@ -62,10 +62,10 @@ class Main(Store):
 
 
 if __name__ == "__main__":
-    from utils.database import Database
     from utils import environment
+    from utils.database import Database
+    Database.connect(environment.DB)
 
     a = Main()
-
     asyncio.run(a.get())
     print(a.data)

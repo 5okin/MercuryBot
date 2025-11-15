@@ -8,9 +8,8 @@ from urllib.request import urlopen, Request
 import aiohttp
 from bs4 import BeautifulSoup
 
-from utils import environment, makejson
+from utils import makejson
 from stores._store import Store
-from utils.database import Database
 
 
 class Main(Store):
@@ -145,6 +144,7 @@ class Main(Store):
 
 
 if __name__ == "__main__":
+    from utils import environment
     from utils.database import Database
     Database.connect(environment.DB)
     
