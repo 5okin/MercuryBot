@@ -163,24 +163,38 @@ class MyClient(discord.Client):
         logger.info("Started sending Discord notifications...")
         servers_data = Database.get_discord_servers()
         servers_notified = 0
+    
+        image_bytes = store.image
+        image_type = store.image_type
+
         for server in servers_data:
+            file = None
             try:
                 # Check server notification settings
                 if str(store.id) in str(server.get('notification_settings')):
                     if server.get('channel'):
-                        file = self.create_discord_file_from_bytesio(store.image, store.image_type)
+                        buffer = BytesIO(image_bytes.getvalue())
+                        file = discord.File(fp=buffer, filename=f'img.{image_type.lower()}')
                         await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
                         servers_notified+=1
-                        os.remove(file.fp.name)
             except:
                 logger.error("Failed to send notification", 
                     extra={
-                    '_store_name': getattr(store, 'name', 'unkown'),
-                    '_server_name':server.get('server_name', 'unkown'),
-                    '_server_id': server.get('server', 'unkown'),
-                    '_server_channel': server.get('channel', 'unkown'),
+                    '_store_name': getattr(store, 'name', 'unknown'),
+                    '_server_name':server.get('server_name', 'unknown'),
+                    '_server_id': server.get('server', 'unknown'),
+                    '_server_channel': server.get('channel', 'unknown'),
                     }
                 )
+            finally:
+                if file:
+                    try:
+                        if file.fp:
+                            file.fp.close()
+                        file.close()
+                    except Exception:
+                        pass
+                    file = None
         end_time = time.time()
         elapsed_time = end_time - start_time
         logger.info(f"Finished sending Discord notifications to {servers_notified}/{len(servers_data)} servers. Time taken: {elapsed_time:.2f} seconds")
