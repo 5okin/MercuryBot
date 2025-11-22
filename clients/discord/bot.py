@@ -25,7 +25,7 @@ class MyClient(discord.Client):
             max_messages=None,
             member_cache_flags=discord.MemberCacheFlags.none(),
             chunk_guilds_at_startup=False,
-            activity = discord.Activity(type=discord.ActivityType.watching, name="out for free games")
+            activity = discord.Activity(type=discord.ActivityType.watching, name="Looking out for free games")
         )
         self.tree = app_commands.CommandTree(self)
 
@@ -44,12 +44,6 @@ class MyClient(discord.Client):
             define_commands(self)  # register after clearing
             await self.tree.sync()
 
-
-    async def change_status(self):
-        await self.wait_until_ready()
-
-        await self.change_presence(
-            activity=discord.Activity(type=discord.ActivityType.watching, name='out for free games'))
 
     # MARK: check_permissions 
     def check_channel_permissions(self, channel):
