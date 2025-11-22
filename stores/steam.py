@@ -56,7 +56,7 @@ class Main(Store):
                     game_url = game['href']
                     appId = game['data-ds-appid']
                     productType = (await self.request_data(f'{self.gamesInfoApi}={appId}'))[appId]['data']['type']
-                    data = urlopen(Request(game_url))
+                    data = await self.request_data(game_url, mode='text')
                     soup = BeautifulSoup(data, 'html.parser')
                     end_date = soup.find("p", {"class":"game_purchase_discount_quantity"})
 
