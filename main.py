@@ -3,7 +3,7 @@
 import os
 import asyncio
 import importlib
-import psutil, tracemalloc, gc
+import psutil, tracemalloc, gc, ctypes
 
 from utils.database import Database
 from utils import environment
@@ -45,15 +45,9 @@ bsky = blueSky.MyClient()
 
 # MARK: Memory logger
 def log_memory(tag=""):
-    tracemalloc.start(25)
     process = psutil.Process(os.getpid())
     mem = process.memory_info().rss / (1024 * 1024)
-    top_stats = tracemalloc.take_snapshot().statistics('lineno')
-
-    extra = {f'_{i+1}': top_stats[i] for i in range(min(15, len(top_stats)))}
-    logger.info(f"[{tag}] RAM Usage: {mem:.2f} MB", extra = extra)
-    del top_stats
-    tracemalloc.stop()
+    logger.info(f"[{tag}] RAM Usage: {mem:.2f} MB")
 
 
 #MARK: Update
@@ -161,6 +155,12 @@ async def scrape_scheduler() -> None:
         tasks = pending.copy()
         pending.clear()
         gc.collect()
+        try:
+            libc = ctypes.CDLL("libc.so.6")
+            libc.malloc_trim(0)
+        except Exception as e:
+            logger.warning(f"malloc_trim not available")
+
         log_memory('After Scrape Loop')
 
         if shutdown_flag_is_set:
