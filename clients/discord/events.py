@@ -24,12 +24,29 @@ def setup_events(client):
             Database.remove_server(guild)
 
         # Update server populations
-        for guild in client.guilds:
-            payload = ([{
+        BATCH_SIZE = 500
+        for i in range(0, len(client.guilds), BATCH_SIZE):
+            batch = client.guilds[i:i + BATCH_SIZE]
+            payloads = [{
                 'server': guild.id,
-                'population' : guild.member_count
-            }])
-            await asyncio.to_thread(Database.insert_discord_server, payload)
+                'population': guild.member_count
+            } for guild in batch]
+            await asyncio.to_thread(Database.insert_discord_server, payloads)
+        
+
+
+        # for guild in client.guilds:
+        #     payload = ([{
+        #         'server': guild.id,
+        #         'population' : guild.member_count
+        #     }])
+        #     await asyncio.to_thread(Database.insert_discord_server, payload)
+
+        # payloads =  [{
+        #     'server':guild.id,
+        #     'population': guild.member_count
+        # } for guild in client.guilds]
+        # await asyncio.to_thread(Database.insert_discord_server, payloads)
 
         if client.ADMIN_USER:
             await client.ADMIN_USER.send(f"**Status** {client.user} `Started/Restarted and ready`, connected to {len(client.guilds)} servers")
@@ -50,7 +67,7 @@ def setup_events(client):
     # MARK: on_guild_join
     @client.event
     async def on_guild_join(guild):
-        msg = 'Hi, if youre a mod you can setup the bot by using the **/settings** slash command'
+        msg = "Hi, if you are a mod you can setup the bot by using the slash command: **/settings** "
         permissions = client.check_channel_permissions(guild.system_channel)
         default_channel = None
 
@@ -92,6 +109,8 @@ def setup_events(client):
     # MARK: on_guild_remove
     @client.event
     async def on_guild_remove(guild):
+        if getattr(guild, "unavailable", False):
+            return
         Database.remove_server(guild.id)
         try:
             if guild.owner:
