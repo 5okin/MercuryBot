@@ -1,0 +1,11 @@
+app = 'mercurybot'
+primary_region = 'ams'
+
+[build]
+  builder = 'paketobuildpacks/builder:base'
+
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory = '512mb'
