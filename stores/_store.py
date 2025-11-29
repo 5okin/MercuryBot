@@ -1,5 +1,5 @@
 import asyncio
-import io,os
+import io,os, copy
 import imageio
 import aiohttp
 import numpy as np
@@ -24,10 +24,10 @@ class Store:
                 service_name: str,
                 url: str,
                 data: Optional[List] = None,
-                image: IO = None,
-                image_mobile: IO = None,
-                image_twitter: IO [bytes] = [None, None],
-                video: IO = None,
+                image: Optional[IO] = None,
+                image_mobile: Optional[IO] = None,
+                image_twitter: Optional[list[Optional[IO[bytes]]]] = None,
+                video: Optional[IO] = None,
                 image_type: str = 'GIF',
                 scheduler_time: int = 1800,
                 discord_emoji: int = 0,
@@ -49,15 +49,19 @@ class Store:
         self.scheduler_time = scheduler_time
         self.twitter_notification = twitter_notification
         self.bsky_notification = bsky_notification
-        self._session = None
+        self._session: Optional[aiohttp.ClientSession] = None
 
 
-    async def request_data(self, url=None, mode='json'):
+    async def request_data(self, url: str | None = None, mode='json'):
         """
         Simple json getter
         """
+        if url is None:
+            raise ValueError("URL must be provided")
+
         try:
             await self.create_session()
+            assert self._session is not None
             async with self._session.get(url, headers={'User-Agent': 'Mozilla'}) as response:
                 response.raise_for_status()
                 if mode == 'json':
@@ -104,7 +108,7 @@ class Store:
 
             for image in images:
                 new_img_size += image.size[0]
-            new_image = Image.new('RGB', (new_img_size, images[0].size[1]), (47, 49, 54, 0))
+            new_image = Image.new('RGB', (new_img_size, images[0].size[1]), color=(47, 49, 54)) # type: ignore
 
             size = 0
             for image in images:
@@ -141,6 +145,7 @@ class Store:
         """Fetch an image asynchronously and return a BytesIO object."""
         try:
             await self.create_session()
+            assert self._session is not None
             async with self._session.get(url) as response:
                 if response.status != 200:
                     return None
@@ -151,7 +156,7 @@ class Store:
                 img = img.convert("RGB")
                 height_percent = (max_height / float(img.size[1]))
                 width_size = int((float(img.size[0]) * float(height_percent)))
-                img = img.resize((width_size, max_height), Image.LANCZOS)
+                img = img.resize((width_size, max_height), Image.Resampling.LANCZOS)
                 return img.copy()
         except Exception as e:
             self.logger.warning(f"Failed to fetch image from {url}: {e}")
@@ -212,7 +217,7 @@ class Store:
             arr.seek(0)
 
             # Create MP4
-            writer = imageio.get_writer(arr_mp4, fps=5, format='mp4')
+            writer = imageio.get_writer(arr_mp4, fps=5, format='mp4') # type: ignore
             frame_duration = 3
             for img in resized_imgs:
                 for _ in range(frame_duration * 5): # 3 seconds @ 5 fps
@@ -281,7 +286,7 @@ class Store:
             working_off = 'database'
             
         # Theres local data and data online
-        if json_data:
+        if json_data and self.data:
 
             # Online data
             online_titles = [
@@ -299,19 +304,17 @@ class Store:
                 '_Online' : online_titles,
                 '_Local': local_titles
             })
+
             # Check if online deals exist in local
             match = all(title in local_titles for title in online_titles)
 
             if match:
-                if len(local_titles) > len(online_titles):
-                    self.data = json_data
-                    await self.set_images()
-                elif working_off == 'database':
-                    self.data = json_data
+                if len(local_titles) > len(online_titles) or working_off == 'database':
+                    self.data = copy.deepcopy(json_data)
                     await self.set_images()
                 return 0
             else:
-                self.data = json_data
+                self.data = copy.deepcopy(json_data)
                 await self.set_images()
                 return 1
 
