@@ -1,5 +1,6 @@
 # coding=utf-8
 
+import itertools
 import os
 import asyncio
 import importlib
@@ -8,12 +9,12 @@ import psutil, tracemalloc, gc, ctypes
 from utils.database import Database
 from utils import environment
 
-import clients.discord.bot as discord
+import clients.discord.bot as discord_module
 import clients.twitter.bot as twitter
 import clients.blueSky.bot as blueSky
 
 logger = environment.logging.getLogger("bot.main")
-shutdown_flag_is_set = False
+shutdown_flag_is_set: bool = False
 modules = []
 
 #MARK: load modules
@@ -31,12 +32,13 @@ def load_modules() -> list:
                 logger.error("Error while loading module")
     if not modules:
         logger.error("Program is exiting because no modules were loaded")
-        exit()
+        import sys
+        sys.exit(1)
     return modules
 
 load_modules()
 
-discord = discord.MyClient(modules)
+discord = discord_module.MyClient(modules)
 Database.initialize(modules)
 Database.connect(environment.DB)
 x = twitter.MyClient()
@@ -126,52 +128,53 @@ async def scrape_scheduler() -> None:
     '''
     Schedules the scraping of stores, runs perpetually
     '''
-    # await client.wait_until_ready()
-    tasks = set()
-
-    for store in modules:
-        tasks.add(asyncio.create_task(store.scheduler(), name=store.name))
-
-    finished = set()
-    pending = set()
+    tasks = {asyncio.create_task(store.scheduler(), name=store.name) for store in modules}
+    loop_counter = itertools.count(1)
+    LOG_EVERY_N = 5
 
     while tasks:
-        logger.debug("tasks=%s", [task.get_name() for task in tasks])
-        logger.info("Active tasks: %s", [task.get_name() for task in asyncio.all_tasks()])
-        log_memory('Before Scrape Loop')
+        iteration = next(loop_counter)
+
+        if iteration % LOG_EVERY_N == 0:
+            log_memory('Before Scrape Loop')
+            logger.info("Pending tasks: %s",', '.join(task.get_name() for task in asyncio.all_tasks() if not task.done()))
         
-        finished, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-        # print(f"{finished=}\n{pending=}\n{tasks=}")
+        finished, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
 
         for task in finished:
+            tasks.remove(task)
+            
             store = task.result()
-
             await update(store)
-
-            pending.add(asyncio.create_task(store.scheduler(), name=store.name))
+            
+            tasks.add(asyncio.create_task(store.scheduler(), name=store.name))
             logger.debug("Adding back in %s", task.get_name())
 
-        finished.clear()
-        tasks = pending.copy()
-        pending.clear()
-        gc.collect()
-        try:
-            libc = ctypes.CDLL("libc.so.6")
-            libc.malloc_trim(0)
-        except Exception as e:
-            logger.warning(f"malloc_trim not available")
+        # gc.collect()
+        # try:
+        #     libc = ctypes.CDLL("libc.so.6")
+        #     libc.malloc_trim(0)
+        # except Exception:
+        #     logger.warning(f"malloc_trim not available")
 
-        log_memory('After Scrape Loop')
+        if iteration % LOG_EVERY_N == 0:
+            log_memory('After Scrape Loop')
 
         if shutdown_flag_is_set:
             print("Braking scrape_scheduler()")
-            tasks.cancel()
+            for task in tasks:
+                task.cancel()
             break
 
 
 #MARK: main
 if __name__ == "__main__":
     log_memory('Start')
+
+    if environment.DISCORD_BOT_TOKEN is None:
+        logger.critical("DISCORD_BOT_TOKEN is not set! Exiting.")
+        import sys
+        sys.exit(1)
 
     try:
         logger.info('Modules: %s', ', '.join(store.name for store in modules))
