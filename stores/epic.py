@@ -58,8 +58,11 @@ class Main(Store):
                     wide_image_url = None
 
                     # Loop through the key images
-                    for j, image in enumerate(game['keyImages']):
+                    for _, image in enumerate(game['keyImages']):
                         image_type = image['type']
+
+                        if (image_type in ["VaultClosed", "VaultOpen"]) is True:
+                            wide_image_url = image['url']
 
                         if wide_image_url and tall_image_url:
                             break
@@ -114,12 +117,17 @@ class Main(Store):
         arr = io.BytesIO()
         curr_images, next_images, combined_images = [], [], []
 
-        image_active = [
-            self.fetch_image(game['image']) for game in self.data if game['activeDeal'] == 1
-        ]
-        image_future = [
-            self.fetch_image(game['image']) for game in self.data if game['activeDeal'] == 0
-        ]        
+        active_games = [game for game in self.data if game['activeDeal'] == 1]
+        future_games = [game for game in self.data if game['activeDeal'] == 0]
+
+        all_have_tall_img = all(game.get('image') for game in self.data)
+
+        if (all_have_tall_img):
+            image_active = [self.fetch_image(game['image']) for game in active_games]
+            image_future = [self.fetch_image(game['image']) for game in future_games]
+        else:
+            image_active = [self.fetch_image(game['wideImage']) for game in active_games]
+            image_future = [self.fetch_image(game['wideImage']) for game in future_games]
         
         active_images, future_images = await asyncio.gather(
             asyncio.gather(*image_active),
