@@ -26,14 +26,14 @@ class Main(Store):
         get data for psplus
         """
         data = await self.request_data(self.url, mode="html")
-        monthly_games_sections = data.xpath('//section[@id="monthly-games"]')
-        games_section = monthly_games_sections[1]
-        games = games_section.xpath('.//div[starts-with(@class, "box")]')
+        monthly_games_section = data.xpath('//div[contains(concat(" ", normalize-space(@class), " "), " cmp-experiencefragment--wn-latest-monthly-games-content ")]')[0]
+        games= monthly_games_section.xpath('.//div[starts-with(@class, "box")]')
         json_data = []
 
         if not games: return self.logger.critical('PSplus isn\'t returning any deals!')
-        try:
-            for game in games:
+
+        for i, game in enumerate(games): 
+            try:
                 title_el = game.xpath('.//h3[contains(@class, "txt-style-medium-title") and contains(@class, "txt-block-paragraph__title")]')
                 title = title_el[0].text_content().strip()
                 game_button = game.xpath('.//a[@role="button"]')
@@ -43,11 +43,11 @@ class Main(Store):
                 else:
                     game_url = 'https://store.playstation.com'
 
-                game_image = (game.xpath('.//source'))[2].attrib.get('srcset')
+                game_image = (game.xpath('.//source'))[2].attrib.get('srcset') if len(game.xpath('.//source')) >= 2 else (games[i-1].xpath('.//source'))[2].attrib.get('srcset') 
                 offer_from  = datetime.now()
                 json_data = makejson.data(json_data, title, 1, game_url, game_image, offer_from)
-        except Exception as e:
-            self.logger.critical("Data acquisition failed %s", e)
+            except Exception as e:
+                self.logger.error("Data acquisition failed %s", e)
 
         return await self.compare(json_data)
 
