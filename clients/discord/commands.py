@@ -25,7 +25,7 @@ def define_commands(self):
         for store in self.modules:
             if store_choice.value in store.name:
                 message_to_show = getattr(messages, store.name)
-                if store.data:
+                if store.data and  any(game.get('activeDeal', False) for game in store.data):
                     image = store.image
                     if isinstance(image, io.BytesIO):
                         image.seek(0)
