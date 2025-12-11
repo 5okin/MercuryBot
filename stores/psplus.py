@@ -47,7 +47,7 @@ class Main(Store):
                 offer_from  = datetime.now()
                 json_data = makejson.data(json_data, title, 1, game_url, game_image, offer_from)
             except Exception as e:
-                self.logger.error("Data acquisition failed %s", e)
+                self.logger.debug("Data acquisition failed %s", e)
 
         return await self.compare(json_data)
 
