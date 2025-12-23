@@ -196,7 +196,7 @@ class Main(Store):
                     return self
                 # if deal ends in the next 24-hours just wait for it.
                 elif delta.total_seconds() <= 86400:
-                    self.logger.info(f"EPIC -> Waiting for {delta.total_seconds()}", extra={
+                    self.logger.info(f"EPIC:: Waiting for {delta.total_seconds()}", extra={
                         '_game_time': date,
                         '_datetime.now': datetime.now()
                     })

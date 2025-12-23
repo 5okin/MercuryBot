@@ -71,7 +71,9 @@ async def update(update_store=None) -> None:
             else:
                 logger.debug("No new games to for %s", update_store.name)
             await update_store.close_session()
+            update_store.reset_scheduler()
     except:
+        update_store.schedule_retry()
         logger.error("Failed to update store")
 
 #MARK: Initialize

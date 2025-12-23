@@ -47,10 +47,26 @@ class Store:
         self.image_type = image_type
         self.discord_emoji = discord_emoji
         self.scheduler_time = scheduler_time
+        self.default_scheduler_time = scheduler_time
         self.twitter_notification = twitter_notification
         self.bsky_notification = bsky_notification
         self._session: Optional[aiohttp.ClientSession] = None
 
+    # MARK 
+    def schedule_retry(self, seconds: int = 300):
+        """
+        Sets the scheduler time to retry soon
+        """
+        self.logger.info(" %s scheduler changed: %s -> %s", self.name, self.scheduler_time, seconds)
+        self.scheduler_time = seconds
+
+    def reset_scheduler(self):
+        """
+        Resets the scheduler time to default
+        """
+        if self.scheduler_time != self.default_scheduler_time:
+            self.logger.info(" %s Scheduler reset from  %s -> %s", self.name, self.scheduler_time, self.default_scheduler_time)
+            self.scheduler_time = self.default_scheduler_time
 
     async def request_data(self, url: str | None = None, mode='json'):
         """
