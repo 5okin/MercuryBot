@@ -128,23 +128,6 @@ def setup_events(client):
         if payload.user_id == client.user.id:
             return
 
-        # Get role message data
-        role_data = Database.get_role_message(payload.guild_id)
-        if not role_data or not role_data.get('message_id'):
-            return
-
-        # Check if this is the role message
-        if payload.message_id != role_data['message_id']:
-            return
-
-        # Get the emoji string
-        emoji_str = str(payload.emoji.id) if payload.emoji.id else str(payload.emoji)
-
-        # Check if this emoji is mapped to a role
-        role_mappings = role_data.get('role_mappings', {})
-        if emoji_str not in role_mappings:
-            return
-
         # Get guild and member
         guild = client.get_guild(payload.guild_id)
         if not guild:
@@ -154,36 +137,44 @@ def setup_events(client):
         if not member:
             return
 
-        # Get and assign the role
-        role_id = role_mappings[emoji_str]
-        role = guild.get_role(role_id)
-        if role:
+        # Get the emoji string
+        emoji_str = str(payload.emoji.id) if payload.emoji.id else str(payload.emoji)
+
+        # Check if this emoji belongs to any of our platforms
+        platform_role = None
+        for store in client.modules:
+            if store.discord_emoji:
+                store_emoji_str = str(store.discord_emoji)
+                if emoji_str == store_emoji_str:
+                    # Find the corresponding role
+                    role_name = f"{store.service_name} Games"
+                    platform_role = discord.utils.get(guild.roles, name=role_name)
+
+                    # Create role if it doesn't exist
+                    if not platform_role:
+                        try:
+                            platform_role = await guild.create_role(
+                                name=role_name,
+                                mentionable=True,
+                                reason="Auto-created for platform notifications"
+                            )
+                            logger.info(f"Created role {role_name} for {guild.name}")
+                        except Exception as e:
+                            logger.error(f"Failed to create role {role_name}: {e}")
+                            return
+                    break
+
+        # Assign the role if we found a matching platform
+        if platform_role:
             try:
-                await member.add_roles(role, reason="Reaction role")
-                logger.info(f"Added role {role.name} to {member.name}")
+                await member.add_roles(platform_role, reason="Reaction role")
+                logger.info(f"Added role {platform_role.name} to {member.name}")
             except Exception as e:
                 logger.error(f"Failed to add role: {e}")
 
     # MARK: on_raw_reaction_remove
     @client.event
     async def on_raw_reaction_remove(payload):
-        # Get role message data
-        role_data = Database.get_role_message(payload.guild_id)
-        if not role_data or not role_data.get('message_id'):
-            return
-
-        # Check if this is the role message
-        if payload.message_id != role_data['message_id']:
-            return
-
-        # Get the emoji string
-        emoji_str = str(payload.emoji.id) if payload.emoji.id else str(payload.emoji)
-
-        # Check if this emoji is mapped to a role
-        role_mappings = role_data.get('role_mappings', {})
-        if emoji_str not in role_mappings:
-            return
-
         # Get guild and member
         guild = client.get_guild(payload.guild_id)
         if not guild:
@@ -193,12 +184,24 @@ def setup_events(client):
         if not member:
             return
 
-        # Get and remove the role
-        role_id = role_mappings[emoji_str]
-        role = guild.get_role(role_id)
-        if role:
+        # Get the emoji string
+        emoji_str = str(payload.emoji.id) if payload.emoji.id else str(payload.emoji)
+
+        # Check if this emoji belongs to any of our platforms
+        platform_role = None
+        for store in client.modules:
+            if store.discord_emoji:
+                store_emoji_str = str(store.discord_emoji)
+                if emoji_str == store_emoji_str:
+                    # Find the corresponding role
+                    role_name = f"{store.service_name} Games"
+                    platform_role = discord.utils.get(guild.roles, name=role_name)
+                    break
+
+        # Remove the role if we found a matching platform
+        if platform_role:
             try:
-                await member.remove_roles(role, reason="Reaction role removed")
-                logger.info(f"Removed role {role.name} from {member.name}")
+                await member.remove_roles(platform_role, reason="Reaction role removed")
+                logger.info(f"Removed role {platform_role.name} from {member.name}")
             except Exception as e:
                 logger.error(f"Failed to remove role: {e}")

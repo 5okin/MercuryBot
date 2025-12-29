@@ -18,6 +18,7 @@ class MyClient(discord.Client):
         self.modules = modules
         intents = discord.Intents.none()
         intents.guilds = True
+        intents.guild_reactions = True
         self.ADMIN_USER = None
         self.DEV_GUILD = None
         super().__init__(
@@ -83,7 +84,7 @@ class MyClient(discord.Client):
             return {"has_all_permissions": False, "permission_details": PermissionDetails(), "embed": embed, "text_message": msg}
 
         guild = channel.guild
-        required_permissions  = ['view_channel', 'send_messages', 'embed_links', 'attach_files']
+        required_permissions  = ['view_channel', 'send_messages', 'embed_links', 'attach_files', 'add_reactions']
         bot_permissions = channel.permissions_for(guild.me)
         has_all_permissions = all(getattr(bot_permissions, perm, False) for perm in required_permissions)
 
@@ -213,12 +214,53 @@ class MyClient(discord.Client):
                     permissions = self.check_channel_permissions(channel)
 
                     if permissions['has_all_permissions']:
-                        await channel.send(
-                            default_txt + f' {role}' if role else default_txt, 
-                            embed=message_to_show(store),
+                        # Create embed and add platform footer
+                        embed = message_to_show(store)
+
+                        # Build platform list with emojis
+                        platform_text = "React to get notified for:\n"
+                        emoji_list = []
+                        role_mappings = {}
+
+                        for platform in self.modules:
+                            if platform.discord_emoji:
+                                emoji = self.get_emoji(platform.discord_emoji)
+                                if emoji:
+                                    platform_text += f"{emoji} {platform.service_name}  "
+                                    emoji_list.append(emoji)
+                                    emoji_str = str(emoji.id) if hasattr(emoji, 'id') else str(emoji)
+
+                                    # Find or create role for this platform
+                                    role_name = f"{platform.service_name} Games"
+                                    platform_role = discord.utils.get(server.roles, name=role_name)
+                                    if platform_role:
+                                        role_mappings[emoji_str] = platform_role.id
+
+                        embed.add_field(name="\u200B", value=platform_text, inline=False)
+
+                        # Send the message
+                        sent_message = await channel.send(
+                            default_txt + f' {role}' if role else default_txt,
+                            embed=embed,
                             view=FooterButtons(),
                             file=file
                         )
+
+                        # Add reactions
+                        for emoji in emoji_list:
+                            try:
+                                await sent_message.add_reaction(emoji)
+                            except Exception as e:
+                                logger.error(f"Failed to add reaction {emoji}: {e}")
+
+                        # Store message info in database if we have role mappings
+                        if role_mappings:
+                            Database.set_role_message(
+                                server_id=server.id,
+                                message_id=sent_message.id,
+                                channel_id=channel.id,
+                                role_mappings=role_mappings
+                            )
 
                     # Check if you can send a permissions notification msg to selected channel
                     elif permissions['permission_details'].send_messages:
