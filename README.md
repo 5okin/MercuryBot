@@ -11,7 +11,7 @@
 
 # MercuryBot
 
-MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab titles for free. Discover more on our [website](https://5okin.github.io/mercurybot-web/).
+MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, PS Plus, and Amazon Prime Gaming, and never miss out on the opportunity to grab titles for free. Discover more on our [website](https://5okin.github.io/mercurybot-web/).
 
 <br>
 
@@ -37,11 +37,13 @@ Discord             |  X            |  Bluesky
 
 ## Features
 
-- **Multi-Platform Support:** MercuryBot monitors free game promotions on Epic Games, Steam, GOG, and PS Plus.
+- **Multi-Platform Support:** MercuryBot monitors free game promotions on Epic Games, Steam, GOG, PS Plus, and Amazon Prime Gaming.
 
 - **Online 24/7:** Bot doesn't go offline ensuring you dont miss out on any deal!
 
 - **Automated Reminders:** Receive timely reminders in your Discord server, X or Bluesky feed when new free games become available.
+
+- **Reaction Roles:** Users can self-assign platform-specific roles using reactions for granular notification control.
 
 - **Customizable Settings:** Configure MercuryBot to tailor notifications to your preferences on discord.
 
@@ -54,6 +56,7 @@ Discord             |  X            |  Bluesky
 
 ### Slash Commands
 - `/settings`: Setup and review your notification preferences.
+- `/roles`: Set up reaction roles for platform-specific notifications. Users can react to get roles for their favorite platforms.
 - `/deals`: Display a list of available stores and get the current available games (Ephemeral Message).
 - `/feedback`: Send feedback or bug reports. 
 
@@ -212,10 +215,13 @@ This datebase only has a collection for discord. For the time being its the only
 | ------                  | ------                                                                                    |
 | `server`                | Guild id.                                                                                 |
 | `channel`               | Channel id.                                                                               |
-| `population`            | The number of actual people in the server.                                                | 
+| `population`            | The number of actual people in the server.                                                |
 | `server_name`           | The name of the server.                                                                   |
 | `role`                  | The role id that is to be pinged in the notifications send.                               |
 | `notification_settings` | A integer number that represents what notifications the server wants to receive.          |
+| `role_message_id`       | (Optional) The message ID for reaction-role assignment.                                   |
+| `role_channel_id`       | (Optional) The channel ID where the reaction-role message is located.                     |
+| `role_mappings`         | (Optional) Dictionary mapping emoji IDs to role IDs for reaction-role functionality.     |
 
 
 #### notification_settings
@@ -226,18 +232,19 @@ To optimize storage and simplify notification settings, MercuryBot uses a compac
   - GOG: `2`
   - Steam: `3`
   - PS Plus: `4`
+  - Amazon Prime Gaming: `5`
   - (Additional stores can be added as needed.)
-  
+
 - These IDs are combined into a single integer to represent notification preferences. For example:
-  - `123`: Notifications for Epic Games, GOG, and Steam.
+  - `1235`: Notifications for Epic Games, GOG, Steam, and Amazon Prime Gaming.
   - `23`: Notifications for GOG and Steam only.
-  - `3`: Notifications for Steam only.
+  - `5`: Notifications for Amazon Prime Gaming only.
 
 This method is both space-efficient and scalable.
 
-**Decoding Logic**: 
+**Decoding Logic**:
 - To determine if notifications are enabled for a specific store, parse the integer into its individual digits.
-- For example, if `notification_settings = 123`, notifications are enabled for stores `1`, `2`, and `3`.
+- For example, if `notification_settings = 1235`, notifications are enabled for stores `1`, `2`, `3`, and `5`.
 
 
 ## Contributions

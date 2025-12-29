@@ -209,3 +209,47 @@ class Database(object):
             Database.servers['social'].update_one(filter_criteria, {"$set":{"followers":social.get('followers_count')}}, upsert=True)
         else:
             logger.warning("No social data provided, skipping update.")
+
+    @staticmethod
+    def set_role_message(server_id, message_id, channel_id, role_mappings):
+        '''
+        Stores the role-reaction message info for a server
+        role_mappings: dict mapping emoji to role_id
+        '''
+        Database.servers['discord'].update_one(
+            {'server': server_id},
+            {'$set': {
+                'role_message_id': message_id,
+                'role_channel_id': channel_id,
+                'role_mappings': role_mappings
+            }},
+            upsert=True
+        )
+
+    @staticmethod
+    def get_role_message(server_id):
+        '''
+        Returns the role-reaction message info for a server
+        '''
+        server = Database.servers['discord'].find_one({'server': server_id})
+        if server:
+            return {
+                'message_id': server.get('role_message_id'),
+                'channel_id': server.get('role_channel_id'),
+                'role_mappings': server.get('role_mappings')
+            }
+        return None
+
+    @staticmethod
+    def remove_role_message(server_id):
+        '''
+        Removes the role-reaction message info from a server
+        '''
+        Database.servers['discord'].update_one(
+            {'server': server_id},
+            {'$unset': {
+                'role_message_id': '',
+                'role_channel_id': '',
+                'role_mappings': ''
+            }}
+        )

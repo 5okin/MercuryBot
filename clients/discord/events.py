@@ -120,3 +120,85 @@ def setup_events(client):
                 )
         except Exception as e:
             logger.info("Failed to send feedback request to guild owner")
+
+    # MARK: on_raw_reaction_add
+    @client.event
+    async def on_raw_reaction_add(payload):
+        # Ignore bot reactions
+        if payload.user_id == client.user.id:
+            return
+
+        # Get role message data
+        role_data = Database.get_role_message(payload.guild_id)
+        if not role_data or not role_data.get('message_id'):
+            return
+
+        # Check if this is the role message
+        if payload.message_id != role_data['message_id']:
+            return
+
+        # Get the emoji string
+        emoji_str = str(payload.emoji.id) if payload.emoji.id else str(payload.emoji)
+
+        # Check if this emoji is mapped to a role
+        role_mappings = role_data.get('role_mappings', {})
+        if emoji_str not in role_mappings:
+            return
+
+        # Get guild and member
+        guild = client.get_guild(payload.guild_id)
+        if not guild:
+            return
+
+        member = guild.get_member(payload.user_id)
+        if not member:
+            return
+
+        # Get and assign the role
+        role_id = role_mappings[emoji_str]
+        role = guild.get_role(role_id)
+        if role:
+            try:
+                await member.add_roles(role, reason="Reaction role")
+                logger.info(f"Added role {role.name} to {member.name}")
+            except Exception as e:
+                logger.error(f"Failed to add role: {e}")
+
+    # MARK: on_raw_reaction_remove
+    @client.event
+    async def on_raw_reaction_remove(payload):
+        # Get role message data
+        role_data = Database.get_role_message(payload.guild_id)
+        if not role_data or not role_data.get('message_id'):
+            return
+
+        # Check if this is the role message
+        if payload.message_id != role_data['message_id']:
+            return
+
+        # Get the emoji string
+        emoji_str = str(payload.emoji.id) if payload.emoji.id else str(payload.emoji)
+
+        # Check if this emoji is mapped to a role
+        role_mappings = role_data.get('role_mappings', {})
+        if emoji_str not in role_mappings:
+            return
+
+        # Get guild and member
+        guild = client.get_guild(payload.guild_id)
+        if not guild:
+            return
+
+        member = guild.get_member(payload.user_id)
+        if not member:
+            return
+
+        # Get and remove the role
+        role_id = role_mappings[emoji_str]
+        role = guild.get_role(role_id)
+        if role:
+            try:
+                await member.remove_roles(role, reason="Reaction role removed")
+                logger.info(f"Removed role {role.name} from {member.name}")
+            except Exception as e:
+                logger.error(f"Failed to remove role: {e}")

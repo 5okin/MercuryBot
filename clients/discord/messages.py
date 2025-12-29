@@ -87,3 +87,22 @@ def psplus(store, mobile=False):
     embed_var.set_image(url="attachment://img.gif")
     embed_var.set_footer(text=footer)
     return embed_var
+
+
+def primegaming(store, mobile=False):
+    embed_var = discord.Embed(title="🕹️ Amazon Prime Gaming 🕹️", description=f'\u200B\n**Free Now**', color=0x00aff4)
+
+    for deal in store.data:
+        title = deal['title']
+        link = deal['url']
+        end_date = store.get_date(deal, 'end', True)
+
+        embed_var.add_field(
+            name=f'\u200B\n',
+            value=f"• [**{title}**]({link})\nUntil: {end_date}" if end_date else f"• [**{title}**]({link})",
+            inline=False
+        )
+
+    embed_var.set_image(url="attachment://img.gif")
+    embed_var.set_footer(text=footer)
+    return embed_var
