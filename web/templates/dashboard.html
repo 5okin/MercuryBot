@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - MercuryBot Admin{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Connected Servers</h3>
+        <p>{{ config.bot_info.guilds }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Active Stores</h3>
+        <p>{{ config.bot_info.stores }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Total Deals</h3>
+        <p id="total-deals">0</p>
+    </div>
+</div>
+
+<div class="card">
+    <h2>🎨 Emoji Configuration</h2>
+    <p style="color: #a1a1aa; margin-bottom: 1.5rem;">Configure the emojis used for each platform. Changes require bot restart.</p>
+
+    <form id="emojiForm">
+        <div class="form-group">
+            <label for="epic_emoji">Epic Games Emoji ID</label>
+            <input type="text" id="epic_emoji" name="epic" value="{{ config.emojis.epic }}" placeholder="Enter Discord emoji ID">
+        </div>
+
+        <div class="form-group">
+            <label for="steam_emoji">Steam Emoji ID</label>
+            <input type="text" id="steam_emoji" name="steam" value="{{ config.emojis.steam }}" placeholder="Enter Discord emoji ID">
+        </div>
+
+        <div class="form-group">
+            <label for="gog_emoji">GOG Emoji ID</label>
+            <input type="text" id="gog_emoji" name="gog" value="{{ config.emojis.gog }}" placeholder="Enter Discord emoji ID">
+        </div>
+
+        <div class="form-group">
+            <label for="psplus_emoji">PlayStation Plus Emoji ID</label>
+            <input type="text" id="psplus_emoji" name="psplus" value="{{ config.emojis.psplus }}" placeholder="Enter Discord emoji ID">
+        </div>
+
+        <div class="form-group">
+            <label for="primegaming_emoji">Prime Gaming Emoji ID</label>
+            <input type="text" id="primegaming_emoji" name="primegaming" value="{{ config.emojis.primegaming }}" placeholder="Enter Discord emoji ID">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Emoji Configuration</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>📦 Active Stores</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Platform</th>
+                <th>Store ID</th>
+                <th>Status</th>
+                <th>Active Deals</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for store in stores %}
+            <tr>
+                <td>{{ store.service_name }}</td>
+                <td>{{ store.id }}</td>
+                <td>
+                    {% if store.has_data %}
+                        <span style="color: #10b981;">✓ Active</span>
+                    {% else %}
+                        <span style="color: #6b7280;">○ No Data</span>
+                    {% endif %}
+                </td>
+                <td>{{ store.data_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load stats
+    async function loadStats() {
+        try {
+            const response = await fetch('/api/stats');
+            const data = await response.json();
+            document.getElementById('total-deals').textContent = data.total_deals;
+        } catch (error) {
+            console.error('Failed to load stats:', error);
+        }
+    }
+
+    // Save emoji configuration
+    document.getElementById('emojiForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        try {
+            const response = await fetch('/api/config/emojis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showAlert(result.message, 'success');
+            } else {
+                showAlert('Failed to save emoji configuration', 'error');
+            }
+        } catch (error) {
+            showAlert('An error occurred while saving', 'error');
+        }
+    });
+
+    // Load stats on page load
+    loadStats();
+</script>
+{% endblock %}

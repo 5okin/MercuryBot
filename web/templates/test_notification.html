@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Test Notifications - MercuryBot Admin{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📨 Send Test Notification</h2>
+    <p style="color: #a1a1aa; margin-bottom: 1.5rem;">Send a test notification to any configured server to verify your setup.</p>
+
+    <form id="testForm">
+        <div class="form-group">
+            <label for="server_id">Select Server</label>
+            <select id="server_id" name="server_id" required>
+                <option value="">-- Select a server --</option>
+                {% for server in servers %}
+                <option value="{{ server.id }}" {% if not server.has_channel %}disabled{% endif %}>
+                    {{ server.name }} {% if not server.has_channel %}(No channel configured){% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="store_name">Select Store</label>
+            <select id="store_name" name="store_name" required>
+                <option value="">-- Select a store --</option>
+                {% for store in stores %}
+                <option value="{{ store.name }}" {% if not store.has_data %}disabled{% endif %}>
+                    {{ store.service_name }} {% if not store.has_data %}(No data available){% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Send Test Notification</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>📋 Available Servers</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Server Name</th>
+                <th>Server ID</th>
+                <th>Channel Configured</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for server in servers %}
+            <tr>
+                <td>{{ server.name }}</td>
+                <td>{{ server.id }}</td>
+                <td>
+                    {% if server.has_channel %}
+                        <span style="color: #10b981;">✓ Yes</span>
+                    {% else %}
+                        <span style="color: #ef4444;">✗ No</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if server.has_channel %}
+                        <span style="color: #10b981;">Ready</span>
+                    {% else %}
+                        <span style="color: #6b7280;">Not Configured</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('testForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const serverId = document.getElementById('server_id').value;
+        const storeName = document.getElementById('store_name').value;
+
+        if (!serverId || !storeName) {
+            showAlert('Please select both server and store', 'error');
+            return;
+        }
+
+        // Disable button during request
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+
+        try {
+            const response = await fetch('/api/test-notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    server_id: serverId,
+                    store_name: storeName
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showAlert(data.message, 'success');
+            } else {
+                showAlert(data.error || 'Failed to send test notification', 'error');
+            }
+        } catch (error) {
+            showAlert('An error occurred while sending the test notification', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send Test Notification';
+        }
+    });
+</script>
+{% endblock %}

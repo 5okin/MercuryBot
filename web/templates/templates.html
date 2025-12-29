@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Message Templates - MercuryBot Admin{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📝 Message Templates</h2>
+    <p style="color: #a1a1aa; margin-bottom: 1.5rem;">
+        Message templates are defined in <code>clients/discord/messages.py</code>.
+        Edit the file directly to customize notification messages.
+    </p>
+
+    <div style="background: #0f111a; padding: 1.5rem; border-radius: 4px; border: 1px solid #2a2d3e;">
+        <h3 style="color: #00aff4; margin-bottom: 1rem;">Template Structure</h3>
+        <p style="color: #a1a1aa; margin-bottom: 1rem;">Each template is a Python function that returns a Discord Embed object.</p>
+
+        <h4 style="color: #00aff4; margin-top: 1.5rem; margin-bottom: 0.5rem;">Available Templates:</h4>
+        <ul style="list-style: none; padding: 0;">
+            {% for template_name in templates.keys() %}
+            <li style="padding: 0.5rem; background: #1a1d2e; margin-bottom: 0.5rem; border-radius: 4px;">
+                <strong style="color: #00aff4;">{{ template_name }}()</strong> - {{ templates[template_name] }}
+            </li>
+            {% endfor %}
+        </ul>
+
+        <h4 style="color: #00aff4; margin-top: 1.5rem; margin-bottom: 0.5rem;">Example Template:</h4>
+        <pre style="background: #1a1d2e; padding: 1rem; border-radius: 4px; overflow-x: auto; color: #e4e4e7;"><code>def epic(store, mobile=False):
+    embed_var = discord.Embed(
+        title="🕹️ Epic Free Games 🕹️",
+        description="",
+        color=0x00aff4
+    )
+    embed_var.set_image(url="attachment://img.gif")
+
+    all_freenow = ''
+    for deal in store.data:
+        if deal['activeDeal']:
+            title = deal['title']
+            link = deal['url']
+            all_freenow += f"• [**{title}**]({link})\n"
+
+    end_date = store.get_date(store.data[0], 'end', True)
+    embed_var.add_field(
+        name=f'\\u200B\n**Free Now**',
+        value=f"Until: {end_date}\n\n{all_freenow}",
+        inline=True
+    )
+
+    return embed_var</code></pre>
+
+        <h4 style="color: #00aff4; margin-top: 1.5rem; margin-bottom: 0.5rem;">How to Edit:</h4>
+        <ol style="color: #a1a1aa; padding-left: 1.5rem;">
+            <li>Open <code>clients/discord/messages.py</code> in your editor</li>
+            <li>Modify the template function for the desired platform</li>
+            <li>Save the file</li>
+            <li>Restart the bot to apply changes</li>
+        </ol>
+
+        <div style="margin-top: 1.5rem; padding: 1rem; background: #2a2d3e; border-radius: 4px;">
+            <strong style="color: #00aff4;">💡 Tip:</strong>
+            <p style="color: #a1a1aa; margin-top: 0.5rem;">
+                You can customize the title, colors, fields, and layout of each notification.
+                Use Discord's Embed Builder to preview your changes:
+                <a href="https://discohook.org/" target="_blank" style="color: #00aff4;">discohook.org</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>🎨 Template Customization Options</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Property</th>
+                <th>Description</th>
+                <th>Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>title</code></td>
+                <td>The main title of the embed</td>
+                <td>"🕹️ Epic Free Games 🕹️"</td>
+            </tr>
+            <tr>
+                <td><code>description</code></td>
+                <td>Main text under the title</td>
+                <td>"Free games available now!"</td>
+            </tr>
+            <tr>
+                <td><code>color</code></td>
+                <td>Embed border color (hex)</td>
+                <td>0x00aff4 (cyan)</td>
+            </tr>
+            <tr>
+                <td><code>add_field()</code></td>
+                <td>Add custom fields</td>
+                <td>name="Free Now", value="..."</td>
+            </tr>
+            <tr>
+                <td><code>set_image()</code></td>
+                <td>Add an image</td>
+                <td>"attachment://img.gif"</td>
+            </tr>
+            <tr>
+                <td><code>set_footer()</code></td>
+                <td>Add footer text</td>
+                <td>"Powered by MercuryBot"</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

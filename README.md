@@ -57,8 +57,21 @@ Discord             |  X            |  Bluesky
 ### Slash Commands
 - `/settings`: Setup and review your notification preferences.
 - `/roles`: Set up reaction roles for platform-specific notifications. Users can react to get roles for their favorite platforms.
+- `/testnotify`: Send a test notification to verify your setup (Admin only).
 - `/deals`: Display a list of available stores and get the current available games (Ephemeral Message).
-- `/feedback`: Send feedback or bug reports. 
+- `/feedback`: Send feedback or bug reports.
+
+### Web Interface
+
+MercuryBot includes a web-based admin panel for easy configuration:
+
+- **Dashboard:** View statistics, configure emojis, monitor active stores
+- **Test Notifications:** Send test notifications to verify setup
+- **Template Documentation:** Learn how to customize notification messages
+
+Access at: `http://localhost:5000` (or your server IP)
+
+For detailed setup instructions, see [web/README.md](web/README.md) 
 
 ### How to use
 

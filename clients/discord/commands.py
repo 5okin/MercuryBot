@@ -125,6 +125,66 @@ def define_commands(self):
                 ephemeral=True
             )
 
+    # MARK: Test Notify
+    @app_commands.default_permissions(manage_guild=True)
+    @self.tree.command(name='testnotify', description="Send a test notification to the configured channel")
+    @app_commands.choices(store_choice=[app_commands.Choice(name=store.service_name, value=store.name) for store in self.modules])
+    @app_commands.describe(store_choice='Select the store to send a test notification for')
+    async def testnotify(interaction: discord.Interaction, store_choice: app_commands.Choice[str]):
+        '''
+        Send a test notification to the server's configured channel
+        '''
+        # Check if the command was send in a DM
+        if isinstance(interaction.channel, discord.DMChannel):
+            await interaction.response.send_message("Please use the `/testnotify` command from the server the bot is in.", ephemeral=True)
+            return
+
+        try:
+            await interaction.response.defer(thinking=True, ephemeral=True)
+
+            # Find the store
+            store = None
+            for s in self.modules:
+                if store_choice.value == s.name:
+                    store = s
+                    break
+
+            if not store:
+                await interaction.followup.send("❌ Store not found.", ephemeral=True)
+                return
+
+            if not store.data:
+                await interaction.followup.send(f"❌ {store.service_name} has no data available to send a test notification.", ephemeral=True)
+                return
+
+            # Get server configuration
+            server_data = Database.get_discord_server(interaction.guild_id)
+            if not server_data or not server_data.get('channel'):
+                await interaction.followup.send("❌ No notification channel configured. Please run `/settings` first.", ephemeral=True)
+                return
+
+            # Send test notification
+            from io import BytesIO
+            image_bytes = store.image
+            image_type = store.image_type
+
+            buffer = BytesIO(image_bytes.getvalue())
+            file = discord.File(fp=buffer, filename=f'img.{image_type.lower()}')
+
+            await self.store_messages(
+                store.name,
+                interaction.guild_id,
+                server_data.get('channel'),
+                server_data.get('role'),
+                file
+            )
+
+            await interaction.followup.send(f"✅ Test notification for {store.service_name} sent successfully!", ephemeral=True)
+
+        except Exception as e:
+            logger.error(f"Failed to send test notification: {e}")
+            await interaction.followup.send("❌ Failed to send test notification. Please try again.", ephemeral=True)
+
     # MARK: Settings
     @app_commands.default_permissions(manage_guild=True)
     @self.tree.command(name='settings', description="Show bot settings like update channel and ping role")

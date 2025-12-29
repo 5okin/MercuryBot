@@ -5,6 +5,7 @@ import os
 import asyncio
 import importlib
 import psutil, tracemalloc, gc, ctypes
+import threading
 
 from utils.database import Database
 from utils import environment
@@ -16,6 +17,7 @@ import clients.blueSky.bot as blueSky
 logger = environment.logging.getLogger("bot.main")
 shutdown_flag_is_set: bool = False
 modules = []
+web_server_thread = None
 
 #MARK: load modules
 def load_modules() -> list:
@@ -169,6 +171,19 @@ async def scrape_scheduler() -> None:
             break
 
 
+# MARK: start_web_server
+def start_web_server():
+    """Start the Flask web server in a separate thread"""
+    try:
+        from web.app import run_server
+        web_port = int(os.getenv('WEB_PORT', 5000))
+        web_host = os.getenv('WEB_HOST', '0.0.0.0')
+        logger.info(f"Starting web server on {web_host}:{web_port}")
+        run_server(discord, host=web_host, port=web_port)
+    except Exception as e:
+        logger.error(f"Failed to start web server: {e}")
+
+
 #MARK: main
 if __name__ == "__main__":
     log_memory('Start')
@@ -180,6 +195,11 @@ if __name__ == "__main__":
 
     try:
         logger.info('Modules: %s', ', '.join(store.name for store in modules))
+
+        # Start web server in separate thread
+        web_server_thread = threading.Thread(target=start_web_server, daemon=True)
+        web_server_thread.start()
+        logger.info("Web server thread started")
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

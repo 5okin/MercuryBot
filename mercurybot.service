@@ -1,0 +1,32 @@
+[Unit]
+Description=MercuryBot - Discord Game Notification Bot
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mercurybot
+Group=mercurybot
+WorkingDirectory=/opt/mercurybot
+Environment="PATH=/opt/mercurybot/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/opt/mercurybot/venv/bin/python3 main.py
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mercurybot
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+MemoryMax=1G
+CPUQuota=80%
+
+[Install]
+WantedBy=multi-user.target
