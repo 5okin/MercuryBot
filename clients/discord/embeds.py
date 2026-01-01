@@ -16,10 +16,8 @@ def settings_embed(client, interaction, change_note=None):
     notifications_str = str(server['notification_settings'] if server and server.get('notification_settings') else '')
     notifications = ''
     for store in client.modules:
-        if store.id in notifications_str:
-            notifications += f'✅ {store.name}\n'
-        else:
-            notifications += f'❌ {store.name}\n'
+        status = '✅' if store.id in notifications_str else '❌'
+        notifications += f'{status} {store.service_name}\n'
 
     embed = discord.Embed(title="⚙️ Settings ⚙️", color=0x00aff4)
     embed.set_thumbnail(url="https://5okin.github.io/mercurybot-web/images/mercury_avatar.gif")
