@@ -57,7 +57,7 @@ class Store:
         """
         Sets the scheduler time to retry soon
         """
-        self.logger.info(" %s scheduler changed: %s -> %s", self.name, self.scheduler_time, seconds)
+        self.logger.info("Scheduler change:  %s from %s -> %s sec", self.name, self.scheduler_time, seconds)
         self.scheduler_time = seconds
 
     def reset_scheduler(self):
@@ -65,9 +65,10 @@ class Store:
         Resets the scheduler time to default
         """
         if self.scheduler_time != self.default_scheduler_time:
-            self.logger.info(" %s Scheduler reset from  %s -> %s", self.name, self.scheduler_time, self.default_scheduler_time)
+            self.logger.info("Scheduler reset: %s from  %s -> %s sec", self.name, self.scheduler_time, self.default_scheduler_time)
             self.scheduler_time = self.default_scheduler_time
 
+    #MARK: request_data
     async def request_data(self, url: str | None = None, mode='json'):
         """
         Simple json getter
