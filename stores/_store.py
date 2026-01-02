@@ -6,6 +6,7 @@ import numpy as np
 from lxml import html
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
+from playwright.async_api import async_playwright
 from typing import List, Optional, IO
 from PIL import Image
 from utils import environment, database
@@ -69,20 +70,24 @@ class Store:
             self.scheduler_time = self.default_scheduler_time
 
     #MARK: request_data
-    async def request_data(self, url: str | None = None, mode='json'):
+    async def request_data(self, url: str | None = None, mode='json', method = 'GET',  headers: Optional[dict] = None, cookies: Optional[dict] = None, body: Optional[dict] = None):
         """
         Simple json getter
         """
         if url is None:
             raise ValueError("URL must be provided")
 
+        default_headers = {}
+        if headers:
+            default_headers.update(headers)
+
         try:
             await self.create_session()
             assert self._session is not None
-            async with self._session.get(url, headers={'User-Agent': 'Mozilla'}) as response:
+            async with self._session.request(method, url, headers=default_headers, json=body, cookies=cookies) as response:
                 response.raise_for_status()
                 if mode == 'json':
-                    return await response.json()
+                    return await response.json(content_type=None)
                 elif mode == 'text':
                     return await response.text()
                 elif mode == 'html':
@@ -106,6 +111,45 @@ class Store:
     async def create_session(self):
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=20))
+
+
+    #MARK: playwrite
+    async def request_data_playwright(self, url, headers_to_get: List[str]):
+        """
+        Launch a temporary Playwright Chromium browser to retrieve request headers
+        and cookies from a target page.
+        
+        Args:
+            url (str): The URL to navigate to.
+            headers_to_get (List[str]): A list of header names that must be present
+                in a request before headers are captured.
+
+        Returns:
+            dict: A dictionary with the following structure:
+                {
+                    "headers": dict,  # Captured request headers (may be empty)
+                    "cookies": dict   # Cookies as {name: value}
+                }
+        """
+        async with async_playwright() as p:
+            result = {"headers": {}, "cookies": {}}
+            browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
+            context = await browser.new_context(java_script_enabled=True)
+            page = await context.new_page()
+    
+            def capture(request):
+                if all (h in request.headers for h in headers_to_get):
+                    result["headers"] = request.headers
+                    context.remove_listener("request", capture)
+
+            context.on("request", capture)
+            
+            await page.goto(url)
+            await page.wait_for_load_state('domcontentloaded') 
+
+            result["cookies"] = {c['name']: c['value'] for c in await context.cookies()}
+            await browser.close()
+        return result
 
 
     def make_image(self):
