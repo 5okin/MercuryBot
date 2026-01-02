@@ -17,22 +17,22 @@ def settings_embed(client, interaction, change_note=None):
     notifications = ''
     for store in client.modules:
         status = '✅' if store.id in notifications_str else '❌'
-        notifications += f'{status} {store.service_name}\n'
+        notifications += f'{status} {store.service_name}\n\n'
 
     embed = discord.Embed(title="⚙️ Settings ⚙️", color=0x00aff4)
     embed.set_thumbnail(url="https://5okin.github.io/mercurybot-web/images/mercury_avatar.gif")
-    embed.add_field(name="", value=f"Notification channel: {channel}\nNotification role: {role}", inline=True)
-    embed.add_field(name="​", value="", inline=False)
+    embed.add_field(name="\u200B", value=f"**Notification channel:** {channel}\n**Notification role:** {role}", inline=True)
+    embed.add_field(name="\u200B", value="", inline=False)
     embed.add_field(name="🛎️ You'll receive notifications for the following stores 🛎️", value="\n", inline=False)
-    embed.add_field(name="", value=f"{notifications}", inline=False)
-    embed.add_field(name="​", value="", inline=False)
+    embed.add_field(name="\u200B", value=f"{notifications}", inline=False)
+    embed.add_field(name="\u200B", value="", inline=False)
     if change_note:
         embed.set_footer(text=f"☑️ {change_note} ☑️")
     else:
         embed.set_footer(text="This message will automatically update when changes are made❗")
     return embed
 
-    #   embed = settings_success(message=f"Role set to: {role_msg}")
+
 def settings_success(message=""):
     embed = discord.Embed(
         title=f"✅ Settings Updated ✅",
