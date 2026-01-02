@@ -13,7 +13,7 @@ def define_commands(self):
 
     # MARK: deals command
     @self.tree.command(name="deals", description="Choose what store you want to retrieve the current deals for.")
-    @app_commands.choices(store_choice=[app_commands.Choice(name=store.service_name, value=store.name) for store in self.modules])                     
+    @app_commands.choices(store_choice=[app_commands.Choice(name=store.service_name, value=store.name) for store in self.modules])
     @app_commands.describe(store_choice='Select the store you want to view')
     async def store_select(interaction: discord.Interaction, store_choice: app_commands.Choice[str]):
 
@@ -24,7 +24,7 @@ def define_commands(self):
 
         for store in self.modules:
             if store_choice.value in store.name:
-                message_to_show = getattr(messages, store.name)
+                message_to_show = getattr(messages, store.name, messages.default)
                 if store.data and  any(game.get('activeDeal', False) for game in store.data):
                     image = store.image
                     if isinstance(image, io.BytesIO):

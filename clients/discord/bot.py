@@ -198,7 +198,7 @@ class MyClient(discord.Client):
     async def store_messages(self, command, server, channel, role, file):
         for store in self.modules:
             if command in store.name:
-                message_to_show = getattr(messages, store.name)
+                message_to_show = getattr(messages, store.name, messages.default)
                 server = self.get_guild(server)
                 if store.data:
 

@@ -3,17 +3,12 @@ import discord
 
 footer = ""
 
+#MARK: epic
 def epic(store, mobile=False):
-    # f = open('./data/epic_database.json')
-    # data_json = json.load(f)
-
     # zima = 0x16b8f3
     embed_var = discord.Embed(title="🕹️ Epic Free Games 🕹️", description="", color=0x00aff4)
     embed_var.set_image(url="attachment://img.gif")
-    # embed_var.set_image(url= "https://i.imgur.com/s3GlK9a.gif")
-
-    all_freenow = ''
-    all_upnext = ''
+    all_freenow = all_upnext = ''
 
     for deal in store.data:
         title = deal['title']
@@ -21,15 +16,10 @@ def epic(store, mobile=False):
 
         if deal['activeDeal']:
             now_end_date = store.get_date(deal, 'end', True)
-            # all_freenow += "• " + f"[**{title}**]({link})\n‎ [Launcher](com.epicgames.launcher://store/p/tomb-raider)\n"
-            # all_freenow += "• " + f"[**{title}**]({link})\n‎" + "<com.epicgames.launcher://store/p/tomb-raider>\n"
             all_freenow += "• " + f"[**{title}**]({link})\n‎"
-
         else:
             start_date = store.get_date(deal, 'start')
             end_date = store.get_date(deal, 'end')
-            # start_date = get_date(deal['startDate'])
-            # end_date = get_date(deal['endDate'])
 
             game_details = f"Free: {start_date} - {end_date}"
             all_upnext += "• " + f"[**{title}**]({link})‎\n"
@@ -41,9 +31,8 @@ def epic(store, mobile=False):
 
     return embed_var
 
-
+# MARK: gog
 def gog(store, mobile=False):
-    # zima = 0x16b8f3
     embed_var = discord.Embed(title="🕹️ GOG 🕹️", description=f'\u200B\n**Free Now**', color=0x00aff4)
 
     for deal in store.data:
@@ -56,34 +45,41 @@ def gog(store, mobile=False):
     embed_var.set_footer(text=footer)
     return embed_var
 
+# MARK: default
+def default(store, mobile=False):
+    embed_var = discord.Embed(title=f"🕹️ {store.service_name} 🕹️", description="\u200B\n**Free now**", color=0x00aff4)
+    col1 = col2 = ""
 
-def steam(store, mobile=False):
-    embed_var = discord.Embed(title="🕹️ Steam 🕹️", description=f'\u200B\n**Free Now**', color=0x00aff4)
+    def add_row():
+        if not col1 and not col2:
+            return
 
-    for deal in store.data:
+        embed_var.add_field(name="\u200B\n", value=col1 or "\u200B", inline=True)
+        embed_var.add_field(name="\u200B", value="\u200B", inline=True)
+        embed_var.add_field(name="\u200B", value=col2 or "\u200B", inline=True)
+
+    for i, deal in enumerate(store.data):
         title = deal['title']
         link = deal['url']
         end_date = store.get_date(deal, 'end', True)
 
-        embed_var.add_field(
-            name = f'\u200B\n',
-            value = f"• [**{title}**]({link})\nUntil: {end_date}" if end_date else f"• [**{title}**]({link})",
-            inline = False
-)
+        entry = f"• [**{title}**]({link})"
+        if end_date:
+            entry += f"\nUntil: {end_date}"
+        entry += "\n\n"
 
-    embed_var.set_image(url="attachment://img.gif")
-    embed_var.set_footer(text=footer)
-    return embed_var
+        target = col1 if i % 2 == 0 else col2
 
+        if len(target) + len(entry) >= 1024:
+            add_row()
+            col1 = col2 = ""
 
-def psplus(store, mobile=False):
-    embed_var = discord.Embed(title="🕹️ Play Station Plus 🕹️", description="", color=0x00aff4)
+        if i % 2 == 0:
+            col1 += entry
+        else:
+            col2 += entry
 
-    for deal in store.data:
-        title = deal['title']
-        link = deal['url']
-        embed_var.add_field(name='', value="• " + f"[**{title}**]({link})‎", inline=False)
-
+    add_row()
     embed_var.set_image(url="attachment://img.gif")
     embed_var.set_footer(text=footer)
     return embed_var
