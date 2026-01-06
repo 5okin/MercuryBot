@@ -178,37 +178,37 @@ class Main(Store):
 
     #MARK: Scheduler
     async def scheduler(self):
-        while True:
-            if self.data:
-                date = self.data[0]['endDate']
+        if not self.data:
+            await asyncio.sleep(self.scheduler_time)
+            return self
 
-                # From all the deals saved find the one that ends first
-                for time in self.data:
-                    temp = time['endDate']
-                    if temp < date:
-                        date = temp
+        date = self.data[0]['endDate']
 
-                delta = date - datetime.now()
-                # if the time has come, Get the deals 5 minutes after they go live
-                if delta.total_seconds() <= 0:
-                    print("EPIC -> End date of deal is today i'll wait 10 minutes and get new games")
-                    await asyncio.sleep(600)
-                    return self
-                # if deal ends in the next 24-hours just wait for it.
-                elif delta.total_seconds() <= 86400:
-                    self.logger.info(f"EPIC:: Waiting for {delta.total_seconds()}", extra={
-                        '_game_time': date,
-                        '_datetime.now': datetime.now()
-                    })
+        # From all the deals saved find the one that ends first
+        for time in self.data:
+            temp = time['endDate']
+            if temp < date:
+                date = temp
 
-                    await asyncio.sleep(delta.total_seconds())
-                # if deal doesn't end in the next 24 hours check if the games changed every 30-minutes
-                else:
-                    await asyncio.sleep(self.scheduler_time)
-                    return self
-            else:
-                print("self.data was empty")
-                await asyncio.sleep(60)
+        delta = date - datetime.now()
+        # if the time has come, Get the deals 5 minutes after they go live
+        if delta.total_seconds() <= 0:
+            self.logger.info("EPIC:: New deals live, waiting 5 minutes to fetch")
+            await asyncio.sleep(300)
+            return self
+        # if deal ends in the next 24-hours just wait for it.
+        elif delta.total_seconds() <= 86400:
+            self.logger.info(f"EPIC:: Waiting for {delta.total_seconds()}", extra={
+                '_game_time': date,
+                '_datetime.now': datetime.now()
+            })
+
+            await asyncio.sleep(delta.total_seconds())
+            return self
+        # if deal doesn't end in the next 24 hours check if the games changed every 30-minutes
+        else:
+            await asyncio.sleep(self.scheduler_time)
+            return self
 
     async def set_images(self):
         self.image = await self.create_combined_gif()
