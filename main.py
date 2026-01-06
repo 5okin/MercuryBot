@@ -73,8 +73,9 @@ async def update(update_store=None) -> None:
             await update_store.close_session()
             update_store.reset_scheduler()
     except:
-        update_store.schedule_retry()
         logger.error("Failed to update store")
+        update_store.schedule_retry()
+
 
 #MARK: Initialize
 async def initialize() -> None:

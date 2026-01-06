@@ -338,8 +338,9 @@ class Store:
         Compare local deals with current deals online
         """
         working_off = 'local'
+        has_active = any(game['activeDeal'] for game in json_data)
 
-        if json_data and not self.data:
+        if (json_data and has_active) and not self.data :
             # If self.data is None, then maybe the last run it was removed because site was down / missed deal
             # Check with database data to make sure the "new" deal isnt actually the old/prev deal.
             database_data = database.Database.find(self.name)
@@ -347,7 +348,7 @@ class Store:
             working_off = 'database'
             
         # Theres local data and data online
-        if json_data and self.data:
+        if (json_data and has_active) and self.data:
 
             # Online data
             online_titles = [
@@ -363,7 +364,7 @@ class Store:
 
             self.logger.info("Store Compare: %s", self.name, extra={
                 '_Online' : online_titles,
-                '_Local': local_titles
+                f'_{working_off}': local_titles
             })
 
             # Check if online deals exist in local
