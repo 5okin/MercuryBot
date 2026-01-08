@@ -237,10 +237,3 @@ if __name__ == "__main__":
     store = Main()
     asyncio.run(store.get())
     print(store.data)
-    print(store.image_twitter)
-    # asyncio.run(store.scheduler())
-
-
-    # import clients.twitter.bot as twitter
-    # x = twitter.MyClient()
-    # x.tweet(store)

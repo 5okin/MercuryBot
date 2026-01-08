@@ -372,15 +372,15 @@ class Store:
             # Check if online deals exist in local
             match = all(title in local_titles for title in online_titles)
 
-            if match:
-                if len(local_titles) > len(online_titles) or working_off == 'database':
-                    self.data = copy.deepcopy(json_data)
-                    await self.set_images()
-                return 0
-            else:
-                self.data = copy.deepcopy(json_data)
-                await self.set_images()
-                return 1
+            if not match or len(local_titles) > len(online_titles) or working_off == 'database':
+                    old_data = self.data
+                    try:
+                        self.data = copy.deepcopy(json_data)
+                        await self.set_images()
+                    except:
+                        self.data = old_data
+                        raise
+            return 0 if match else 1
 
         # Theres no data online
         elif not json_data:
