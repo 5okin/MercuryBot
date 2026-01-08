@@ -31,6 +31,7 @@ class Store:
                 video: Optional[IO] = None,
                 image_type: str = 'GIF',
                 scheduler_time: int = 1800,
+                scheduler_retry_time: int = 300,
                 discord_emoji: int = 0,
                 twitter_notification: bool = False,
                 bsky_notification: bool = False
@@ -48,18 +49,19 @@ class Store:
         self.image_type = image_type
         self.discord_emoji = discord_emoji
         self.scheduler_time = scheduler_time
+        self.scheduler_retry_time = scheduler_retry_time
         self.default_scheduler_time = scheduler_time
         self.twitter_notification = twitter_notification
         self.bsky_notification = bsky_notification
         self._session: Optional[aiohttp.ClientSession] = None
 
     # MARK 
-    def schedule_retry(self, seconds: int = 300):
+    def schedule_retry(self):
         """
         Sets the scheduler time to retry soon
         """
-        self.logger.info("Scheduler change:  %s from %s -> %s sec", self.name, self.scheduler_time, seconds)
-        self.scheduler_time = seconds
+        self.logger.info("Scheduler change: %s from %s -> %s sec", self.name, self.scheduler_time, self.scheduler_retry_time)
+        self.scheduler_time = self.scheduler_retry_time
 
     def reset_scheduler(self):
         """
