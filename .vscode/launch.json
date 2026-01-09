@@ -35,6 +35,12 @@
             "type": "debugpy",
             "request": "launch",
             "module": "stores.psplus"
-        }
+        },
+        {
+            "name": "LUNA",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "stores.luna"
+        },
     ]
 }

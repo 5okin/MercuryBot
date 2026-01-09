@@ -11,7 +11,7 @@
 
 # MercuryBot
 
-MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG, and PS Plus, and never miss out on the opportunity to grab titles for free. Discover more on our [website](https://5okin.github.io/mercurybot-web/).
+MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG,  PS Plus and luna (prime gaming). Never miss out on the opportunity to grab titles for free. Discover more on our [website](https://5okin.github.io/mercurybot-web/).
 
 <br>
 
@@ -69,7 +69,7 @@ Discord             |  X            |  Bluesky
     - `Set stores`: Set the store you wish to receive notifications for.
 
 <p align='center'>
-    <image src="https://github.com/user-attachments/assets/7ac02668-ed91-41ae-b12a-576788b64b99">
+    <image src="https://github.com/user-attachments/assets/e51893ae-ba7f-451f-b1a7-8ba1ebefb0a3">
 <p>
 
 3. Enjoy automatic alerts for new free games on various platforms.
@@ -99,7 +99,7 @@ Discord             |  X            |  Bluesky
 
 - The `Set stores` button allows you change the stores for which you receive notifications.
 <p align='center'>
- <image src="https://github.com/user-attachments/assets/f3c16310-3439-4a11-afaf-5413b0dbfcf9">
+ <image src="https://github.com/user-attachments/assets/efef0be8-d549-42b6-be93-fed9d437d780">
 <p>
 
 ## Project Structure
@@ -110,10 +110,11 @@ Discord             |  X            |  Bluesky
 │ ├── 📜 bluesky.py     # Bluesky integration
 │ ├── 📜 twitter.py     # X (Twitter) integration
 │── 📂 stores
-│ ├── 📜 epic_games.py  # Epic Games store handler
-│ ├── 📜 steam.py       # Steam store handler
+│ ├── 📜 epic.py        # Epic Games store handler
 │ ├── 📜 gog.py         # GOG store handler
+│ ├── 📜 luna.py        # luna store handler
 │ ├── 📜 ps_plus.py     # PlayStation Plus store handler
+│ ├── 📜 steam.py       # Steam store handler
 │── 📂 utils
 │ ├── 📜 logger.py      # Logging utility
 │ ├── 📜 helpers.py     # Helper functions
@@ -121,19 +122,32 @@ Discord             |  X            |  Bluesky
 │── 📜 .env.example     # Environment configuration template
 │── 📜 requirements.txt # Python dependencies
 │── 📜 LICENSE          # License information
-│── 📜 Procfile         # Deployment process file
+│── 📜 Dockerfile	    # Docker configuration
+│── 📜 fly.toml         # Deployment process file
 │── 📜 README.md        # Project documentation
 ```
 
 ## Running it on your own
 
 - Download or clone the repository.
-- Make sure you have python 3.10 or higher installed. `python -V`
-- Install the required dependencies by running. `pip install -r requirements.txt`
 - Obtain a working [discord bot TOKEN](#get-a-discord-token) and [mongoDB server](#mongodb-connection-string) running.
 - Optionally, set up a [twitter key](#get-twitter-keys) and [BlueSky account](#get-a-bluesky-account) but these aren't required.  
 - Add your credentials to the [.env](#env-file) file.
+
+### Locally
+
+- Make sure you have python 3.12 or higher installed. `python -V`
+- Install the required dependencies by running. `pip install -r requirements.txt`
+- Install Playwright
+    ```
+    python -m playwright install-deps
+    python -m playwright install chromium
+    ```
 - Run it using: `python3 main.py`
+
+### Docker
+- Build the Docker image `docker build -t mercurybot .`
+- Run the bot in a container with your .env `docker run -d --env-file .env mybot`
 
 ### Get a discord TOKEN
 Log in to https://discord.com/developers/applications/ and click on the New Application button. Go to the bot tab and click the Add Bot button to get a TOKEN.
