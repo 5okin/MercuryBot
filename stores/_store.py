@@ -55,7 +55,7 @@ class Store:
         self.bsky_notification = bsky_notification
         self._session: Optional[aiohttp.ClientSession] = None
 
-    # MARK 
+    # MARK Scheduler timer change
     def schedule_retry(self):
         """
         Sets the scheduler time to retry soon
@@ -116,7 +116,7 @@ class Store:
 
 
     #MARK: playwrite
-    async def request_data_playwright(self, url, headers_to_get: List[str]):
+    async def request_data_playwright(self, url, headers_to_get: Optional[List[str]]=None, return_response: bool=False):
         """
         Launch a temporary Playwright Chromium browser to retrieve request headers
         and cookies from a target page.
@@ -133,14 +133,22 @@ class Store:
                     "cookies": dict   # Cookies as {name: value}
                 }
         """
+        result = {"headers": {}, "cookies": {}}
+
         async with async_playwright() as p:
-            result = {"headers": {}, "cookies": {}}
             browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
-            context = await browser.new_context(java_script_enabled=True)
+            context = await browser.new_context(
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/121.0.0.0 Safari/537.36"
+                ),
+                java_script_enabled=True
+            )
             page = await context.new_page()
     
             def capture(request):
-                if all (h in request.headers for h in headers_to_get):
+                if all (h in request.headers for h in (headers_to_get or [])):
                     result["headers"] = request.headers
                     context.remove_listener("request", capture)
 
@@ -150,6 +158,11 @@ class Store:
             await page.wait_for_load_state('domcontentloaded') 
 
             result["cookies"] = {c['name']: c['value'] for c in await context.cookies()}
+
+            if return_response:
+                response = await page.content()
+                result["response"] = response
+
             await browser.close()
         return result
 

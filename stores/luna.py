@@ -46,7 +46,6 @@ class Main(Store):
 
     async def reload_auth(self):
         await self.get_cookies_playwright()
-        await self.close_session()
 
 
     async def process_data(self):
