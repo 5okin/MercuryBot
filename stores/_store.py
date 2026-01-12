@@ -109,6 +109,10 @@ class Store:
             await self._session.close()
             self._session = None
 
+    async def clear_session(self):
+        if self._session and not self._session.closed:
+            self._session.cookie_jar.clear()
+
 
     async def create_session(self):
         if self._session is None or self._session.closed:
