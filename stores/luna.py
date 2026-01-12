@@ -35,6 +35,7 @@ class Main(Store):
 
 
     async def get_cookies_playwright(self):
+        await self.clear_session()
         result = await self.request_data_playwright(self.url, ["csrf-token"])
 
         self.headers = {
@@ -44,39 +45,34 @@ class Main(Store):
         }
 
 
-    async def reload_auth(self):
-        await self.get_cookies_playwright()
-
-
     async def process_data(self):
         """
         Luna process data
         """
         json_data = []
-
         if not self.headers:
-            await self.reload_auth()
+            await self.get_cookies_playwright()
         
         try:
             data = await self.request_data(url=self.gamesInfoApi, mode='json', method='POST', headers=self.headers, body=self.graphql_body)
             
-            if not data:
-                raise Exception("Auth has expired")
+            if data is False:
+                self.logger.debug("Auth expired for %s, refreshing cookies", self.service_name)
+                await self.get_cookies_playwright()
+                data = await self.request_data(url=self.gamesInfoApi, mode='json', method='POST', headers=self.headers, body=self.graphql_body)
+
+            for item in data.get("data").get("items").get("items"):
+                title = item.get("assets").get("title")
+                link = item.get("assets").get("externalClaimLink")
+                image = item.get("assets").get("cardMedia").get("defaultMedia").get("src2x")
+                startDate = datetime.strptime(item.get("offers")[0].get("startTime"), "%Y-%m-%dT%H:%M:%SZ")
+                endDate = datetime.strptime(item.get("offers")[0].get("endTime"), "%Y-%m-%dT%H:%M:%SZ")
+                json_data = makejson.data(json_data, title, 1, link, image, startDate, endDate)
         
-        except Exception as e:
-            self.logger.debug("Error fetching data %s", self.service_name)
-            await self.reload_auth()
-            data = await self.request_data(url=self.gamesInfoApi, mode='json', method='POST', headers=self.headers, body=self.graphql_body)
-        
-        for item in data.get("data").get("items").get("items"):
-            title = item.get("assets").get("title")
-            link = item.get("assets").get("externalClaimLink")
-            image = item.get("assets").get("cardMedia").get("defaultMedia").get("src2x")
-            startDate = datetime.strptime(item.get("offers")[0].get("startTime"), "%Y-%m-%dT%H:%M:%S%fZ")
-            endDate = datetime.strptime(item.get("offers")[0].get("endTime"), "%Y-%m-%dT%H:%M:%S%fZ")
-            json_data = makejson.data(json_data, title, 1, link, image, startDate, endDate)
-        
-        return await self.compare(json_data)
+            return await self.compare(json_data)
+
+        except Exception:
+            self.logger.error("Unexpected error retrieving data for %s", self.service_name)
 
     async def get(self):
         """
