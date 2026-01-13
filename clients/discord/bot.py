@@ -1,4 +1,4 @@
-import os, time, tempfile
+import asyncio, time, tempfile
 import discord
 from discord import app_commands
 from utils import environment
@@ -31,7 +31,12 @@ class MyClient(discord.Client):
 
     async def setup_hook(self):
         self.DEV_GUILD = discord.Object(id=environment.DISCORD_DEV_GUILD) if environment.DISCORD_DEV_GUILD is not None and environment.DEVELOPMENT else None
-        self.ADMIN_USER = await self.fetch_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
+        try:
+            self.ADMIN_USER = await self.fetch_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
+        except discord.NotFound:
+            self.ADMIN_USER = None
+            logger.warning("Admin user ID not found.")
+
         setup_events(self)
         if self.DEV_GUILD:
             logger.debug("IN DEV setting up guild commands")
@@ -148,7 +153,17 @@ class MyClient(discord.Client):
         tmp_file.seek(0)
 
         return discord.File(tmp_file.name, filename=f'img.{ext}')
+    
+    #MARK: upload_image_to_cdn
+    async def upload_image_to_cdn(self, store) -> str:
+        buffer = BytesIO(store.image.getvalue())
+        file = discord.File(fp=buffer, filename=f'img.{store.image_type.lower()}')
 
+        if not self.ADMIN_USER:
+            return None
+
+        message = await self.ADMIN_USER.send(file=file)
+        return message.attachments[0].url
 
     # MARK: send notifications
     async def send_notifications(self, store):
@@ -158,19 +173,22 @@ class MyClient(discord.Client):
         servers_data = Database.get_discord_servers()
         servers_notified = 0
     
-        image_bytes = store.image
+        image_bytes = store.image.getvalue()
         image_type = store.image_type
 
         for server in servers_data:
             file = None
             try:
                 # Check server notification settings
-                if str(store.id) in str(server.get('notification_settings')):
-                    if server.get('channel'):
-                        buffer = BytesIO(image_bytes.getvalue())
+                if store.id in str(server.get('notification_settings')) and server.get('channel'):
+                    if store.image_cdn:
+                        file = store.image_cdn
+                    else:
+                        buffer = BytesIO(image_bytes)
                         file = discord.File(fp=buffer, filename=f'img.{image_type.lower()}')
-                        await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
-                        servers_notified+=1
+
+                    await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
+                    servers_notified+=1
             except:
                 logger.error("Failed to send notification", 
                     extra={
@@ -190,8 +208,7 @@ class MyClient(discord.Client):
                         pass
                     file = None
         end_time = time.time()
-        elapsed_time = end_time - start_time
-        logger.info(f"Finished sending Discord notifications to {servers_notified}/{len(servers_data)} servers. Time taken: {elapsed_time:.2f} seconds")
+        logger.info(f"Finished sending Discord notifications to {servers_notified}/{len(servers_data)} servers. Time taken: {end_time - start_time:.2f} seconds")
 
 
     # MARK: store_messages
@@ -213,9 +230,16 @@ class MyClient(discord.Client):
                     permissions = self.check_channel_permissions(channel)
 
                     if permissions['has_all_permissions']:
+
+                        if isinstance(file, discord.File):
+                            embed = message_to_show(store)
+                        else:
+                            embed = message_to_show(store, file)
+                            file = None
+
                         await channel.send(
                             default_txt + f' {role}' if role else default_txt, 
-                            embed=message_to_show(store),
+                            embed=embed,
                             view=FooterButtons(),
                             file=file
                         )

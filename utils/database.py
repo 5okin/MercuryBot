@@ -166,38 +166,30 @@ class Database(object):
 
             thumbnail = {
                 '_id': store.name,
-                'data': image.getvalue()
+                'data': image.getvalue(),
+                'cdn' : store.image_cdn
             }
             Database.images.insert_one(thumbnail)
         else:
             logger.debug('Module %s has no image to upload', store.name)
 
     @staticmethod
-    def get_image(name):
+    def get_image(name, row="data"):
         '''
         Return image of a given store
+        row must be either "data" or "cdn"
         '''
+
+        if row not in ("data", "cdn"):
+            raise ValueError(f"row must be 'data' or 'cdn', got '{row}'")
+
         if Database.image_exists(name):
             img = Database.images.find_one({"_id": name})
-            pil_img = io.BytesIO(img['data'])
+            pil_img = io.BytesIO(img['data']) if row =="data" else img.get(row)
             return pil_img
         else:
             logger.error("Image not found")
 
-    # @staticmethod
-    # def get_population():
-    #     '''
-    #     Retruns the total number of people the bot is serving
-    #     '''
-    #     total_population = Database.servers['discord'].aggregate([
-    #     {
-    #         "$group": {
-    #             "_id": 1,
-    #             "total_population": {"$sum": {"$ifNull": ["$population", 0]}}
-    #         }
-    #     }
-    #     ])
-    #     return list(total_population)[0]['total_population']
     
     @staticmethod
     def update_social_followers(social):

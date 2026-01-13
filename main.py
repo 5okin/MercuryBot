@@ -65,6 +65,7 @@ async def update(update_store=None) -> None:
         if update_store:
             logger.info("Updating store: %s", update_store.name)
             if await update_store.get():
+                update_store.image_cdn = await discord.upload_image_to_cdn(update_store)
                 Database.overwrite_deals(update_store.name, update_store.data)
                 Database.add_image(update_store)
                 await send_games_notification(update_store)
@@ -89,6 +90,7 @@ async def initialize() -> None:
             logger.debug("Getting Data from DB for %s", store.name)
             store.data = Database.find(store.name)
             store.image = Database.get_image(store.name)
+            store.image_cdn = Database.get_image(store.name, 'cdn')
 
             # Then check if live data is different
             logger.debug("Checking if theres new data")

@@ -26,6 +26,7 @@ class Store:
                 url: str,
                 data: Optional[List] = None,
                 image: Optional[IO] = None,
+                image_cdn: Optional[str] = None,
                 image_mobile: Optional[IO] = None,
                 image_twitter: Optional[list[Optional[IO[bytes]]]] = None,
                 video: Optional[IO] = None,
@@ -43,6 +44,7 @@ class Store:
         self.url = url
         self.data = data
         self.image = image
+        self.image_cdn = image_cdn
         self.image_mobile = image_mobile
         self.image_twitter = image_twitter
         self.video = video
@@ -221,7 +223,7 @@ class Store:
         return None
 
 
-    async def fetch_image(self, url:str, max_height=300) -> Image.Image | None:
+    async def fetch_image(self, url:str, max_height: int = 300) -> Image.Image | None:
         """Fetch an image asynchronously and return a BytesIO object."""
         try:
             await self.create_session()

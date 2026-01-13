@@ -5,11 +5,15 @@ footer = ""
 ZWSP = "\u200B" # Zero Width Space
 
 #MARK: epic
-def epic(store, mobile=False):
+def epic(store, image_url: str | None = None, mobile=False):
     # zima = 0x16b8f3
     embed_var = discord.Embed(title="🕹️ Epic Free Games 🕹️", description="", color=0x00aff4)
-    embed_var.set_image(url="attachment://img.gif")
     all_freenow = all_upnext = ''
+
+    if image_url:
+        embed_var.set_image(url=image_url)
+    else:
+        embed_var.set_image(url="attachment://img.gif")
 
     for deal in store.data:
         title = deal['title']
@@ -33,7 +37,7 @@ def epic(store, mobile=False):
     return embed_var
 
 # MARK: gog
-def gog(store, mobile=False):
+def gog(store, image_url: str | None = None, mobile=False):
     embed_var = discord.Embed(title="🕹️ GOG 🕹️", description=f'{ZWSP}\n**Free Now**', color=0x00aff4)
 
     for deal in store.data:
@@ -42,12 +46,15 @@ def gog(store, mobile=False):
         end_date = store.get_date(deal, 'end', True)
         embed_var.add_field(name=f'{ZWSP}\n', value=f"[**{title}**]({link})\nUntil: {end_date}", inline=False)
 
-    embed_var.set_image(url="attachment://img.gif")
+    if image_url:
+        embed_var.set_image(url=image_url)
+    else:
+        embed_var.set_image(url="attachment://img.gif")
     embed_var.set_footer(text=footer)
     return embed_var
 
 # MARK: default
-def default(store, mobile=False):
+def default(store, image_url: str | None = None, mobile=False):
     DISCORD_MAX_FIELD_VALUE_CHARS = 1024
     NUM_OF_DEALS_USE_SINGLE_COLUMN = 5
     USE_SINGLE_COLUMN = len(store.data) <= NUM_OF_DEALS_USE_SINGLE_COLUMN
@@ -85,6 +92,10 @@ def default(store, mobile=False):
         target.append(entry)
 
     save_row()
-    embed_var.set_image(url="attachment://img.gif")
+    if image_url:
+        embed_var.set_image(url=image_url)
+    else:
+        embed_var.set_image(url="attachment://img.gif")
+
     embed_var.set_footer(text=footer)
     return embed_var
