@@ -38,15 +38,14 @@ class MyClient(discord.Client):
             logger.warning("Admin user ID not found.")
 
         setup_events(self)
+        define_commands(self)
+
         if self.DEV_GUILD:
             logger.debug("IN DEV setting up guild commands")
-            self.tree.clear_commands(guild=self.DEV_GUILD)  # Clear guild commands
-            # Set global commands as guild commands for specific server
-            # self.tree.copy_global_to(guild=DEV_GUILD)
-            define_commands(self)  # register after clearing
-            await self.tree.sync(guild=self.DEV_GUILD)
+            self.tree.clear_commands(guild=self.DEV_GUILD)  # wipe old commands
+            self.tree.copy_global_to(guild=self.DEV_GUILD)  # copy commands to specified server
+            await self.tree.sync(guild=self.DEV_GUILD)      # sync commands instantly
         else:
-            define_commands(self)  # register after clearing
             await self.tree.sync()
 
 
