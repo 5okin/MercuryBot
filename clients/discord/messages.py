@@ -32,6 +32,9 @@ def epic(store, image_url: str | None = None, mobile=False):
     embed_var.add_field(name=f'{ZWSP}\n**Free Now**', value=f"Until: {now_end_date}\n\n{all_freenow}", inline=True)
     if (not mobile):
         embed_var.add_field(name=f'{ZWSP}\n**Up Next**', value=f"{ZWSP}{ZWSP}{ZWSP}{game_details}\n\n{all_upnext}{ZWSP}", inline=True)
+
+    if hasattr(store, "checkout_url") and store.checkout_url:
+        embed_var.add_field(name=f"{ZWSP}\n", value=f"[**Checkout with all games**]({store.checkout_url})", inline=False)
     embed_var.set_footer(text=footer)
 
     return embed_var
@@ -92,6 +95,10 @@ def default(store, image_url: str | None = None, mobile=False):
         target.append(entry)
 
     save_row()
+    
+    if hasattr(store, "checkout_url") and store.checkout_url:
+        embed_var.add_field(name=f"{ZWSP}\n", value=f"[**Checkout with all games**]({store.checkout_url})", inline=True)
+    
     if image_url:
         embed_var.set_image(url=image_url)
     else:

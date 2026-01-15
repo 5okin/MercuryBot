@@ -13,9 +13,8 @@ class Main(Store):
     Epic store 
     '''
     def __init__(self):
-        self.online_data = []
         self.page = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions'
-        self.dlcUrl = 'https://store.epicgames.com/en-US/free-games'
+        self.checkout_url = 'https://store.epicgames.com/purchase?{offers}#/purchase/payment-methods'
         self.giveawayUrl = 'https://store.epicgames.com/en-US/free-games'
         super().__init__(
             name = 'epic',
@@ -36,11 +35,14 @@ class Main(Store):
             return False
 
         json_data = []
+        offer_links = []
         game_list = pages['data']['Catalog']['searchStore']['elements']
         for game in game_list:
 
             if game['promotions'] is not None:
                 game_name = game['title']
+                game_id = game['id']
+                game_namespace = game['namespace']
 
                 if (game['catalogNs']['mappings'] is not None) and (len(game['catalogNs']['mappings'])):
                     product_url = game['catalogNs']['mappings'][0]['pageSlug']
@@ -81,6 +83,7 @@ class Main(Store):
                         offer = game['promotions']['promotionalOffers'][0]['promotionalOffers'][0]
                         startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
                         endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
+                        offer_links.append(f'offers=1-{game_namespace}-{game_id}')
                         json_data = makejson.data(json_data,
                                                     game_name,
                                                     1,
@@ -105,6 +108,7 @@ class Main(Store):
                                                         startDate,
                                                         endDate,
                                                         wide_image_url)
+        self.checkout_url = self.checkout_url.format(offers= '&'.join(offer_links))
         del game_list
         return await self.compare(json_data)
 
