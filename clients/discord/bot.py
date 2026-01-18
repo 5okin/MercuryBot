@@ -171,12 +171,13 @@ class MyClient(discord.Client):
         logger.info("Started sending Discord notifications...")
         servers_data = Database.get_discord_servers()
         servers_notified = 0
+        BATCH_SIZE = int(environment.NOTIFICATION_BATCH_SIZE)
     
         image_bytes = store.image.getvalue()
         image_type = store.image_type
 
-        for server in servers_data:
-            file = None
+        async def send_message(server) -> bool:
+            file, buffer = None, None
             try:
                 # Check server notification settings
                 if store.id in str(server.get('notification_settings')) and server.get('channel'):
@@ -187,8 +188,9 @@ class MyClient(discord.Client):
                         file = discord.File(fp=buffer, filename=f'img.{image_type.lower()}')
 
                     await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
-                    servers_notified+=1
-            except:
+                    return True
+                return False
+            except Exception:
                 logger.error("Failed to send notification", 
                     extra={
                     '_store_name': getattr(store, 'name', 'unknown'),
@@ -197,17 +199,39 @@ class MyClient(discord.Client):
                     '_server_channel': server.get('channel', 'unknown'),
                     }
                 )
+                return False
             finally:
-                if file:
-                    try:
-                        if file.fp:
-                            file.fp.close()
-                        file.close()
-                    except Exception:
-                        pass
-                    file = None
+                if buffer:
+                    buffer.close()
+
+        batch_stats = []
+        for i in range(0, len(servers_data), BATCH_SIZE):
+            batch = servers_data[i:i + BATCH_SIZE]
+            batch_start = time.time()
+            
+            tasks = [send_message(server) for server in batch]
+            results = await asyncio.gather(*tasks)
+            
+            batch_time = time.time() - batch_start
+            servers_notified += sum(results)
+
+            batch_stats.append({
+                # "batch": i // BATCH_SIZE + 1,
+                # "attempted": len(batch),
+                # "notified": sum(results),
+                "time": batch_time,
+            })
+
         end_time = time.time()
-        logger.info(f"Finished sending Discord notifications to {servers_notified}/{len(servers_data)} servers. Time taken: {end_time - start_time:.2f} seconds")
+
+        logger.info("Finished sending Discord notifications", 
+            extra={
+                "_total_batches": len(batch_stats), 
+                "_total_notified": f"{servers_notified}/{len(servers_data)}",
+                "_total_time": f"{end_time - start_time:.2f}s",
+                "_Avg_batch_time": f"{sum(b['time'] for b in batch_stats) / len(batch_stats):.2f}s"
+            }
+        )
 
 
     # MARK: store_messages

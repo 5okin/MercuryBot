@@ -16,12 +16,14 @@ DISCORD_ADMIN_ACC = int(os.getenv('DISCORD_ADMIN_ACC')) if os.getenv('DISCORD_AD
 if DEBUG:
     print('\x1b[6;30;42m' + "---::-DEBUG-::---" + '\x1b[0m')
     DISCORD_BOT_TOKEN = os.getenv('DISCORD_TOKEN_TEST')
+    NOTIFICATION_BATCH_SIZE = os.getenv('NOTIFICATION_BATCH_SIZE')
     DEVELOPMENT = True
     DB = '_dev'
     loggerlevel = 'DEBUG'
 else:
     print('\x1b[37;41m' + "---::-PRODUCTION-::---" + '\x1b[0m')
     DISCORD_BOT_TOKEN = os.getenv('DISCORD_TOKEN_LIVE')
+    NOTIFICATION_BATCH_SIZE = os.getenv('NOTIFICATION_BATCH_SIZE')
     DEVELOPMENT = False
     DB = ''
     loggerlevel = 'INFO'
