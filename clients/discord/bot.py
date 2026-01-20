@@ -179,17 +179,14 @@ class MyClient(discord.Client):
         async def send_message(server) -> bool:
             file, buffer = None, None
             try:
-                # Check server notification settings
-                if store.id in str(server.get('notification_settings')) and server.get('channel'):
-                    if store.image_cdn:
-                        file = store.image_cdn
-                    else:
-                        buffer = BytesIO(image_bytes)
-                        file = discord.File(fp=buffer, filename=f'img.{image_type.lower()}')
+                if store.image_cdn:
+                    file = store.image_cdn
+                else:
+                    buffer = BytesIO(image_bytes)
+                    file = discord.File(fp=buffer, filename=f'img.{image_type.lower()}')
 
-                    await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
-                    return True
-                return False
+                await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
+                return True
             except Exception:
                 logger.error("Failed to send notification", 
                     extra={
@@ -204,9 +201,15 @@ class MyClient(discord.Client):
                 if buffer:
                     buffer.close()
 
+
+        servers_eligible = [
+            server for server in servers_data
+            if store.id in str(server.get('notification_settings')) and server.get('channel') 
+        ]
+
         batch_stats = []
-        for i in range(0, len(servers_data), BATCH_SIZE):
-            batch = servers_data[i:i + BATCH_SIZE]
+        for i in range(0, len(servers_eligible), BATCH_SIZE):
+            batch = servers_eligible[i:i + BATCH_SIZE]
             batch_start = time.time()
             
             tasks = [send_message(server) for server in batch]
@@ -226,8 +229,10 @@ class MyClient(discord.Client):
 
         logger.info("Finished sending Discord notifications", 
             extra={
-                "_total_batches": len(batch_stats), 
-                "_total_notified": f"{servers_notified}/{len(servers_data)}",
+                "_store_name": store.name,
+                "_total_batches": len(batch_stats),
+                "_total_servers": len(servers_data),
+                "_total_notified": f"{servers_notified}/{len(servers_eligible)}",
                 "_total_time": f"{end_time - start_time:.2f}s",
                 "_Avg_batch_time": f"{sum(b['time'] for b in batch_stats) / len(batch_stats):.2f}s"
             }
