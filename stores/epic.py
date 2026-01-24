@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.request import urlopen
 import io, os
 import asyncio
@@ -81,8 +81,8 @@ class Main(Store):
                 if game['promotions']['promotionalOffers']:
                     if game['price']['totalPrice']['fmtPrice']['discountPrice'] == "0":
                         offer = game['promotions']['promotionalOffers'][0]['promotionalOffers'][0]
-                        startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
-                        endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
+                        startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
+                        endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                         offer_links.append(f'offers=1-{game_namespace}-{game_id}')
                         json_data = makejson.data(json_data,
                                                     game_name,
@@ -98,8 +98,8 @@ class Main(Store):
                     for offer in game['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers']:
                         if offer['discountSetting']['discountPercentage'] == 0:
                             offer =  game['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers'][0]
-                            startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
-                            endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
+                            startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
+                            endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                             json_data = makejson.data(json_data,
                                                         game_name,
                                                         0,
@@ -194,22 +194,26 @@ class Main(Store):
             if temp < date:
                 date = temp
 
-        delta = date - datetime.now()
-        # if the time has come, Get the deals 5 minutes after they go live
-        if delta.total_seconds() <= 0:
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        delta = date - now
+
+        # Deal already live, wait before fetching
+        if delta.total_seconds() <= 1:
             self.logger.info("EPIC:: New deals live, waiting 5 minutes to fetch")
             await asyncio.sleep(300)
             return self
-        # if deal ends in the next 24-hours just wait for it.
+        
+        # Deal ends within 24h wait until it ends
         elif delta.total_seconds() <= 86400:
             self.logger.info(f"EPIC:: Waiting for {delta.total_seconds()}", extra={
                 '_game_time': date,
-                '_datetime.now': datetime.now()
+                '_datetime.now': now
             })
 
             await asyncio.sleep(delta.total_seconds())
-            return self
-        # if deal doesn't end in the next 24 hours check if the games changed every 30-minutes
+            return await self.scheduler()
+
+        # Regular scheduled check
         else:
             await asyncio.sleep(self.scheduler_time)
             return self
