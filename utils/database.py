@@ -25,7 +25,7 @@ class Database(object):
         Connect to mongoDB and setup collections
         '''
         if cls._client is None:
-            cls._client = MongoClient(cls.CONNECTION_STRING)
+            cls._client = MongoClient(cls.CONNECTION_STRING, tz_aware=True, tzinfo=timezone.utc)
             cls.servers = cls._client['servers'+dev]
             cls.deals = cls._client['deals'+dev]
             cls.feedback = cls._client['feedback'+dev]
