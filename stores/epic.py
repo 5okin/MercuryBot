@@ -14,7 +14,8 @@ class Main(Store):
     '''
     def __init__(self):
         self.page = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions'
-        self.checkout_url = 'https://store.epicgames.com/purchase?{offers}#/purchase/payment-methods'
+        self.checkout_url_template = 'https://store.epicgames.com/purchase?{slugs}#/purchase/payment-methods'
+        self.checkout_url = None
         self.giveawayUrl = 'https://store.epicgames.com/en-US/free-games'
         super().__init__(
             name = 'epic',
@@ -35,14 +36,11 @@ class Main(Store):
             return False
 
         json_data = []
-        offer_links = []
         game_list = pages['data']['Catalog']['searchStore']['elements']
         for game in game_list:
 
             if game['promotions'] is not None:
                 game_name = game['title']
-                game_id = game['id']
-                game_namespace = game['namespace']
 
                 if (game['catalogNs']['mappings'] is not None) and (len(game['catalogNs']['mappings'])):
                     product_url = game['catalogNs']['mappings'][0]['pageSlug']
@@ -83,7 +81,7 @@ class Main(Store):
                         offer = game['promotions']['promotionalOffers'][0]['promotionalOffers'][0]
                         startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                         endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
-                        offer_links.append(f'offers=1-{game_namespace}-{game_id}')
+                        checkout_slug = f'offers=1-{game['namespace']}-{game['id']}'
                         json_data = makejson.data(json_data,
                                                     game_name,
                                                     1,
@@ -91,7 +89,9 @@ class Main(Store):
                                                     tall_image_url,
                                                     startDate,
                                                     endDate,
-                                                    wide_image_url)
+                                                    wide_image_url,
+                                                    'game',
+                                                    checkout_slug)
 
                 # Upcoming deal
                 if game['promotions']['upcomingPromotionalOffers']:
@@ -108,7 +108,6 @@ class Main(Store):
                                                         startDate,
                                                         endDate,
                                                         wide_image_url)
-        self.checkout_url = self.checkout_url.format(offers= '&'.join(offer_links))
         del game_list
         return await self.compare(json_data)
 
