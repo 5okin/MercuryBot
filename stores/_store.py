@@ -395,6 +395,7 @@ class Store:
                     old_data = self.data
                     try:
                         self.data = copy.deepcopy(json_data)
+                        await self.create_checkout_url()
                         await self.set_images()
                     except:
                         self.data = old_data
@@ -406,6 +407,24 @@ class Store:
             self.data = None
             self.image = self.image_mobile = self.image_twitter = None
             return 0
+    
+    # MARK: create_checkout_url
+    async def create_checkout_url(self):
+
+        template = getattr(self, 'checkout_url_template', None)
+
+        if not template:
+            self.checkout_url = None
+            return
+
+        offer_links = [
+            game["checkout_slug"]
+            for game in self.data if game.get("activeDeal")
+        ]
+
+        self.checkout_url = template.format(
+            slugs = "&".join(offer_links)
+        )
 
     #MARK: scheduler
     async def scheduler(self):

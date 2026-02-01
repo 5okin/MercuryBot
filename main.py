@@ -91,6 +91,7 @@ async def initialize() -> None:
             store.data = Database.find(store.name)
             store.image = Database.get_image(store.name)
             store.image_cdn = Database.get_image(store.name, 'cdn')
+            await store.create_checkout_url()
 
             # Then check if live data is different
             logger.debug("Checking if theres new data")

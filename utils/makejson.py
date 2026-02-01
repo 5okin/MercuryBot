@@ -5,7 +5,7 @@ from datetime import datetime
 
 logger = environment.logging.getLogger("bot.makejson")
 
-def data(json_data, game_name, active_deal, game_url, game_image, offer_from=None, offer_until=None, wide_image=None, productType='game') -> dict:
+def data(json_data, game_name, active_deal, game_url, game_image, offer_from=None, offer_until=None, wide_image=None, productType='game', checkout_slug=None) -> dict:
     """ Creates a json file from the given data
         
         Parameters
@@ -25,6 +25,7 @@ def data(json_data, game_name, active_deal, game_url, game_image, offer_from=Non
         :param game_image:
         :param wide_image:
         :param type:
+        :param checkout_slug:
     """
 
     # Set offer_from to today if its not provided
@@ -41,7 +42,8 @@ def data(json_data, game_name, active_deal, game_url, game_image, offer_from=Non
         'endDate': offer_until,
         'image': game_image.replace(" ", "%20") if game_image else None,
         'wideImage': wide_image.replace(" ", "%20") if wide_image else None,
-        'type': productType
+        'type': productType,
+        'checkout_slug': checkout_slug
     })
     return json_data
 
