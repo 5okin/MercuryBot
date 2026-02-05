@@ -113,7 +113,7 @@ class Main(Store):
 
 
     #MARK: combined GIF
-    async def create_combined_gif(self):
+    async def make_gif_image(self, wide=False, status=1, size=1):
         """
         Generates a gif from the given list of images
         """
@@ -139,6 +139,9 @@ class Main(Store):
 
         curr_images = [img for img in active_images if img]
         next_images = [img for img in future_images if img]
+
+        if (not next_images):
+            return await super().make_gif_image(wide, status, size)
 
         if len(curr_images) >= len(next_images):
             for index, image in enumerate(curr_images):
@@ -218,8 +221,7 @@ class Main(Store):
             return self
 
     async def set_images(self):
-        self.image = await self.create_combined_gif()
-        # self.image_mobile = await self.make_gif_image()
+        self.image = await self.make_gif_image()
         self.image_twitter = await self.make_gif_image(True, size=2)
 
     #MARK: get
