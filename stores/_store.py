@@ -27,7 +27,6 @@ class Store:
                 data: Optional[List] = None,
                 image: Optional[IO] = None,
                 image_cdn: Optional[str] = None,
-                image_mobile: Optional[IO] = None,
                 image_twitter: Optional[list[Optional[IO[bytes]]]] = None,
                 video: Optional[IO] = None,
                 image_type: str = 'GIF',
@@ -45,7 +44,6 @@ class Store:
         self.data = data
         self.image = image
         self.image_cdn = image_cdn
-        self.image_mobile = image_mobile
         self.image_twitter = image_twitter
         self.video = video
         self.image_type = image_type
@@ -405,7 +403,7 @@ class Store:
         # Theres no data online
         elif not json_data:
             self.data = None
-            self.image = self.image_mobile = self.image_twitter = None
+            self.image = self.image_twitter = None
             return 0
     
     # MARK: create_checkout_url
