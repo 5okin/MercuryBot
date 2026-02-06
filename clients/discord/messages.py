@@ -30,6 +30,7 @@ def epic(store, image_url: str | None = None, mobile=False):
             all_upnext += "• " + f"[**{title}**]({link}){ZWSP}\n"
 
     embed_var.add_field(name=f'{ZWSP}\n**Free Now**', value=f"Until: {now_end_date}\n\n{all_freenow}", inline=True)
+    embed_var.add_field(name=ZWSP, value=ZWSP, inline=True)
     if (not mobile):
         embed_var.add_field(name=f'{ZWSP}\n**Up Next**', value=f"{ZWSP}{ZWSP}{ZWSP}{game_details}\n\n{all_upnext}{ZWSP}", inline=True)
 
