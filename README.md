@@ -11,7 +11,7 @@
 
 # MercuryBot
 
-MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, Steam, GOG,  PS Plus and luna (prime gaming). Never miss out on the opportunity to grab titles for free. Discover more on our [website](https://5okin.github.io/mercurybot-web/).
+MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, both desktop and mobile, Steam, GOG,  PS Plus and luna (prime gaming). Never miss out on the opportunity to grab titles for free. Discover more on our [website](https://5okin.github.io/mercurybot-web/).
 
 <br>
 
@@ -69,7 +69,7 @@ Discord             |  X            |  Bluesky
     - `Set stores`: Set the store you wish to receive notifications for.
 
 <p align='center'>
-    <image src="https://github.com/user-attachments/assets/e51893ae-ba7f-451f-b1a7-8ba1ebefb0a3">
+    <image src="https://github.com/user-attachments/assets/feb013c1-3f0c-4fc9-85bd-11ad140a2f57">
 <p>
 
 3. Enjoy automatic alerts for new free games on various platforms.
@@ -99,7 +99,7 @@ Discord             |  X            |  Bluesky
 
 - The `Set stores` button allows you change the stores for which you receive notifications.
 <p align='center'>
- <image src="https://github.com/user-attachments/assets/efef0be8-d549-42b6-be93-fed9d437d780">
+ <image src="https://github.com/user-attachments/assets/c0c03f56-837b-41d5-ac51-648078bfd49d">
 <p>
 
 ## Project Structure
@@ -110,6 +110,7 @@ Discord             |  X            |  Bluesky
 │ ├── 📜 bluesky.py     # Bluesky integration
 │ ├── 📜 twitter.py     # X (Twitter) integration
 │── 📂 stores
+│ ├── 📜 epic_mobile.py # Epic Games store handler
 │ ├── 📜 epic.py        # Epic Games store handler
 │ ├── 📜 gog.py         # GOG store handler
 │ ├── 📜 luna.py        # luna store handler
@@ -236,10 +237,12 @@ This datebase only has a collection for discord. For the time being its the only
 To optimize storage and simplify notification settings, MercuryBot uses a compact integer-based encoding system for `notification_settings`:
 
 - Each store is assigned a unique integer ID:
+  - Epic Games Mobile: `0`  
   - Epic Games: `1`
   - GOG: `2`
   - Steam: `3`
   - PS Plus: `4`
+  - luna: `5`
   - (Additional stores can be added as needed.)
   
 - These IDs are combined into a single integer to represent notification preferences. For example:
@@ -257,3 +260,4 @@ This method is both space-efficient and scalable.
 ## Contributions
 
 Contributions are welcome! If you have any ideas for improvements or new features, feel free to submit a pull request.
+
