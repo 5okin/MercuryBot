@@ -12,19 +12,28 @@ class Main(Store):
     '''
     Epic store 
     '''
-    def __init__(self):
+    def __init__(
+        self, *,
+        name='epic',
+        id='1',
+        discord_emoji=os.getenv('DISCORD_EPIC_EMOJI'),
+        service_name='Epic Games',
+        url='https://www.epicgames.com/store/us-US/product/',
+        **kwargs
+    ):
+
         self.page = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions'
         self.checkout_url_template = 'https://store.epicgames.com/purchase?{slugs}#/purchase/payment-methods'
         self.checkout_url = None
         self.giveawayUrl = 'https://store.epicgames.com/en-US/free-games'
+        
         super().__init__(
-            name = 'epic',
-            id = '1',
-            discord_emoji = os.getenv('DISCORD_EPIC_EMOJI'),
-            twitter_notification = True,
-            bsky_notification = True,
-            service_name = 'Epic Games',
-            url = 'https://www.epicgames.com/store/us-US/product/'
+            name = name,
+            id = id,
+            discord_emoji = discord_emoji,
+            service_name = service_name,
+            url = url,
+            **kwargs
         )
 
     #MARK: process_data
@@ -201,13 +210,13 @@ class Main(Store):
 
         # Deal already live, wait before fetching
         if delta.total_seconds() <= 1:
-            self.logger.info("EPIC:: New deals live, waiting 5 minutes to fetch")
-            await asyncio.sleep(300)
+            self.logger.info(f"{self.name}:: New deals live, waiting {self.new_deal_delay/60:.2f} minutes to fetch")
+            await asyncio.sleep(self.new_deal_delay)
             return self
         
         # Deal ends within 24h wait until it ends
         elif delta.total_seconds() <= 86400:
-            self.logger.info(f"EPIC:: Waiting for {delta.total_seconds()}", extra={
+            self.logger.info(f"{self.name}:: Waiting for {delta.total_seconds()}", extra={
                 '_game_time': date,
                 '_datetime.now': now
             })
