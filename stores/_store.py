@@ -32,6 +32,7 @@ class Store:
                 image_type: str = 'GIF',
                 scheduler_time: int = 1800,
                 scheduler_retry_time: int = 300,
+                new_deal_delay: int = 300,
                 discord_emoji: int = 0,
                 twitter_notification: bool = False,
                 bsky_notification: bool = False
@@ -49,6 +50,7 @@ class Store:
         self.image_type = image_type
         self.discord_emoji = discord_emoji
         self.scheduler_time = scheduler_time
+        self.new_deal_delay = new_deal_delay
         self.scheduler_retry_time = scheduler_retry_time
         self.default_scheduler_time = scheduler_time
         self.twitter_notification = twitter_notification
