@@ -19,6 +19,8 @@ class Main(Store):
         discord_emoji=os.getenv('DISCORD_EPIC_EMOJI'),
         service_name='Epic Games',
         url='https://www.epicgames.com/store/us-US/product/',
+        twitter_notification = True,
+        bsky_notification = True,
         **kwargs
     ):
 
@@ -33,6 +35,8 @@ class Main(Store):
             discord_emoji = discord_emoji,
             service_name = service_name,
             url = url,
+            twitter_notification = twitter_notification,
+            bsky_notification = bsky_notification,
             **kwargs
         )
 
@@ -122,7 +126,7 @@ class Main(Store):
 
 
     #MARK: combined GIF
-    async def make_gif_image(self, wide=False, status=1, size=1):
+    async def make_gif_image(self, wide=False, status=None, size=1):
         """
         Generates a gif from the given list of images
         """
@@ -149,8 +153,11 @@ class Main(Store):
         curr_images = [img for img in active_images if img]
         next_images = [img for img in future_images if img]
 
-        if (not next_images):
-            return await super().make_gif_image(wide, status, size)
+        if (not next_images or status is not None):
+            if status is None:
+                return await super().make_gif_image(wide, size)
+            else:
+                return await super().make_gif_image(wide, status, size)
 
         if len(curr_images) >= len(next_images):
             for index, image in enumerate(curr_images):
@@ -231,7 +238,7 @@ class Main(Store):
 
     async def set_images(self):
         self.image = await self.make_gif_image()
-        self.image_twitter = await self.make_gif_image(True, size=2)
+        self.image_twitter = await self.make_gif_image(True, status=1, size=2)
 
     #MARK: get
     async def get(self):

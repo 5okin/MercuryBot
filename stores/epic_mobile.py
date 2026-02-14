@@ -13,6 +13,8 @@ class Main(epic):
             id='0',
             service_name='Epic Games Mobile',
             url = 'https://www.epicgames.com/store/us-US/product/',
+            twitter_notification = True,
+            bsky_notification = True,
             scheduler_time = 7200,
             new_deal_delay = 900 # 15 minutes
         )
