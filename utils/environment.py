@@ -9,21 +9,19 @@ import sys
 load_dotenv(override=True)
 DEBUG = (os.getenv('DEBUG', 'True').lower() == 'true')
 
-# DISCORD_DEV_GUILD = os.getenv('DISCORD_DEV_GUILD')
-DISCORD_DEV_GUILD = os.getenv('DISCORD_DEV_GUILD') # if os.getenv('DISCORD_DEV_GUILD') is not None else '0'
-DISCORD_ADMIN_ACC = int(os.getenv('DISCORD_ADMIN_ACC')) if os.getenv('DISCORD_ADMIN_ACC') is not None else None
+DISCORD_DEV_GUILD = os.getenv('DISCORD_DEV_GUILD')
+DISCORD_ADMIN_ACC = int(os.getenv('DISCORD_ADMIN_ACC')) if os.getenv('DISCORD_ADMIN_ACC') else None
+NOTIFICATION_BATCH_SIZE = os.getenv('NOTIFICATION_BATCH_SIZE')
 
 if DEBUG:
     print('\x1b[6;30;42m' + "---::-DEBUG-::---" + '\x1b[0m')
     DISCORD_BOT_TOKEN = os.getenv('DISCORD_TOKEN_TEST')
-    NOTIFICATION_BATCH_SIZE = os.getenv('NOTIFICATION_BATCH_SIZE')
     DEVELOPMENT = True
     DB = '_dev'
     loggerlevel = 'DEBUG'
 else:
     print('\x1b[37;41m' + "---::-PRODUCTION-::---" + '\x1b[0m')
     DISCORD_BOT_TOKEN = os.getenv('DISCORD_TOKEN_LIVE')
-    NOTIFICATION_BATCH_SIZE = os.getenv('NOTIFICATION_BATCH_SIZE')
     DEVELOPMENT = False
     DB = ''
     loggerlevel = 'INFO'
