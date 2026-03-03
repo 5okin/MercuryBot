@@ -26,9 +26,7 @@ def define_commands(self):
             if store_choice.value == store.name:
                 message_to_show = getattr(messages, store.name, messages.default)
                 if store.data and any(game.get('activeDeal', False) for game in store.data):
-                    if store.image_cdn:
-                        await interaction.response.send_message(embed=message_to_show(store, store.image_cdn, mobile=mobile), view=FooterButtons(), ephemeral=True)
-                    elif isinstance(store.image, io.BytesIO):
+                    if isinstance(store.image, io.BytesIO):
                         store.image.seek(0)
                         file = discord.File(store.image, filename='img.' + store.image_type.lower())
                         await interaction.response.send_message(embed=message_to_show(store, mobile=mobile), file=file, view=FooterButtons(), ephemeral=True)

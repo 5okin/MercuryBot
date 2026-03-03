@@ -353,54 +353,68 @@ class Store:
         self.image = self.image_twitter = await self.make_gif_image()
 
 
+    def _normilize_title(self, data):
+        return set(
+            game['title'].encode('ascii', 'ignore').decode('ascii')
+            for game in data if game.get('activeDeal')
+        )
+
+    # MARK: verify_new_notification
+    def verify_new_notification(self, potential_deal):
+        """
+        Verify whether a notification should be sent for the current deals.
+
+        This method checks the incoming deals (`potential_deal`) against the deals
+        stored in the database. It uses the db deals as the last deals that a 
+        notification was sent for. If the new deals are different from the db deals, 
+        it means there's a new deal and a notification should be sent.
+
+        Parameters
+        ----------
+        potential_deal : list[dict]
+            The latest deals retrieved from the store API or scraper.
+
+        Returns
+        -------
+        int
+            1 if a new deal exists that has not been recorded in the database
+            (a notification should be sent), otherwise 0.
+        """
+        database_data = database.Database.find(self.name)
+
+        db_data = self._normilize_title(database_data)
+        potential_deal = self._normilize_title(potential_deal)
+
+        match = potential_deal.issubset(db_data)
+
+        return 0 if match else 1
+
     #MARK: compare
     async def compare(self, json_data):
         """
         Compare local deals with current deals online
         """
-        working_off = 'local'
-        has_active = any(game['activeDeal'] for game in json_data)
+        has_active = json_data and any(game.get('activeDeal') for game in json_data)
 
-        if (json_data and has_active) and not self.data :
-            # If self.data is None, then maybe the last run it was removed because site was down / missed deal
-            # Check with database data to make sure the "new" deal isnt actually the old/prev deal.
-            database_data = database.Database.find(self.name)
-            self.data = database_data
-            working_off = 'database'
-            
         # Theres local data and data online
-        if (json_data and has_active) and self.data:
+        if has_active and self.data:
 
-            # Online data
-            online_titles = [
-                game['title'].encode('ascii', 'ignore').decode('ascii')
-                for game in json_data if game['activeDeal']
-            ]
+            online_titles = self._normilize_title(json_data)
+            local_titles = self._normilize_title(self.data)
 
-            # Local data
-            local_titles = [
-                game['title']
-                for game in self.data if game['activeDeal']
-            ]
+            if local_titles != online_titles:
+                state_backup = (self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter)
+                
+                try:
+                    self.data = copy.deepcopy(json_data)
+                    await self.create_checkout_url()
+                    await self.set_images()
+                except:
+                    self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter = state_backup
+                    raise
 
-            self.logger.info("Store Compare: %s", self.name, extra={
-                '_Online' : online_titles,
-                f'_{working_off}': local_titles
-            })
-
-            # Check if online deals exist in local
-            match = all(title in local_titles for title in online_titles)
-
-            if not match or len(local_titles) > len(online_titles) or working_off == 'database':
-                    old_data = self.data
-                    try:
-                        self.data = copy.deepcopy(json_data)
-                        await self.create_checkout_url()
-                        await self.set_images()
-                    except:
-                        self.data = old_data
-                        raise
-            return 0 if match else 1
+                return self.verify_new_notification(json_data)
+            return 0
 
         # Theres no data online
         elif not json_data:
