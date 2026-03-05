@@ -403,6 +403,11 @@ class Store:
             local_titles = self._normilize_title(self.data)
 
             if local_titles != online_titles:
+
+                self.logger.info("Store Compare: %s", self.name, extra={
+                    '_Online'   : online_titles,
+                    '_Local'    : local_titles
+                })
                 state_backup = (self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter)
                 
                 try:
