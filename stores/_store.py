@@ -411,7 +411,7 @@ class Store:
                 state_backup = (self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter)
                 
                 try:
-                    self.data = copy.deepcopy(json_data)
+                    self.data = json_data
                     await self.create_checkout_url()
                     await self.set_images()
                 except:
