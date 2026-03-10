@@ -94,7 +94,7 @@ class Main(Store):
                         offer = game['promotions']['promotionalOffers'][0]['promotionalOffers'][0]
                         startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                         endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
-                        checkout_slug = f'offers=1-{game['namespace']}-{game['id']}'
+                        checkout_slug = f"offers=1-{game['namespace']}-{game['id']}"
                         json_data = makejson.data(json_data,
                                                     game_name,
                                                     1,

@@ -64,7 +64,7 @@ class Main(epic):
                     endDate = datetime.strptime(endDeal, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
 
                     parts = game.get('offers')[0].get('content').get('purchase')[0].get('purchasePayload')
-                    checkout_slug = f'offers=1-{parts.get("sandboxId")}-{parts.get("offerId")}'
+                    checkout_slug = f"offers=1-{parts.get("sandboxId")}-{parts.get("offerId")}"
                     product_url = game.get('offers')[0].get('content').get('mapping').get('slug')
                     game_url = self.url + product_url
  
