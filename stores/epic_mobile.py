@@ -16,7 +16,7 @@ class Main(epic):
             twitter_notification = True,
             bsky_notification = True,
             scheduler_time = 7200,
-            new_deal_delay = 1200 # 20 minutes
+            new_deal_delay = 900 # 15 minutes
         )
         
         self.platforms = ['ios', 'android']
@@ -42,18 +42,26 @@ class Main(epic):
             return None
 
 
-    # MARK: process_data    
-    async def process_data(self):
+    async def get_mobile_deals(self):
+        responses = {}
+        
+        for platform in self.platforms:
+            url = self.api_url.format(platform=platform)
+            response = (await self.request_data_playwright(url, return_response=True))['response']
+            responses[platform] = self.cleanup_json_response(response)
+        return responses
+
+
+    # MARK: process_data
+    async def process_data(self, pages):
         """
         epic mobile process data
         """
         json_data = []
 
-        for platform in self.platforms:
-            url = self.api_url.format(platform=platform)
-            response = (await self.request_data_playwright(url, return_response=True))['response']
+        for platform, data in pages.items():            
 
-            data = self.cleanup_json_response(response)
+            if not data: continue
             
             for game in data['data']:
                 if game.get('type') == "freeGame":
@@ -77,7 +85,7 @@ class Main(epic):
         """
         epic mobile get
         """
-        if await self.process_data():
+        if await self.process_data(await self.get_mobile_deals()):
             return 1
         return 0
 
