@@ -35,7 +35,8 @@ class Store:
                 new_deal_delay: int = 300,
                 discord_emoji: Optional[str] = None,
                 twitter_notification: bool = False,
-                bsky_notification: bool = False
+                bsky_notification: bool = False,
+                require_all_deals_new: bool = False
                 ) -> None:
         self.name = name
         self.logger = environment.logging.getLogger(f'store.{self.name}')
@@ -55,6 +56,7 @@ class Store:
         self.default_scheduler_time = scheduler_time
         self.twitter_notification = twitter_notification
         self.bsky_notification = bsky_notification
+        self.require_all_deals_new = require_all_deals_new
         self._session: Optional[aiohttp.ClientSession] = None
 
     # MARK Scheduler timer change
@@ -474,7 +476,15 @@ class Store:
             online_titles = self._normilize_title(json_data)
             local_titles = self._normilize_title(self.data)
 
-            if local_titles != online_titles:
+            should_update = False
+            if self.require_all_deals_new:
+                # Only update if all online deals are new (no overlap with local)
+                should_update = online_titles and online_titles.isdisjoint(local_titles)
+            else:
+                # Update if any difference
+                should_update = local_titles != online_titles
+
+            if should_update:
 
                 self.logger.info("Store Compare: %s", self.name, extra={
                     '_Online'   : online_titles,
@@ -497,6 +507,11 @@ class Store:
         elif not json_data:
             self.data = None
             self.image = self.image_twitter = None
+            return False
+        elif has_active and not self.data:
+            self.data = json_data
+            await self.create_checkout_url()
+            await self.set_images()
             return False
         return False
     
