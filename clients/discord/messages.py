@@ -22,13 +22,13 @@ def epic(store, image_url: str | None = None, mobile=False) -> discord.Embed:
 
         if deal['activeDeal']:
             now_end_date = store.get_date(deal, 'end', True)
-            all_freenow += "• " + f"[**{title}**]({link})\n{ZWSP}"
+            all_freenow += "• " + f"[**{title}**]({link})\n\n"
         else:
             start_date = store.get_date(deal, 'start')
             end_date = store.get_date(deal, 'end')
 
             game_details = f"Free: {start_date} - {end_date}"
-            all_upnext += "• " + f"[**{title}**]({link}){ZWSP}\n"
+            all_upnext += "• " + f"[**{title}**]({link})\n\n"
 
     embed_var.add_field(name=f'{ZWSP}\n**Free Now**', value=f"Until: {now_end_date}\n\n{all_freenow}", inline=True)
     embed_var.add_field(name=ZWSP, value=ZWSP, inline=True)
