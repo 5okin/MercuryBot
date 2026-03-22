@@ -1,3 +1,4 @@
+from typing import Self
 from atproto import Client, client_utils
 from utils import environment
 
@@ -5,26 +6,30 @@ logger = environment.logging.getLogger("bot.blueSky")
 
 class MyClient():
 
-    def __new__(cls):
+    def __new__(cls) -> None | Self:
         '''
         Check if running in dev mode
         '''
         if environment.DEVELOPMENT:
             logger.debug("Bluesky doesn't run in development")
-            return 0
+            return None
         return super(MyClient, cls).__new__(cls)
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.name = 'bluesky'
         self.client = Client()
+        self.user = environment.BSKY_USER
         self.client.login(environment.BSKY_USER, environment.BSKY_PASSWORD)
 
 
-    def get_follower_count(self) -> dict[str, int | str]:
+    def get_follower_count(self) -> dict:
         """Returns the number of followers of the Bluesky account."""
         try:
-            profile = self.client.get_profile(environment.BSKY_USER)
-            return {"name": self.name, "followers_count": profile.followers_count}
+            if self.user:
+                profile = self.client.get_profile(self.user)
+                return {"name": self.name, "followers_count": profile.followers_count}
+            else: 
+                return {}
         except Exception:
             logger.error("Bluesky failed to retrieve follower count")
             return {}
@@ -44,10 +49,10 @@ class MyClient():
             if data['activeDeal']:
                 txt.text("• ").link(title, link)
                 txt.text("\n\n")
-        return txt
+        return str(txt)
 
     #MARK: Post
-    def post(self, store) -> str|None:
+    def post(self, store) -> str:
         try:
             txt_string = self.format_post(store)
             post = self.client.send_video(text=txt_string, video=store.video, video_alt='game photos')

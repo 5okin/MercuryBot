@@ -7,7 +7,7 @@ from lxml import html
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 from playwright.async_api import async_playwright
-from typing import List, Optional, IO
+from typing import List, Optional, IO, Self, overload, Literal, Any
 from PIL import Image
 from utils import environment, database
 from datetime import datetime, timedelta
@@ -33,10 +33,10 @@ class Store:
                 scheduler_time: int = 1800,
                 scheduler_retry_time: int = 300,
                 new_deal_delay: int = 300,
-                discord_emoji: int = 0,
+                discord_emoji: Optional[str] = None,
                 twitter_notification: bool = False,
                 bsky_notification: bool = False
-                ):
+                ) -> None:
         self.name = name
         self.logger = environment.logging.getLogger(f'store.{self.name}')
         self.id = id
@@ -58,14 +58,14 @@ class Store:
         self._session: Optional[aiohttp.ClientSession] = None
 
     # MARK Scheduler timer change
-    def schedule_retry(self):
+    def schedule_retry(self) -> None:
         """
         Sets the scheduler time to retry soon
         """
         self.logger.info("Scheduler change: %s from %s -> %s sec", self.name, self.scheduler_time, self.scheduler_retry_time)
         self.scheduler_time = self.scheduler_retry_time
 
-    def reset_scheduler(self):
+    def reset_scheduler(self) -> None:
         """
         Resets the scheduler time to default
         """
@@ -74,12 +74,82 @@ class Store:
             self.scheduler_time = self.default_scheduler_time
 
     #MARK: request_data
-    async def request_data(self, url: str | None = None, mode='json', method = 'GET',  headers: Optional[dict] = None, cookies: Optional[dict] = None, body: Optional[dict] = None):
+    @overload
+    async def request_data(
+        self,
+        url: str
+    ) -> dict | None: ...
+
+    @overload
+    async def request_data(self,
+        url: str,
+        mode: Literal['json'],
+        method: str = 'GET',
+        headers: Optional[dict] = None,
+        cookies: Optional[dict] = None,
+        body: Optional[dict] = None
+    ) -> dict | None: ...
+
+
+    @overload
+    async def request_data(self,
+        url: str,
+        mode: Literal['text'],
+        method: str = 'GET',
+        headers: Optional[dict] = None,
+        cookies: Optional[dict] = None,
+        body: Optional[dict] = None
+    ) -> str | None: ...
+
+
+    @overload
+    async def request_data(self,
+        url: str,
+        mode: Literal['html'],
+        method: str = 'GET',
+        headers: Optional[dict] = None,
+        cookies: Optional[dict] = None,
+        body: Optional[dict] = None
+    ) -> html.HtmlElement | None: ...
+
+    async def request_data(
+        self,
+        url: str,
+        mode: Literal['json', 'text', 'html'] = 'json',
+        method: str = 'GET',
+        headers: Optional[dict] = None,
+        cookies: Optional[dict] = None,
+        body: Optional[dict] = None
+    ) -> dict | str | html.HtmlElement | None:
         """
-        Simple json getter
+        Make an HTTP request and return the response in the requested format.
+
+        Parameters
+        ----------
+        url : str
+            The URL to send the request to.
+        mode : Literal['json', 'text', 'html'], default 'json'
+            Determines the expected response type:
+            - 'json' → returns a dict (parsed JSON)
+            - 'text' → returns the raw text
+            - 'html' → returns an lxml HtmlElement parsed from the response
+        method : str, default 'GET'
+            HTTP method to use.
+        headers : dict, optional
+            Additional HTTP headers to include in the request.
+        cookies : dict, optional
+            Cookies to include in the request.
+        body : dict, optional
+            JSON body to send with the request (for POST/PUT).
+
+        Returns
+        -------
+        dict | str | html.HtmlElement | None
+            - `dict` if mode='json'
+            - `str` if mode='text'
+            - `HtmlElement` if mode='html'
+            - `None` if the request fails or an exception occurs
         """
-        if url is None:
-            raise ValueError("URL must be provided")
 
         default_headers = {}
         if headers:
@@ -95,28 +165,25 @@ class Store:
                 elif mode == 'text':
                     return await response.text()
                 elif mode == 'html':
-                    html_bytes = await response.read()
-                    tree = html.parse(io.BytesIO(html_bytes))
-                    del html_bytes
-                    return tree
+                    return html.fromstring(await response.read())
                 else:
                     raise ValueError(f"Unsupported mode: {mode}")
         except:
             self.logger.warning("Request to %s failed", self.service_name)
-            return False
+            return None
 
 
-    async def close_session(self):
+    async def close_session(self) -> None:
         if self._session and not self._session.closed:
             await self._session.close()
             self._session = None
 
-    async def clear_session(self):
+    async def clear_session(self) -> None:
         if self._session and not self._session.closed:
             self._session.cookie_jar.clear()
 
 
-    async def create_session(self):
+    async def create_session(self) -> None:
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=20))
 
@@ -139,7 +206,7 @@ class Store:
                     "cookies": dict   # Cookies as {name: value}
                 }
         """
-        result = {"headers": {}, "cookies": {}}
+        result = {"headers": {}, "cookies": {}, "response": None}
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
@@ -153,7 +220,7 @@ class Store:
             )
             page = await context.new_page()
     
-            def capture(request):
+            def capture(request) -> None:
                 if all (h in request.headers for h in (headers_to_get or [])):
                     result["headers"] = request.headers
                     context.remove_listener("request", capture)
@@ -163,7 +230,14 @@ class Store:
             await page.goto(url)
             await page.wait_for_load_state('domcontentloaded') 
 
-            result["cookies"] = {c['name']: c['value'] for c in await context.cookies()}
+            cookies = []
+            for c in await context.cookies():
+                name = c.get('name')
+                value = c.get('value')
+                if name and value:
+                    cookies.append((name, value))
+
+            result["cookies"] = dict(cookies)
 
             if return_response:
                 response = await page.content()
@@ -173,11 +247,9 @@ class Store:
         return result
 
 
-    def make_image(self):
+    def make_image(self)-> Optional[Image.Image]:
         '''
         Creates an image with game images appended side by side
-
-        :return: Nothing, saves the result to store image variable
         '''
         images = []
         new_img_size = 0
@@ -201,7 +273,7 @@ class Store:
             return new_image
         
     
-    def parse_date(self, date_str, date_formats):
+    def parse_date(self, date_str, date_formats) -> datetime | None:
         """
         Returns a date object according to given formats
 
@@ -246,7 +318,7 @@ class Store:
 
 
     # MARK: make_gif_image
-    async def make_gif_image(self, wide=False, status=1, size=1):
+    async def make_gif_image(self, wide=False, status=1, size=1) -> IO[bytes] | None:
         """Creates a GIF and MP4 asynchronously."""
 
         if not self.data:
@@ -278,7 +350,7 @@ class Store:
         self.video = arr_mp4  # Store the MP4 buffer
         return arr
 
-    def process_images(self, image_list, size):
+    def process_images(self, image_list, size) -> tuple[IO[bytes], IO[bytes]]:
         arr = io.BytesIO()
         arr_mp4 = io.BytesIO()
         resized_imgs = []
@@ -319,7 +391,7 @@ class Store:
         return arr, arr_mp4
 
     #MARK: get_date
-    def get_date(self, data, status='start', returnAsRelative=False):
+    def get_date(self, data, status='start', returnAsRelative=False) -> str | None:
         """
         Returns the start or end date of a deal based on the status parameter.
         
@@ -349,18 +421,18 @@ class Store:
             return f"{month} {day}"
         return None
 
-    async def set_images(self):
+    async def set_images(self) -> None:
         self.image = self.image_twitter = await self.make_gif_image()
 
 
-    def _normilize_title(self, data):
+    def _normilize_title(self, data) -> set:
         return set(
             game['title'].encode('ascii', 'ignore').decode('ascii')
             for game in data if game.get('activeDeal')
         )
 
     # MARK: verify_new_notification
-    def verify_new_notification(self, potential_deal):
+    def verify_new_notification(self, potential_deal) -> bool:
         """
         Verify whether a notification should be sent for the current deals.
 
@@ -376,9 +448,9 @@ class Store:
 
         Returns
         -------
-        int
-            1 if a new deal exists that has not been recorded in the database
-            (a notification should be sent), otherwise 0.
+        bool
+            True if a new deal exists that has not been recorded in the database
+            (a notification should be sent), otherwise False.
         """
         database_data = database.Database.find(self.name)
 
@@ -387,10 +459,10 @@ class Store:
 
         match = potential_deal.issubset(db_data)
 
-        return 0 if match else 1
+        return False if match else True
 
     #MARK: compare
-    async def compare(self, json_data):
+    async def compare(self, json_data) -> bool:
         """
         Compare local deals with current deals online
         """
@@ -419,20 +491,21 @@ class Store:
                     raise
 
                 return self.verify_new_notification(json_data)
-            return 0
+            return False
 
         # Theres no data online
         elif not json_data:
             self.data = None
             self.image = self.image_twitter = None
-            return 0
+            return False
+        return False
     
     # MARK: create_checkout_url
-    async def create_checkout_url(self):
+    async def create_checkout_url(self) -> None:
 
         template = getattr(self, 'checkout_url_template', None)
 
-        if not template:
+        if not template or not self.data:
             self.checkout_url = None
             return
 
@@ -446,7 +519,7 @@ class Store:
         )
 
     #MARK: scheduler
-    async def scheduler(self):
+    async def scheduler(self) -> Self:
         """
         Default scheduler
         """
@@ -454,3 +527,10 @@ class Store:
         await asyncio.sleep(self.scheduler_time)
         #print(f'{self.service_name}={self.data}')
         return self
+
+    #Mark: get
+    async def get(self) -> bool:
+        """
+        Get method to be implemented by each store
+        """
+        raise NotImplementedError("The get method must be implemented by the store subclass.")

@@ -81,13 +81,13 @@ class Main(epic):
         return await self.compare(json_data)
 
     #MARK: get
-    async def get(self):
+    async def get(self) -> bool:
         """
         epic mobile get
         """
         if await self.process_data(await self.get_mobile_deals()):
-            return 1
-        return 0
+            return True
+        return False
 
 
 if __name__ == "__main__":

@@ -13,6 +13,11 @@ import clients.discord.bot as discord_module
 import clients.twitter.bot as twitter
 import clients.blueSky.bot as blueSky
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from stores._store import Store
+
 logger = environment.logging.getLogger("bot.main")
 shutdown_flag_is_set: bool = False
 modules = []
@@ -46,14 +51,14 @@ bsky = blueSky.MyClient()
 
 
 # MARK: Memory logger
-def log_memory(tag=""):
+def log_memory(tag="") -> None:
     process = psutil.Process(os.getpid())
     mem = process.memory_info().rss / (1024 * 1024)
     logger.info(f"[{tag}] RAM Usage: {mem:.2f} MB")
 
 
 #MARK: Update
-async def update(update_store=None) -> None:
+async def update(update_store: "Store") -> None:
     '''
     Update specified store
 
@@ -182,10 +187,10 @@ if __name__ == "__main__":
         import sys
         sys.exit(1)
 
+    loop = asyncio.new_event_loop()
     try:
         logger.info('Modules: %s', ', '.join(store.name for store in modules))
 
-        loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
         loop.create_task(discord.start(environment.DISCORD_BOT_TOKEN))

@@ -1,3 +1,4 @@
+from typing import Self
 import tweepy
 from dotenv import load_dotenv
 import tweepy.client
@@ -8,16 +9,16 @@ logger = environment.logging.getLogger("bot.twitter")
 
 class MyClient():
 
-    def __new__(cls):
+    def __new__(cls) -> None | Self:
         '''
         Check if running in dev mode
         '''
         if environment.DEVELOPMENT:
             logger.debug("Twitter bot doesn't run in development")
-            return 0
+            return None
         return super(MyClient, cls).__new__(cls)
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.name = 'twitter'
         self.TWEET_MAX = 280
         self.TCO_URL_LENGTH = 23
@@ -147,7 +148,7 @@ class MyClient():
     # MARK: Tweet
     def tweet(self, store) -> str:
         try:
-            media_id: str = None
+            media_id: list[str] | None = None 
             txt = self.tweet_txt(store)
 
             if (store.image_twitter):
@@ -158,7 +159,7 @@ class MyClient():
 
             tweetNow = self.client_v2.create_tweet(text=txt, media_ids=media_id)
             tweetUrl = f'https://twitter.com/user/status/{ tweetNow.data["id"] }'
-            logger.info("twitter: /%s", tweetUrl)
+            logger.info("twitter: %s", tweetUrl)
             
             return (tweetUrl)
 

@@ -2,9 +2,10 @@ import discord
 from utils.database import Database
 
 
-def settings_embed(client, interaction, change_note=None):
+def settings_embed(client, interaction, change_note=None) -> discord.Embed:
     server = Database.get_discord_server(interaction.guild_id)
     channel = '<#'+str(server.get('channel'))+'>' if server and server.get('channel') else '`None`'
+    assert server is not None, "Interaction guild is None"
     
     if (server.get('role') == interaction.guild.default_role.id):
         role = '@everyone'
@@ -33,7 +34,7 @@ def settings_embed(client, interaction, change_note=None):
     return embed
 
 
-def settings_success(message=""):
+def settings_success(message="") -> discord.Embed:
     embed = discord.Embed(
         title=f"✅ Settings Updated ✅",
         description=message,

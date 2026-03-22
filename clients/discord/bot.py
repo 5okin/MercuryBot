@@ -14,7 +14,7 @@ logger = environment.logging.getLogger("bot.discord")
 
 
 class MyClient(discord.Client):
-    def __init__(self, modules):
+    def __init__(self, modules) -> None:
         self.modules = modules
         intents = discord.Intents.none()
         intents.guilds = True
@@ -29,10 +29,11 @@ class MyClient(discord.Client):
         )
         self.tree = app_commands.CommandTree(self)
 
-    async def setup_hook(self):
+    async def setup_hook(self) -> None:
         self.DEV_GUILD = discord.Object(id=environment.DISCORD_DEV_GUILD) if environment.DISCORD_DEV_GUILD is not None and environment.DEVELOPMENT else None
         try:
-            self.ADMIN_USER = await self.fetch_user(environment.DISCORD_ADMIN_ACC) if environment.DISCORD_ADMIN_ACC is not None else None
+            env_value = environment.DISCORD_ADMIN_ACC
+            self.ADMIN_USER = await self.fetch_user(int(env_value)) if env_value is not None else None
         except discord.NotFound:
             self.ADMIN_USER = None
             logger.warning("Admin user ID not found.")
@@ -154,7 +155,7 @@ class MyClient(discord.Client):
         return discord.File(tmp_file.name, filename=f'img.{ext}')
     
     #MARK: upload_image_to_cdn
-    async def upload_image_to_cdn(self, store) -> str:
+    async def upload_image_to_cdn(self, store) -> str | None:
         buffer = BytesIO(store.image.getvalue())
         file = discord.File(fp=buffer, filename=f'img.{store.image_type.lower()}')
 
@@ -165,13 +166,13 @@ class MyClient(discord.Client):
         return message.attachments[0].url
 
     # MARK: send notifications
-    async def send_notifications(self, store):
+    async def send_notifications(self, store) -> None:
         await self.wait_until_ready()
         start_time = time.time()
         logger.info("Started sending Discord notifications...")
         servers_data = Database.get_discord_servers()
         servers_notified = 0
-        BATCH_SIZE = int(environment.NOTIFICATION_BATCH_SIZE)
+        BATCH_SIZE = int(environment.NOTIFICATION_BATCH_SIZE or 1)
     
         image_bytes = store.image.getvalue()
         image_type = store.image_type
@@ -240,19 +241,26 @@ class MyClient(discord.Client):
 
 
     # MARK: store_messages
-    async def store_messages(self, command, server, channel, role, file):
+    async def store_messages(self, command, server_id: int, channel_id: int, role_id: int | None, file: discord.File | None) -> None:
         for store in self.modules:
             if command == store.name:
                 message_to_show = getattr(messages, store.name, messages.default)
-                server = self.get_guild(server)
-                if store.data:
+                server = self.get_guild(server_id)
+                if store.data and server:
+                    channel = self.get_channel(channel_id)
 
-                    channel = self.get_channel(channel)
+                    if not isinstance(channel, discord.TextChannel):
+                        logger.warning("Selected channel is not a text channel", extra={
+                            '_server_id': server_id,
+                            '_channel_id': channel_id
+                        })
+                        return
 
-                    if role and role == server.default_role.id:
+                    role = None
+                    if role_id and role_id == server.default_role.id:
                         role = '@everyone'
-                    elif role:
-                        role = f' <@&{role}>'
+                    elif role_id:
+                        role = f' <@&{role_id}>'
 
                     default_txt = f'{store.service_name} has new free games'
                     permissions = self.check_channel_permissions(channel)
@@ -269,7 +277,7 @@ class MyClient(discord.Client):
                             default_txt + f' {role}' if role else default_txt, 
                             embed=embed,
                             view=FooterButtons(),
-                            file=file
+                            file=file # type: ignore
                         )
 
                     # Check if you can send a permissions notification msg to selected channel
@@ -285,7 +293,11 @@ class MyClient(discord.Client):
 
                         # Try sending permissions notification msg to server owner as dm
                         else:
-                            owner = await self.fetch_user(server.owner_id)
+                            if server.owner_id is not None:
+                                owner = await self.fetch_user(server.owner_id)
+                            else:
+                                logger.warning("Server owner ID is None for server %s", server.id)
+                                return
                             try:
                                 await owner.send(
                                     f"Hello {owner.name}, we noticed that the bot does not have all the required permissions for **{server.name}**.\n"

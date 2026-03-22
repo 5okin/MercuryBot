@@ -10,7 +10,7 @@ load_dotenv(override=True)
 DEBUG = (os.getenv('DEBUG', 'True').lower() == 'true')
 
 DISCORD_DEV_GUILD = os.getenv('DISCORD_DEV_GUILD')
-DISCORD_ADMIN_ACC = int(os.getenv('DISCORD_ADMIN_ACC')) if os.getenv('DISCORD_ADMIN_ACC') else None
+DISCORD_ADMIN_ACC = os.getenv('DISCORD_ADMIN_ACC')
 NOTIFICATION_BATCH_SIZE = os.getenv('NOTIFICATION_BATCH_SIZE')
 
 if DEBUG:
@@ -44,7 +44,7 @@ class CustomFormatter(logging.Formatter):
     }
     RESET = "\033[0m"
 
-    def format(self, record):
+    def format(self, record) -> str:
         log_color = self.COLORS.get(record.levelno, self.RESET)
 
         log_record = {
@@ -63,7 +63,7 @@ class CustomFormatter(logging.Formatter):
                 log_record["exception_type"] = str(sys.exc_info()[0])
                 log_record["exception_message"] = str(sys.exc_info()[1])
             else:
-                log_record["traceback"] = None
+                log_record["traceback"] = 'No traceback available'
 
         # Add any extra fields
         for key, value in record.__dict__.items():

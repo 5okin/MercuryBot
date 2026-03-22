@@ -1,6 +1,7 @@
 import io
+from typing import Optional
 import discord
-from discord import app_commands
+from discord import WebhookMessage, app_commands
 import clients.discord.messages as messages
 from .ui_elements import FooterButtons, Settings_buttons, FeedBackView
 from .embeds import settings_embed, feedback_embed
@@ -9,13 +10,13 @@ from utils import environment
 logger = environment.logging.getLogger("bot.discord")
 
 
-def define_commands(self):
+def define_commands(self) -> None:
 
     # MARK: deals command
     @self.tree.command(name="deals", description="Choose what store you want to retrieve the current deals for.")
     @app_commands.choices(store_choice=[app_commands.Choice(name=store.service_name, value=store.name) for store in self.modules])
     @app_commands.describe(store_choice='Select the store you want to view')
-    async def store_select(interaction: discord.Interaction, store_choice: app_commands.Choice[str]):
+    async def store_select(interaction: discord.Interaction, store_choice: app_commands.Choice[str]) -> None:
 
         mobile = False
         # Check if the command was not send in a DM
@@ -38,13 +39,13 @@ def define_commands(self):
 
     # MARK: Feedback
     @self.tree.command(description="Submit feedback")
-    async def feedback(interaction: discord.Interaction):
+    async def feedback(interaction: discord.Interaction) -> None:
         await interaction.response.send_message(embed=feedback_embed(), view=FeedBackView(), ephemeral=True)
 
     # MARK: Settings
     @app_commands.default_permissions(manage_guild=True)
     @self.tree.command(name='settings', description="Show bot settings like update channel and ping role")
-    async def settings(interaction: discord.Interaction):
+    async def settings(interaction: discord.Interaction) -> None:
         '''
         Return bot settings
         '''
@@ -59,7 +60,9 @@ def define_commands(self):
 
             view = Settings_buttons(self)
             embed = settings_embed(self, interaction)
-            message = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+            message: Optional[WebhookMessage] = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+            if message is None:
+                raise Exception("Failed to send settings message")
             view.message = message
             await message.edit(view=Settings_buttons(self, settings_message=message))
         except:

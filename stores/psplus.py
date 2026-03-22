@@ -10,7 +10,7 @@ class Main(Store):
     """
     psplus store
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.base_url = 'https://www.playstation.com'
         super().__init__(
             name = 'psplus',
@@ -26,6 +26,8 @@ class Main(Store):
         get data for psplus
         """
         data = await self.request_data(self.url, mode="html")
+        if data is None : return
+
         monthly_games_section = data.xpath('//div[contains(concat(" ", normalize-space(@class), " "), " cmp-experiencefragment--wn-latest-monthly-games-content ")]')[0]
         games= monthly_games_section.xpath('.//div[starts-with(@class, "box")]')
         json_data = []
@@ -52,13 +54,13 @@ class Main(Store):
         return await self.compare(json_data)
 
 
-    async def get(self):
+    async def get(self) -> bool:
         """
         psplus get
         """
         if await self.process_data():
-            return 1
-        return 0
+            return True
+        return False
 
 
 if __name__ == "__main__":

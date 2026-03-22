@@ -11,7 +11,7 @@ class Main(Store):
     """
     Steam store
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.gamesInfoApi = 'https://store.steampowered.com/api/appdetails?appids'
         self.dlcUrl = 'https://store.steampowered.com/search/?maxprice=free&category1=21&specials=1'
         self.giveawayUrl = 'https://store.steampowered.com/search/?maxprice=free&specials=1&ndl=1'
@@ -29,7 +29,7 @@ class Main(Store):
 
 
     #MARK: process_data 
-    async def process_data(self, games_num):
+    async def process_data(self, games_num) -> bool:
         """
         Steam process data
         """
@@ -75,15 +75,15 @@ class Main(Store):
         return await self.compare(json_data)
 
     #MARK: get
-    async def get(self):
+    async def get(self) -> bool:
         '''
         Steam get
         '''
         response = await self.request_data(self.url)
         if response and 'total_count' in response:
             if await self.process_data(response['total_count']):
-                return 1
-        return 0
+                return True
+        return False
 
 if __name__ == "__main__":
     from utils import environment

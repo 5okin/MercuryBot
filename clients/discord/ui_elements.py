@@ -11,7 +11,7 @@ logger = environment.logging.getLogger("bot.discord")
 
 # MARK: FooterButtons
 class FooterButtons(discord.ui.View):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(timeout=None)
         self.add_item(RateUsButton())
         button_donate = discord.ui.Button(label='Donate', style=discord.ButtonStyle.url, emoji='💰',url='https://google.com')
@@ -21,7 +21,7 @@ class FooterButtons(discord.ui.View):
 
 
 class RateUsButton(discord.ui.Button):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(label='Rate Us', style=discord.ButtonStyle.primary, emoji='⭐', custom_id="rate_us_button")
 
     async def callback(self, interaction: discord.Interaction):
@@ -34,13 +34,13 @@ class RateUsButton(discord.ui.Button):
 
 # MARK: BackButton
 class BackButton(discord.ui.Button):
-    def __init__(self, client, settings_message):
+    def __init__(self, client, settings_message) -> None:
         backBtn = discord.PartialEmoji(name="back", id=os.getenv('DISCORD_BACK_BTN'))
         super().__init__(label="Back",emoji=backBtn, style=discord.ButtonStyle.secondary)
         self.client = client
         self.settings_message = settings_message
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         await self.settings_message.edit(
             content=None,
             embed=settings_embed(self.client, interaction),
@@ -55,7 +55,7 @@ class FeedbackButton(discord.ui.Button):
     def __init__(self):
         super().__init__(label="Submit Feedback", style=discord.ButtonStyle.primary)
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         await interaction.response.send_modal(FeedbackModal())
 
 
@@ -69,7 +69,7 @@ class FeedbackModal(discord.ui.Modal, title='Feedback'):
         max_length=300,
     )
 
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: discord.Interaction) -> None:
 
         feedback_payload = {
         'server': interaction.guild_id,
@@ -101,7 +101,7 @@ class FeedBackView(discord.ui.View):
 
 # MARK: Settings_buttons
 class Settings_buttons(discord.ui.View):
-    def __init__(self, client, settings_message=None):
+    def __init__(self, client, settings_message=None) -> None:
         super().__init__(timeout=270)
         self.client = client
         self.settings_message = settings_message
@@ -112,7 +112,7 @@ class Settings_buttons(discord.ui.View):
         self.add_item(self.create_role_button())
         self.add_item(self.create_store_button())
 
-    async def on_timeout(self):
+    async def on_timeout(self) -> None:
         self.client = None
         self.settings_message = None
         
@@ -171,18 +171,18 @@ class Settings_buttons(discord.ui.View):
         return button
         
     # MARK: settings callbacks
-    async def channel_select_callback(self, interaction: discord.Interaction):
+    async def channel_select_callback(self, interaction: discord.Interaction) -> None:
         await Channel_Select.handle(interaction, self.client, self.settings_message)
 
-    async def settings_role_callback(self, interaction: discord.Interaction):
+    async def settings_role_callback(self, interaction: discord.Interaction) -> None:
         await Role_Select.handle(interaction, self.client, self.settings_message)
 
-    async def settings_store_callback(self, interaction: discord.Interaction):
+    async def settings_store_callback(self, interaction: discord.Interaction) -> None:
         await Store_Select.handle(interaction, self.client, self.settings_message)
 
 
     # MARK: test settings
-    async def test_settings_callback(self, interaction: discord.Interaction):
+    async def test_settings_callback(self, interaction: discord.Interaction) -> None:
         server = Database.get_discord_server(interaction.guild_id)
         if server and server.get('channel'):
             channel = self.client.get_channel(server['channel'])
@@ -209,7 +209,7 @@ class Settings_buttons(discord.ui.View):
 # MARK: Channel select
 class Channel_Select(discord.ui.ChannelSelect):
     @staticmethod
-    async def handle(interaction: discord.Interaction, client, settings_message):
+    async def handle(interaction: discord.Interaction, client, settings_message) -> None:
         await interaction.response.defer()
         
         if Database.get_discord_server(interaction.guild_id):
@@ -225,7 +225,7 @@ class Channel_Select(discord.ui.ChannelSelect):
         view.add_item(BackButton(client, settings_message))
         await settings_message.edit(content=None, embed=description_embed, view=view)
 
-    def __init__(self, client, settings_message=None, default=None):
+    def __init__(self, client, settings_message=None, default=None) -> None:
         default_channel = [discord.Object(id=default)] if default is not None else []
         super().__init__(
             placeholder="🔍 Select a Channel...",
@@ -239,7 +239,7 @@ class Channel_Select(discord.ui.ChannelSelect):
         self.client = client
         self.settings_message = settings_message
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         selected_channel = interaction.guild.get_channel(self.values[0].id)
         permissions = self.client.check_channel_permissions(selected_channel)
 
@@ -276,7 +276,7 @@ class Channel_Select(discord.ui.ChannelSelect):
 # MARK: Role select
 class Role_Select(discord.ui.Select):
     @staticmethod
-    async def handle(interaction: discord.Interaction, client, settings_message):
+    async def handle(interaction: discord.Interaction, client, settings_message) -> None:
         await interaction.response.defer()
         role_id = None
         if Database.get_discord_server(interaction.guild_id):
@@ -295,7 +295,7 @@ class Role_Select(discord.ui.Select):
         view.add_item(BackButton(client, settings_message))
         await settings_message.edit(content=None, embed=description_embed, view=view)
 
-    def __init__(self, client, interaction, settings_message, default):
+    def __init__(self, client, interaction, settings_message, default) -> None:
         rolesNoneEmoji = discord.PartialEmoji(name="rolesNone", id=os.getenv('DISCORD_ROLES_NONE'))
         rolesAtEmoji = discord.PartialEmoji(name="roles", id=os.getenv('DISCORD_ROLES_AT'))
         rolesAllEmoji = discord.PartialEmoji(name="rolesAll", id=os.getenv('DISCORD_ROLES_ALL'))
@@ -330,7 +330,7 @@ class Role_Select(discord.ui.Select):
         self.interaction = interaction
         self.settings_message = settings_message
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         if not interaction.response.is_done():
             await interaction.response.defer()
 
@@ -362,7 +362,7 @@ class Role_Select(discord.ui.Select):
 # MARK: Store select
 class Store_Select(discord.ui.Select):
     @staticmethod
-    async def handle(interaction: discord.Interaction, client, settings_message):
+    async def handle(interaction: discord.Interaction, client, settings_message) -> None:
         await interaction.response.defer()
 
         description_embed = discord.Embed( title="Store notification Settings",
@@ -375,7 +375,7 @@ class Store_Select(discord.ui.Select):
         view.add_item(BackButton(client, settings_message))
         await settings_message.edit(content=None, embed=description_embed, view=view)
 
-    def __init__(self, client, interaction, settings_message):
+    def __init__(self, client, interaction, settings_message) -> None:
         server = Database.get_discord_server(interaction.guild_id)
         notifications_str = str(server['notification_settings'] if server and server.get('notification_settings') else '')
 
@@ -400,7 +400,7 @@ class Store_Select(discord.ui.Select):
         self.client = client
         self.settings_message = settings_message
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         if not interaction.response.is_done():
             await interaction.response.defer()
 

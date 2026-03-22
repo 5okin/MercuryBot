@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from urllib.request import urlopen
+from typing import List, Optional, Self, Literal
 import io, os
 import asyncio
 from PIL import Image
@@ -22,7 +23,7 @@ class Main(Store):
         twitter_notification = True,
         bsky_notification = True,
         **kwargs
-    ):
+    ) -> None:
 
         self.page = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions'
         self.checkout_url_template = 'https://store.epicgames.com/purchase?{slugs}#/purchase/payment-methods'
@@ -41,7 +42,7 @@ class Main(Store):
         )
 
     #MARK: process_data
-    async def process_data(self, pages):
+    async def process_data(self, pages) -> bool:
         """
         Main epic scraper
         """
@@ -130,6 +131,7 @@ class Main(Store):
         """
         Generates a gif from the given list of images
         """
+        if not self.data : return
         arr = io.BytesIO()
         curr_images, next_images, combined_images = [], [], []
 
@@ -199,7 +201,7 @@ class Main(Store):
         return arr
 
     #MARK: Scheduler
-    async def scheduler(self):
+    async def scheduler(self) -> Self:
         if not self.data:
             await asyncio.sleep(self.scheduler_time)
             return self
@@ -236,12 +238,12 @@ class Main(Store):
             await asyncio.sleep(self.scheduler_time)
             return self
 
-    async def set_images(self):
+    async def set_images(self) -> None:
         self.image = await self.make_gif_image()
         self.image_twitter = await self.make_gif_image(True, status=1, size=2)
 
     #MARK: get
-    async def get(self):
+    async def get(self) -> bool:
         """
         Runs epic data check, fetch and compile
 
@@ -249,8 +251,8 @@ class Main(Store):
         returns 1 if new data was found
         """
         if await self.process_data(await self.request_data(self.page)):
-            return 1
-        return 0
+            return True
+        return False
 
 
 if __name__ == "__main__":

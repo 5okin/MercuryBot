@@ -16,7 +16,7 @@ class Main(Store):
     """
     Gog store
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         GoG store
         """
@@ -34,11 +34,12 @@ class Main(Store):
         )
 
     #MARK: giveaway
-    async def giveaway(self, json_data):
+    async def giveaway(self, json_data) -> None:
         '''
         Search gog front page for giveaways
         '''
         tree = await self.request_data(self.base_url, mode='html')
+        if tree is None: return
         giveaway = tree.find(".//*[@id='giveaway']")
 
         if giveaway is not None:
@@ -46,12 +47,16 @@ class Main(Store):
             link = giveaway.find(".//a[@class='giveaway__overlay-link']")
 
             game_data = await self.request_data(link.get('href'),'html')
+            if game_data is None: return 
+
             root = game_data.getroot()
             game_id = root.find(".//div[@card-product]").get("card-product")
             offer_until = root.find(".//span[@class='product-actions__time']").text.rsplit(' ', 1)[0]
             offer_until = self.parse_date(offer_until, ["%d/%m/%Y %H:%M", "%m/%d/%Y %H:%M"])              
 
             games = await self.request_data(f"https://api.gog.com/v2/games/{game_id}")
+            if games is None: return
+
             game_title = games['_embedded']['product']['title']
             game_image = games['_links']['boxArtImage']['href']
             game_url = self.giveawayUrl
@@ -85,62 +90,24 @@ class Main(Store):
     #     except Exception as e:
     #         self.logger.error('Gog request data broke: %s', str(e))
 
-    async def client_session(self):
-        '''
-        Create urls and connect to them using async
-        '''
-        tasks = []
-
-        async with aiohttp.ClientSession() as session:
-            try:
-                for url in self.urls:
-                    tasks.append(self.request_data(session, url))
-
-                return await asyncio.gather(*tasks)
-
-            except (URLError, HTTPError) as e:
-                self.logger.debug('Request to: %s failed: %s', self.service_name, e)
-                return False
-
-    async def process_data(self):
+    async def process_data(self) -> bool:
         '''
         Parse the retrieved data
         '''
-
         json_data = []
         data = []
-
-        # Retry the urls that returned Error: 429
-        # while self.urls:
-        #     response = await self.client_session()
-        #     data.extend(response)
-
-        # # Search for games on 100% discount
-        # for page in data:
-        #     if page is not None:
-        #         for game in page['products']:
-        #             if game['price']['discountPercentage'] == 100:
-        #                 game_name = (game['title']).encode('ascii', 'ignore').decode('ascii')
-        #                 if ['type'] != 1:
-        #                     game_name += " DLC"
-        #                 game_url = 'https://www.gog.com' + game['url']
-        #                 offer_from = None
-        #                 offer_until = None
-        #                 game_image = 'https:' + game['image'] + '.jpg'
-        #                 json_data = makejson.data(json_data, game_name, 1, game_url,
-        #                                         game_image, offer_from, offer_until)
 
         await self.giveaway(json_data)
         return await self.compare(json_data)
 
     #MARK: get
-    async def get(self):
+    async def get(self) -> bool:
         '''
         Gog get method
         '''
         if await self.process_data():
-            return 1
-        return 0
+            return True
+        return False
 
 
 if __name__ == "__main__":

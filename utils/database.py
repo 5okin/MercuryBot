@@ -15,12 +15,12 @@ class Database(object):
 
 
     @classmethod
-    def initialize(cls, modules):
+    def initialize(cls, modules) -> None:
         cls.store_list = [store.name for store in modules]
 
 
     @classmethod
-    def connect(cls, dev):
+    def connect(cls, dev) -> None:
         '''
         Connect to mongoDB and setup collections
         '''
@@ -34,7 +34,7 @@ class Database(object):
 
 
     @staticmethod
-    def add_feedback(data):
+    def add_feedback(data) -> None:
         '''
         Save feedback to server 
         '''
@@ -42,7 +42,7 @@ class Database(object):
 
 
     @staticmethod
-    def insert_store_notifications(data):
+    def insert_store_notifications(data) -> None:
         '''
         Inserts or updates guild store notification prefrences
         '''
@@ -52,7 +52,7 @@ class Database(object):
 
 
     @staticmethod
-    def insert_discord_server(data):
+    def insert_discord_server(data) -> None:
         '''
         Inserts or updates the discord server database 
         according to the server id field ['server':'xxxxxxx']
@@ -82,7 +82,7 @@ class Database(object):
 
 
     @staticmethod
-    def remove_server(guildId):
+    def remove_server(guildId) -> None:
         '''
         Removes the server from the database when the bot is kicked.
         Important so it doesnt try to send messages to a server its no longer connected to.
@@ -110,18 +110,18 @@ class Database(object):
 
 
     @staticmethod
-    def collections_exists(collection_name):
+    def collections_exists(collection_name) -> bool:
         return True if collection_name in Database.deals.list_collection_names() else False
 
     @staticmethod
-    def image_exists(store_name):
+    def image_exists(store_name) -> bool:
         '''
         Return a boolean (True/False) for a given store
         '''
         return True if Database.images.find_one({"_id": store_name}) else False
 
     @staticmethod
-    def overwrite_deals(collection, data):
+    def overwrite_deals(collection, data) -> None:
         Database.deals[collection].drop()
         if data:
             logger.info('Creating collection for %s', collection)
@@ -153,7 +153,7 @@ class Database(object):
         return found
 
     @staticmethod
-    def add_image(store):
+    def add_image(store) -> None:
         if store.image:
             if Database.image_exists(store.name):
                 Database.images.delete_many({"_id": store.name})
@@ -183,8 +183,9 @@ class Database(object):
         if row not in ("data", "cdn"):
             raise ValueError(f"row must be 'data' or 'cdn', got '{row}'")
 
-        if Database.image_exists(name):
-            img = Database.images.find_one({"_id": name})
+        img = Database.images.find_one({"_id": name})
+
+        if img:
             pil_img = io.BytesIO(img['data']) if row =="data" else img.get(row)
             return pil_img
         else:
@@ -192,7 +193,7 @@ class Database(object):
 
     
     @staticmethod
-    def update_social_followers(social):
+    def update_social_followers(social) -> None:
         '''
         Updates the number of followers on social media
         '''

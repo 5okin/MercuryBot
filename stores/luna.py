@@ -8,7 +8,7 @@ class Main(Store):
     """
     Luna store
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.headers = None
         self.gamesInfoApi = 'https://luna.amazon.com/graphql'
         self.graphql_body = {
@@ -60,8 +60,10 @@ class Main(Store):
                 self.logger.debug("Auth expired for %s, refreshing cookies", self.service_name)
                 await self.get_cookies_playwright()
                 data = await self.request_data(url=self.gamesInfoApi, mode='json', method='POST', headers=self.headers, body=self.graphql_body)
+            
+            if not isinstance(data, dict) : raise TypeError("Expected a dictionary response from the API")
 
-            for item in data.get("data").get("items").get("items"):
+            for item in data.get("data", {}).get("items").get("items"):
                 title = item.get("assets").get("title")
                 link = item.get("assets").get("externalClaimLink")
                 image = item.get("assets").get("cardMedia").get("defaultMedia").get("src2x")
@@ -74,13 +76,13 @@ class Main(Store):
         except Exception:
             self.logger.error("Unexpected error retrieving data for %s", self.service_name)
 
-    async def get(self):
+    async def get(self) -> bool:
         """
         luna get
         """
         if await self.process_data():
-            return 1
-        return 0
+            return True
+        return False
 
 
 if __name__ == "__main__":
