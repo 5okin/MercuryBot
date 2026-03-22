@@ -51,7 +51,7 @@ class MyClient(discord.Client):
 
 
     # MARK: check_permissions 
-    def check_channel_permissions(self, channel):
+    def check_channel_permissions(self, channel) -> dict:
         """
         Checks if the bot has the required permissions in a given channel and returns detailed information about the permissions.
 
@@ -69,22 +69,28 @@ class MyClient(discord.Client):
             - If the bot does not have the required permissions, the embed will list each permission's status and provide instructions for updating permissions.
             - If the channel does not exist, the method will return a message indicating so.
         """
-
+        assert self.user is not None, "Bot user is None"
         #  It is possible for system channel not to exist on a guild.
         if channel is None:
             # object to match discords API response to channel permissions
             class PermissionDetails:
-                def __init__(self):
+                def __init__(self) -> None:
                     self.view_channel = False
                     self.send_messages = False
                     self.embed_links = False
                     self.attach_files = False
+
+            msg = (f"The selected channel does not exist, or {self.user.mention} can't access it. "
+                    "To fix this, update your settings using the `/settings` command with a valid channel, "
+                    "and ensure the bot has access to it.")
+
             embed = discord.Embed(
                 title="❌ Channel Not Found",
-                description="The selected channel does not exist or I can't access it",
+                description= msg,
                 color=0xff0000
             )
-            msg = "**❌ Channel Not Found**\nThe selected channel does not exist or I can't access it\n"
+            embed.set_thumbnail(url="https://5okin.github.io/mercurybot-web/images/mercury_avatar.gif")
+            msg = f"**❌ Channel Not Found**\n{msg}\n"
             return {"has_all_permissions": False, "permission_details": PermissionDetails(), "embed": embed, "text_message": msg}
 
         guild = channel.guild
@@ -109,6 +115,7 @@ class MyClient(discord.Client):
         embed.add_field(name="​", value="", inline=False)
         embed.add_field(name=msg_e_t, value=msg_e_d, inline=False)
         embed.set_footer(text=msg_g)
+        embed.set_thumbnail(url="https://5okin.github.io/mercurybot-web/images/mercury_avatar.gif")
 
         text_message = f"**{embed.title}**\n{embed.description}\n"
         for field in embed.fields:
@@ -249,13 +256,6 @@ class MyClient(discord.Client):
                 if store.data and server:
                     channel = self.get_channel(channel_id)
 
-                    if not isinstance(channel, discord.TextChannel):
-                        logger.warning("Selected channel is not a text channel", extra={
-                            '_server_id': server_id,
-                            '_channel_id': channel_id
-                        })
-                        return
-
                     role = None
                     if role_id and role_id == server.default_role.id:
                         role = '@everyone'
@@ -273,16 +273,18 @@ class MyClient(discord.Client):
                             embed = message_to_show(store, file)
                             file = None
 
-                        await channel.send(
-                            default_txt + f' {role}' if role else default_txt, 
-                            embed=embed,
-                            view=FooterButtons(),
-                            file=file # type: ignore
-                        )
+                        if isinstance(channel, discord.TextChannel):
+                            await channel.send(
+                                default_txt + f' {role}' if role else default_txt, 
+                                embed=embed,
+                                view=FooterButtons(),
+                                file=file # type: ignore
+                            )
 
                     # Check if you can send a permissions notification msg to selected channel
                     elif permissions['permission_details'].send_messages:
-                        await channel.send(content=permissions['text_message'])
+                        if isinstance(channel, discord.TextChannel):
+                            await channel.send(content=permissions['text_message'])
 
                     else:
                         # Check if you can send permissions notification embed or msg to system channel
