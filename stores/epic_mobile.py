@@ -16,7 +16,8 @@ class Main(epic):
             twitter_notification = True,
             bsky_notification = True,
             scheduler_time = 7200,
-            new_deal_delay = 900 # 15 minutes
+            new_deal_delay = 900, # 15 minutes
+            require_all_deals_new = True
         )
         
         self.platforms = ['ios', 'android']
