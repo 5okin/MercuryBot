@@ -1,5 +1,6 @@
 from typing import Self
 from atproto import Client, client_utils
+from atproto_client.utils import TextBuilder
 from utils import environment
 
 logger = environment.logging.getLogger("bot.blueSky")
@@ -35,7 +36,7 @@ class MyClient():
             return {}
 
     #MARK: format post
-    def format_post(self, store) -> str:
+    def format_post(self, store) -> TextBuilder:
         txt = client_utils.TextBuilder()
         txt.text("🕹️ ").tag('Free now', 'freegames')
         txt.text(" on ").tag(store.name, store.name).text(" 🕹️\n\n")
@@ -49,7 +50,7 @@ class MyClient():
             if data['activeDeal']:
                 txt.text("• ").link(title, link)
                 txt.text("\n\n")
-        return str(txt)
+        return txt
 
     #MARK: Post
     def post(self, store) -> str:
@@ -71,6 +72,6 @@ if __name__ == "__main__":
     from utils import environment
     
     bsky = MyClient()
-
-    number = bsky.get_follower_count()
-    print(number)
+    if bsky:
+        number = bsky.get_follower_count()
+        print(number)
