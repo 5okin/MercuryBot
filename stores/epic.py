@@ -127,7 +127,7 @@ class Main(Store):
 
 
     #MARK: combined GIF
-    async def make_gif_image(self, wide=False, status=None, size=1):
+    async def make_gif_image(self, wide:bool=False, status: Optional[bool] = None, size: int = 1):
         """
         Generates a gif from the given list of images
         """
@@ -135,8 +135,8 @@ class Main(Store):
         arr = io.BytesIO()
         curr_images, next_images, combined_images = [], [], []
 
-        active_games = [game for game in self.data if game['activeDeal'] == 1]
-        future_games = [game for game in self.data if game['activeDeal'] == 0]
+        active_games = [game for game in self.data if game['activeDeal']]
+        future_games = [game for game in self.data if not game['activeDeal']]
 
         all_have_tall_img = all(game.get('image') for game in self.data)
 
@@ -155,11 +155,8 @@ class Main(Store):
         curr_images = [img for img in active_images if img]
         next_images = [img for img in future_images if img]
 
-        if (not next_images or status is not None):
-            if status is None:
-                return await super().make_gif_image(wide, size)
-            else:
-                return await super().make_gif_image(wide, status, size)
+        if (not next_images):
+            return await super().make_gif_image(wide, status, size)
 
         if len(curr_images) >= len(next_images):
             for index, image in enumerate(curr_images):
@@ -240,7 +237,7 @@ class Main(Store):
 
     async def set_images(self) -> None:
         self.image = await self.make_gif_image()
-        self.image_twitter = await self.make_gif_image(True, status=1, size=2)
+        self.image_twitter = await self.make_gif_image(True, status=True, size=2)
 
     #MARK: get
     async def get(self) -> bool:

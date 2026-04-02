@@ -320,8 +320,9 @@ class Store:
 
 
     # MARK: make_gif_image
-    async def make_gif_image(self, wide=False, status=1, size=1) -> IO[bytes] | None:
+    async def make_gif_image(self, wide: bool = False, status: Optional[bool] = None, size: int =1) -> IO[bytes] | None:
         """Creates a GIF and MP4 asynchronously."""
+        if status is None : status = True
 
         if not self.data:
             return None
@@ -329,7 +330,7 @@ class Store:
         images_key = 'wideImage' if wide else 'image'
 
         image_futures = [
-            self.fetch_image(game[images_key], 500) for game in self.data if game['activeDeal'] == status
+            self.fetch_image(game[images_key], 500) for game in self.data if game['activeDeal'] is status
         ]
         image_bytes_list = await asyncio.gather(*image_futures)
 
