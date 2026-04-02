@@ -62,7 +62,7 @@ class Main(Store):
             game_url = self.giveawayUrl
             offer_from  = datetime.now()
 
-            json_data = makejson.data(json_data, game_title, 1, game_url, game_image, offer_from, offer_until)
+            json_data = makejson.append_game_deal(json_data, game_title, True, game_url, game_image, offer_from, offer_until)
         else:
             return
 

@@ -76,18 +76,18 @@ class Main(Store):
                         image_type = image['type']
 
                         if (image_type in ["VaultClosed", "VaultOpen"]) is True:
-                            wide_image_url = image['url']
+                            wide_image_url = str(image['url'])
 
                         if wide_image_url and tall_image_url:
                             break
 
                         if "Tall" in image_type:
-                            tall_image_url = image['url']
+                            tall_image_url = str(image['url'])
                         elif "Wide" in image_type:
-                            wide_image_url = image['url']
+                            wide_image_url = str(image['url'])
 
                 except Exception as e:
-                    tall_image_url = wide_image_url = game['keyImages'][0]['url']
+                    tall_image_url = wide_image_url = str(game['keyImages'][0]['url'])
 
                 # Current deal
                 if game['promotions']['promotionalOffers']:
@@ -96,9 +96,9 @@ class Main(Store):
                         startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                         endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                         checkout_slug = f"offers=1-{game['namespace']}-{game['id']}"
-                        json_data = makejson.data(json_data,
+                        json_data = makejson.append_game_deal(json_data,
                                                     game_name,
-                                                    1,
+                                                    True,
                                                     game_url,
                                                     tall_image_url,
                                                     startDate,
@@ -114,9 +114,9 @@ class Main(Store):
                             offer =  game['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers'][0]
                             startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                             endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
-                            json_data = makejson.data(json_data,
+                            json_data = makejson.append_game_deal(json_data,
                                                         game_name,
-                                                        0,
+                                                        False,
                                                         game_url,
                                                         tall_image_url,
                                                         startDate,

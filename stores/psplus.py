@@ -47,7 +47,7 @@ class Main(Store):
 
                 game_image = (game.xpath('.//source'))[2].attrib.get('srcset') if len(game.xpath('.//source')) >= 2 else (games[i-1].xpath('.//source'))[2].attrib.get('srcset') 
                 offer_from  = datetime.now()
-                json_data = makejson.data(json_data, title, 1, game_url, game_image, offer_from)
+                json_data = makejson.append_game_deal(json_data, title, True, game_url, game_image, offer_from)
             except Exception as e:
                 self.logger.debug("Data acquisition failed %s", e)
 

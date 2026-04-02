@@ -77,7 +77,7 @@ class Main(epic):
                     product_url = game.get('offers')[0].get('content').get('mapping').get('slug')
                     game_url = self.url + product_url
  
-                    json_data = makejson.data(json_data, title, 1, game_url, image, None, endDate, wide_image, 'game', checkout_slug)
+                    json_data = makejson.append_game_deal(json_data, title, True, game_url, image, None, endDate, wide_image, 'game', checkout_slug)
 
         return await self.compare(json_data)
 

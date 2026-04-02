@@ -69,7 +69,7 @@ class Main(Store):
                 image = item.get("assets").get("cardMedia").get("defaultMedia").get("src2x")
                 startDate = datetime.strptime(item.get("offers")[0].get("startTime"), "%Y-%m-%dT%H:%M:%SZ")
                 endDate = datetime.strptime(item.get("offers")[0].get("endTime"), "%Y-%m-%dT%H:%M:%SZ")
-                json_data = makejson.data(json_data, title, 1, link, image, startDate, endDate)
+                json_data = makejson.append_game_deal(json_data, title, True, link, image, startDate, endDate)
         
             return await self.compare(json_data)
 

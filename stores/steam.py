@@ -68,7 +68,7 @@ class Main(Store):
                         self.logger.warning("Date could not be handled")
                     offer_from  = datetime.now()
                     game_image = soup.find("meta", property="og:image").get("content")
-                    json_data = makejson.data(json_data, game_name, 1, game_url, game_image, offer_from, end_date_object, productType=productType)
+                    json_data = makejson.append_game_deal(json_data, game_name, True, game_url, str(game_image), offer_from, end_date_object, productType=productType)
                     soup.decompose()
                     del soup
 
