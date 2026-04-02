@@ -1,13 +1,12 @@
 import asyncio
-import io,os, copy
+import io
 import imageio
 import aiohttp
 import numpy as np
 from lxml import html
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 from playwright.async_api import async_playwright
-from typing import List, Optional, IO, Self, overload, Literal, Any
+from typing import List, IO, Self, overload, Literal
 from PIL import Image
 from utils import environment, database
 from datetime import datetime, timedelta
@@ -24,16 +23,16 @@ class Store:
                 id: str,
                 service_name: str,
                 url: str,
-                data: Optional[List] = None,
-                image: Optional[IO] = None,
-                image_cdn: Optional[str] = None,
-                image_twitter: Optional[list[Optional[IO[bytes]]]] = None,
-                video: Optional[IO] = None,
+                data: List | None = None,
+                image: IO | None = None,
+                image_cdn: str | None = None,
+                image_twitter: list[IO[bytes] | None] | None = None,
+                video: IO | None = None,
                 image_type: str = 'GIF',
                 scheduler_time: int = 1800,
                 scheduler_retry_time: int = 300,
                 new_deal_delay: int = 300,
-                discord_emoji: Optional[str] = None,
+                discord_emoji: str | None = None,
                 twitter_notification: bool = False,
                 bsky_notification: bool = False,
                 require_all_deals_new: bool = False
@@ -57,7 +56,7 @@ class Store:
         self.twitter_notification = twitter_notification
         self.bsky_notification = bsky_notification
         self.require_all_deals_new = require_all_deals_new
-        self._session: Optional[aiohttp.ClientSession] = None
+        self._session: aiohttp.ClientSession | None = None
 
     # MARK Scheduler timer change
     def schedule_retry(self) -> None:
@@ -87,9 +86,9 @@ class Store:
         url: str,
         mode: Literal['json'],
         method: str = 'GET',
-        headers: Optional[dict] = None,
-        cookies: Optional[dict] = None,
-        body: Optional[dict] = None
+        headers: dict | None = None,
+        cookies: dict | None = None,
+        body: dict | None = None
     ) -> dict | None: ...
 
 
@@ -98,9 +97,9 @@ class Store:
         url: str,
         mode: Literal['text'],
         method: str = 'GET',
-        headers: Optional[dict] = None,
-        cookies: Optional[dict] = None,
-        body: Optional[dict] = None
+        headers: dict | None = None,
+        cookies: dict | None = None,
+        body: dict | None = None
     ) -> str | None: ...
 
 
@@ -109,9 +108,9 @@ class Store:
         url: str,
         mode: Literal['html'],
         method: str = 'GET',
-        headers: Optional[dict] = None,
-        cookies: Optional[dict] = None,
-        body: Optional[dict] = None
+        headers: dict | None = None,
+        cookies: dict | None = None,
+        body: dict | None = None
     ) -> html.HtmlElement | None: ...
 
     async def request_data(
@@ -119,9 +118,9 @@ class Store:
         url: str,
         mode: Literal['json', 'text', 'html'] = 'json',
         method: str = 'GET',
-        headers: Optional[dict] = None,
-        cookies: Optional[dict] = None,
-        body: Optional[dict] = None
+        headers: dict | None = None,
+        cookies: dict | None = None,
+        body: dict | None = None
     ) -> dict | str | html.HtmlElement | None:
         """
         Make an HTTP request and return the response in the requested format.
@@ -191,7 +190,7 @@ class Store:
 
 
     #MARK: playwrite
-    async def request_data_playwright(self, url, headers_to_get: Optional[List[str]]=None, return_response: bool=False):
+    async def request_data_playwright(self, url, headers_to_get: list[str] | None = None, return_response: bool=False):
         """
         Launch a temporary Playwright Chromium browser to retrieve request headers
         and cookies from a target page.
@@ -249,7 +248,7 @@ class Store:
         return result
 
 
-    def make_image(self)-> Optional[Image.Image]:
+    def make_image(self)-> Image.Image | None:
         '''
         Creates an image with game images appended side by side
         '''
@@ -320,7 +319,7 @@ class Store:
 
 
     # MARK: make_gif_image
-    async def make_gif_image(self, wide: bool = False, status: Optional[bool] = None, size: int =1) -> IO[bytes] | None:
+    async def make_gif_image(self, wide: bool = False, status: bool | None = None, size: int = 1) -> IO[bytes] | None:
         """Creates a GIF and MP4 asynchronously."""
         if status is None : status = True
 

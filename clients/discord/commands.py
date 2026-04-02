@@ -1,5 +1,4 @@
 import io
-from typing import Optional
 import discord
 from discord import WebhookMessage, app_commands
 import clients.discord.messages as messages
@@ -60,7 +59,7 @@ def define_commands(self) -> None:
 
             view = Settings_buttons(self)
             embed = settings_embed(self, interaction)
-            message: Optional[WebhookMessage] = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+            message: WebhookMessage | None = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
             if message is None:
                 raise Exception("Failed to send settings message")
             view.message = message

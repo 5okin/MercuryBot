@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
-from urllib.request import urlopen
-from typing import List, Optional, Self, Literal
+from typing import Self
 import io, os
 import asyncio
 from PIL import Image
@@ -127,7 +126,7 @@ class Main(Store):
 
 
     #MARK: combined GIF
-    async def make_gif_image(self, wide:bool=False, status: Optional[bool] = None, size: int = 1):
+    async def make_gif_image(self, wide:bool=False, status: bool | None = None, size: int = 1):
         """
         Generates a gif from the given list of images
         """
