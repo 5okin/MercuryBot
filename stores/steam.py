@@ -1,10 +1,10 @@
 import asyncio, os
-from urllib.request import urlopen, Request, HTTPCookieProcessor, build_opener
-from bs4 import BeautifulSoup
+from datetime import datetime
+
+from bs4 import BeautifulSoup, Tag
+
 from stores._store import Store
 from utils import makejson
-import http.cookiejar
-from datetime import datetime
 
 
 class Main(Store):
@@ -16,62 +16,74 @@ class Main(Store):
         self.dlcUrl = 'https://store.steampowered.com/search/?maxprice=free&category1=21&specials=1'
         self.giveawayUrl = 'https://store.steampowered.com/search/?maxprice=free&specials=1&ndl=1'
         super().__init__(
-            name = 'steam',
-            id = '3',
-            discord_emoji = os.getenv('DISCORD_STEAM_EMOJI'),
+            name='steam',
+            id='3',
+            discord_emoji=os.getenv('DISCORD_STEAM_EMOJI'),
             twitter_notification=True,
-            service_name = 'Steam',
+            bsky_notification=True,
+            service_name='Steam',
             scheduler_time=7200,
-            url = ('https://store.steampowered.com/search/results/?'
-                    'query=&start=0&count=50&dynamic_data=&sort_by=_ASC&'
-                    'maxprice=free&snr=1_7_7_2300_7&specials=1&infinite=1')
+            url=('https://store.steampowered.com/search/results/?'
+                 'query=&start=0&count=50&dynamic_data=&sort_by=_ASC&'
+                 'maxprice=free&snr=1_7_7_2300_7&specials=1&infinite=1')
         )
 
+    async def _parse_end_date(self, soup: BeautifulSoup) -> datetime | None:
+        end_date = soup.select_one("p.game_purchase_discount_quantity")
+
+        if not end_date: return None
+
+        end_date_text = (end_date.text.split('before')[1]).split('@')[0].strip()
+        date_formats = ["%b %d", "%d %b", "%d %b, %Y", "%b %d, %Y"]
+        parsed_date = self.parse_date(end_date_text, date_formats)
+
+        if parsed_date:
+            return parsed_date.replace(year=datetime.now().year)
+        else:
+            self.logger.warning("Could not parse date: %s", end_date_text)
+            return None
 
     #MARK: process_data 
-    async def process_data(self, games_num) -> bool:
+    async def process_data(self) -> bool:
         """
         Steam process data
         """
-        i = 0
         json_data = []
-        # print(games_num)
-        if games_num:
-            for i in range(0, games_num, 15):
+        data = await self.request_data(self.url, mode='json')
+        if not data or data.get('total_count', 0) == 0:
+            return False
+        
+        soup = BeautifulSoup(data['results_html'], 'html.parser')
+        games = soup.find_all("a", class_="search_result_row ds_collapse_flag")
 
-                url = ("https://store.steampowered.com/search/results/?query=&start=" + str(i
-                        ) + "&count=50&dynamic_data=&sort_by=_ASC&maxprice=free&snr=1_7_7_2300_7"
-                        "&specials=1&infinite=1")
+        # Get new deals
+        for game in games:
+            
+            if not isinstance(game, Tag):
+                continue
 
-                data = await self.request_data(url)
-                soup = BeautifulSoup(data['results_html'], 'html.parser')
-                games = soup.findAll("a", {"class": "search_result_row ds_collapse_flag"})
-                soup.decompose()
-                del soup
+            title_tag = game.select_one("span.title")
+            game_name = title_tag.text.strip() if title_tag else None
+            game_url = str(game['href'])
+            img = game.select_one(".search_capsule img")
+            game_image = str(img.get("src")) if img else None
+            app_id = game['data-ds-appid']
+            details = await self.request_data(f'{self.gamesInfoApi}={app_id}') or {}
+            product_type = details.get(app_id, {}).get('data', {}).get('type')
 
-                # Get new deals
-                for game in games:
-                    end_date_object = None
-                    game_name = game.find("span", {"class": "title"}).text
-                    game_url = game['href']
-                    appId = game['data-ds-appid']
-                    productType = (await self.request_data(f'{self.gamesInfoApi}={appId}'))[appId]['data']['type']
-                    data = await self.request_data(game_url, mode='text')
-                    soup = BeautifulSoup(data, 'html.parser')
-                    end_date = soup.find("p", {"class":"game_purchase_discount_quantity"})
+            if not game_name or (not game_url) or (not game_image):
+                continue
 
-                    try:
-                        end_date = (end_date.text.split('before')[1]).split('@')[0].strip()
-                        date_formats = ["%b %d", "%d %b", "%d %b, %Y", "%b %d, %Y"]
-                        end_date_object = self.parse_date(end_date, date_formats).replace(year=datetime.now().year)
-                    except:
-                        self.logger.warning("Date could not be handled")
-                    offer_from  = datetime.now()
-                    game_image = soup.find("meta", property="og:image").get("content")
-                    json_data = makejson.append_game_deal(json_data, game_name, True, game_url, str(game_image), offer_from, end_date_object, productType=productType)
-                    soup.decompose()
-                    del soup
+            game_details = await self.request_data(game_url, mode='text')
+            end_date_object = None
+            if game_details:
+                soup = BeautifulSoup(game_details, 'html.parser')
+                end_date_object = await self._parse_end_date(soup)
+                meta = soup.find("meta", property="og:image")
+                game_image = str(meta.get("content")) if isinstance(meta, Tag) else game_image
 
+            offer_from  = datetime.now()
+            json_data = makejson.append_game_deal(json_data, game_name, True, game_url, str(game_image), offer_from, end_date_object, productType=product_type)
         return await self.compare(json_data)
 
     #MARK: get
@@ -79,11 +91,8 @@ class Main(Store):
         '''
         Steam get
         '''
-        response = await self.request_data(self.url)
-        if response and 'total_count' in response:
-            if await self.process_data(response['total_count']):
-                return True
-        return False
+        return await self.process_data()
+
 
 if __name__ == "__main__":
     from utils import environment
