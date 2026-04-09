@@ -158,7 +158,7 @@ class Main(Store):
         curr_images = [img for img in active_images if img]
         next_images = [img for img in future_images if img]
 
-        if (not next_images):
+        if (not next_images or status):
             return await super().make_gif_image(wide, status, size)
 
         if len(curr_images) >= len(next_images):
