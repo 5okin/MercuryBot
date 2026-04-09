@@ -1,7 +1,8 @@
 import asyncio, os
 from datetime import datetime
+
 from stores._store import Store
-from utils import makejson
+from utils.makejson import GameDeal, append_game_deal
 
 
 class Main(Store):
@@ -56,7 +57,7 @@ class Main(Store):
         try:
             data = await self.request_data(url=self.gamesInfoApi, mode='json', method='POST', headers=self.headers, body=self.graphql_body)
             
-            if data is False:
+            if not data:
                 self.logger.debug("Auth expired for %s, refreshing cookies", self.service_name)
                 await self.get_cookies_playwright()
                 data = await self.request_data(url=self.gamesInfoApi, mode='json', method='POST', headers=self.headers, body=self.graphql_body)
@@ -69,8 +70,17 @@ class Main(Store):
                 image = item.get("assets").get("cardMedia").get("defaultMedia").get("src2x")
                 startDate = datetime.strptime(item.get("offers")[0].get("startTime"), "%Y-%m-%dT%H:%M:%SZ")
                 endDate = datetime.strptime(item.get("offers")[0].get("endTime"), "%Y-%m-%dT%H:%M:%SZ")
-                json_data = makejson.append_game_deal(json_data, title, True, link, image, startDate, endDate)
-        
+                game_data = GameDeal(
+                    name=title,
+                    url=link,
+                    active_deal=True,
+                    image=image,
+                    wide_image=image,
+                    offer_from=startDate,
+                    offer_until=endDate
+                )
+                json_data = append_game_deal(json_data, game_data)
+
             return await self.compare(json_data)
 
         except Exception:

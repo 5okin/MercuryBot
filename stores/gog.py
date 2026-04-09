@@ -2,13 +2,9 @@ import asyncio
 import json
 import os
 from datetime import datetime
-from urllib.error import URLError, HTTPError
 from urllib.request import urlopen, Request
 
-import aiohttp
-from bs4 import BeautifulSoup
-
-from utils import makejson
+from utils.makejson import GameDeal, append_game_deal
 from stores._store import Store
 
 
@@ -62,7 +58,16 @@ class Main(Store):
             game_url = self.giveawayUrl
             offer_from  = datetime.now()
 
-            json_data = makejson.append_game_deal(json_data, game_title, True, game_url, game_image, offer_from, offer_until)
+            game_data = GameDeal(
+                name=game_title,
+                url=game_url,
+                active_deal=True,
+                image=game_image,
+                wide_image=game_image,
+                offer_from=offer_from,
+                offer_until=offer_until
+            )
+            json_data = append_game_deal(json_data, game_data)
         else:
             return
 

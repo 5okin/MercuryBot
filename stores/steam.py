@@ -4,7 +4,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup, Tag
 
 from stores._store import Store
-from utils import makejson
+from utils.makejson import GameDeal, append_game_deal
 
 
 class Main(Store):
@@ -82,8 +82,17 @@ class Main(Store):
                 meta = soup.find("meta", property="og:image")
                 game_image = str(meta.get("content")) if isinstance(meta, Tag) else game_image
 
-            offer_from  = datetime.now()
-            json_data = makejson.append_game_deal(json_data, game_name, True, game_url, str(game_image), offer_from, end_date_object, productType=product_type)
+            game_data = GameDeal(
+                name=game_name,
+                url=game_url,
+                active_deal=True,
+                image=str(game_image),
+                wide_image=str(game_image),
+                offer_until=end_date_object,
+                product_type=product_type
+            )
+            json_data = append_game_deal(json_data, game_data)
+            
         return await self.compare(json_data)
 
     #MARK: get

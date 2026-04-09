@@ -3,9 +3,10 @@ from typing import Self
 import io, os
 import asyncio
 from PIL import Image
-from utils import makejson
-from stores._store import Store
 import gc
+
+from utils.makejson import GameDeal, append_game_deal 
+from stores._store import Store
 
 
 class Main(Store):
@@ -95,16 +96,17 @@ class Main(Store):
                         startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                         endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                         checkout_slug = f"offers=1-{game['namespace']}-{game['id']}"
-                        json_data = makejson.append_game_deal(json_data,
-                                                    game_name,
-                                                    True,
-                                                    game_url,
-                                                    tall_image_url,
-                                                    startDate,
-                                                    endDate,
-                                                    wide_image_url,
-                                                    'game',
-                                                    checkout_slug)
+                        game_data = GameDeal(
+                            name=game_name,
+                            url=game_url,
+                            active_deal=True,
+                            image=tall_image_url,
+                            wide_image=wide_image_url,
+                            offer_from=startDate,
+                            offer_until=endDate,
+                            checkout_slug=checkout_slug
+                        )
+                        json_data = append_game_deal(json_data, game_data)
 
                 # Upcoming deal
                 if game['promotions']['upcomingPromotionalOffers']:
@@ -113,14 +115,16 @@ class Main(Store):
                             offer =  game['promotions']['upcomingPromotionalOffers'][0]['promotionalOffers'][0]
                             startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                             endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
-                            json_data = makejson.append_game_deal(json_data,
-                                                        game_name,
-                                                        False,
-                                                        game_url,
-                                                        tall_image_url,
-                                                        startDate,
-                                                        endDate,
-                                                        wide_image_url)
+                            game_data = GameDeal(
+                                name=game_name,
+                                url=game_url,
+                                active_deal=False,
+                                image=tall_image_url,
+                                wide_image=wide_image_url,
+                                offer_from=startDate,
+                                offer_until=endDate
+                            )
+                            json_data = append_game_deal(json_data, game_data)
         del game_list
         return await self.compare(json_data)
 

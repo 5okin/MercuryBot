@@ -1,7 +1,9 @@
 import asyncio, json
-from stores.epic import Main as epic
-from utils import makejson
 from datetime import datetime, timezone
+
+from stores.epic import Main as epic
+from utils.makejson import GameDeal, append_game_deal
+
 
 class Main(epic):
     """
@@ -76,8 +78,17 @@ class Main(epic):
                     checkout_slug = f"offers=1-{parts.get("sandboxId")}-{parts.get("offerId")}"
                     product_url = game.get('offers')[0].get('content').get('mapping').get('slug')
                     game_url = self.url + product_url
- 
-                    json_data = makejson.append_game_deal(json_data, title, True, game_url, image, None, endDate, wide_image, 'game', checkout_slug)
+
+                    game_data = GameDeal(
+                        name=title, 
+                        url=game_url,
+                        active_deal=True,
+                        image=image,
+                        wide_image=wide_image,
+                        offer_until=endDate,
+                        checkout_slug=checkout_slug
+                    )
+                    json_data = append_game_deal(json_data, game_data)
 
         return await self.compare(json_data)
 

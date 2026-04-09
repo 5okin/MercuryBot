@@ -1,9 +1,8 @@
 import asyncio, os
-from urllib.request import urlopen, Request
-from bs4 import BeautifulSoup
-from stores._store import Store
-from utils import makejson
 from datetime import datetime
+
+from stores._store import Store
+from utils.makejson import GameDeal, append_game_deal
 
 
 class Main(Store):
@@ -46,8 +45,15 @@ class Main(Store):
                     game_url = 'https://store.playstation.com'
 
                 game_image = (game.xpath('.//source'))[2].attrib.get('srcset') if len(game.xpath('.//source')) >= 2 else (games[i-1].xpath('.//source'))[2].attrib.get('srcset') 
-                offer_from  = datetime.now()
-                json_data = makejson.append_game_deal(json_data, title, True, game_url, game_image, offer_from)
+                
+                game_data = GameDeal(
+                    name=title,
+                    url=game_url,
+                    active_deal=True,
+                    image=game_image,
+                    wide_image=game_image
+                )
+                json_data = append_game_deal(json_data, game_data)
             except Exception as e:
                 self.logger.debug("Data acquisition failed %s", e)
 

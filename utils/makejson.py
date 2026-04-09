@@ -1,52 +1,123 @@
 import json
-from typing import Any
-from utils import environment
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Any
+
+from utils import environment
 
 logger = environment.logging.getLogger("bot.makejson")
 
-def append_game_deal(
-        json_data: list[dict[str, Any]],
-        game_name: str,
-        active_deal: bool,
-        game_url: str,
-        game_image: str | None = None,
-        offer_from: datetime | None = None,
-        offer_until: datetime | None = None,
-        wide_image: str | None = None,
-        productType: str | None = 'game',
-        checkout_slug: str | None = None
-    ) -> list[dict[str, Any]]:
 
+@dataclass(slots=True)
+class GameDeal:
+    """
+    Represents a single free game deal.
+
+    Attributes
+    ----------
+    name : str
+        The game title. Leading/trailing whitespaces are stripped during initialization.
+        Non-ASCII characters are removed when converting to a dictionary.
+    url : str
+        URL to the game's store or offer page. Stripped of leading/trailing whitespaces.
+    active_deal : bool
+        Whether the deal is currently active. Defaults to True.
+    image : str | None
+        URL of the main game image.
+    wide_image : str | None
+        URL of a wide/banner image.
+    offer_from : datetime
+        Start of the offer. Defaults to current UTC time. Invalid values are replaced.
+    offer_until : datetime | None
+        End of the offer, or None if no end date. Invalid values are set to None.
+    product_type : str | None
+        Type of product e.g. 'game', 'dlc'. Defaults to 'game'.
+    checkout_slug : str | None
+        Identifier used for the checkout URL.
+
+    Methods
+    -------
+    is_valid() -> bool
+        Returns True if the deal contains the minimum required data
+        (name, url, and at least one image).
+
+    to_dict() -> dict[str, Any]
+        Converts the GameDeal into a dictionary.
+        Handles string normalization, ASCII cleanup, and URL formatting.
+    """
+
+    name: str
+    url: str
+    active_deal: bool = True
+    image: str | None = None
+    wide_image: str | None = None
+    offer_from: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    offer_until: datetime | None = None
+    product_type: str = 'game'
+    checkout_slug: str | None = None
+
+    def __post_init__(self):
+        """
+        Post-initialization validation and normalization.
+        """
+        self.name = self.name.strip() if isinstance(self.name, str) else self.name
+        self.url = self.url.strip() if isinstance(self.url, str) else self.url
+
+        if not isinstance(self.offer_from, datetime):
+            logger.warning("Invalid offer_from date", extra={'_game': self.name, '_date': self.offer_from})
+            self.offer_from = datetime.now(timezone.utc)
+
+        if self.offer_until is not None and not isinstance(self.offer_until, datetime):
+            logger.warning("Invalid offer_until date", extra={'_game': self.name, '_date': self.offer_until})
+            self.offer_until = None
+
+    def is_valid(self) -> bool:
+        """
+        Check if the GameDeal has all required fields for appending.
+
+        Returns
+        -------
+        bool
+            True if name, url, and at least one image are present; False otherwise.
+        """
+        return bool(self.name and self.url and (self.image or self.wide_image))
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert the GameDeal to a dictionary.
+
+        Returns
+        -------
+        dict[str, Any]
+            A dictionary representation of the GameDeal.
+        """
+        return {
+            'title': self.name.encode('ascii', 'ignore').decode('ascii'),
+            'activeDeal': self.active_deal,
+            'url': self.url,
+            'startDate': self.offer_from,
+            'endDate': self.offer_until,
+            'image': self.image.replace(" ", "%20") if self.image else None,
+            'wideImage': self.wide_image.replace(" ", "%20") if self.wide_image else None,
+            'type': self.product_type,
+            'checkout_slug': self.checkout_slug,
+        }
+
+
+def append_game_deal(json_data: list[dict[str, Any]], deal: GameDeal) -> list[dict[str, Any]]:
     """
     Append a game deal entry to an existing list of game data.
 
-    This function creates a structured dictionary representing a game deal and appends it to the provided list. 
-    Dates are stored as `datetime` objects so that further calculations (like finding the earliest end date)
-    can be performed directly. Image URLs are percent-encoded for safety.
+    Creates a structured dictionary from a GameDeal and appends it to the provided list.
+    Dates are stored as datetime objects so further calculations (like finding the earliest
+    end date) can be performed directly.
 
     Parameters
     ----------
     json_data : list[dict[str, Any]]
         The list to append the new game data to.
-    game_name : str
-        The name of the game. Non-ASCII characters are stripped.
-    active_deal : bool
-        Indicates whether the deal is currently active.
-    game_url : str
-        The URL to the game's store or offer page.
-    game_image : str
-        URL of the main image for the game.
-    offer_from : datetime | None, optional
-        The start date of the offer. If None, defaults to the current UTC datetime.
-    offer_until : datetime | None, optional
-        The end date of the offer. If None, no end date is set.
-    wide_image : str | None, optional
-        URL of a wide/banner image for the game.
-    productType : str | None, optional
-        The type of product (default is 'game').
-    checkout_slug : str | None, optional
-        Identifier used for checkout url.
+    deal : GameDeal
+        The game deal to append. See GameDeal for field descriptions.
 
     Returns
     -------
@@ -55,48 +126,26 @@ def append_game_deal(
 
     Notes
     -----
-    - Non-ASCII characters in `game_name` are removed.
-    - Image URLs are percent-encoded using `urllib.parse.quote`.
-    - For JSON serialization, use `json.dump(..., default=str)` to handle `datetime` objects.
-    - If `game_name`, `game_image`, or `game_url` are missing or empty, the function logs a warning and does **not** append an entry to `json_data`.
+    - The deal is only appended if `deal.is_valid()` returns True.
+    - Invalid deals are logged and skipped.
+    - Conversion to dictionary is handled by `GameDeal.to_dict()`.
 
     Example
     -------
     >>> json_data = []
-    >>> data(
-    ...     json_data,
-    ...     game_name="Example Game",
-    ...     active_deal=True,
-    ...     game_url="https://example.com",
-    ...     game_image="https://example.com/image.jpg"
-    ... )
+    >>> deal = GameDeal(name="Example Game", url="https://example.com", image="https://example.com/image.jpg")
+    >>> append_game_deal(json_data, deal)
     [{'title': 'Example Game', 'activeDeal': True, ...}]
     """
 
-    # Enforce presence of required fields
-    if not game_name or not(game_image or wide_image) or (not game_url):
-        logger.warning(f"Not all required data passed for '{game_name = }', '{game_image = }', '{wide_image = }', '{game_url = }'")
+    if not deal.is_valid():
+        logger.warning(
+            "Not all required data passed for game deal", 
+            extra={'_game': deal.name, '_image': deal.image, '_wide_image': deal.wide_image, '_url': deal.url}
+        )
         return json_data
 
-    # Ensure offer_from and offer_until are datetime objects
-    if offer_from is None or not isinstance(offer_from, datetime):
-        offer_from = datetime.now(timezone.utc)
-    if offer_until is not None and not isinstance(offer_until, datetime):
-        offer_until = None
-        logger.warning("Dates of passed for %s arent datetime objects", game_name)
-
-
-    json_data.append({
-        'title': game_name.encode('ascii', 'ignore').decode('ascii'),
-        'activeDeal': active_deal,
-        'url': game_url,
-        'startDate': offer_from,
-        'endDate': offer_until,
-        'image': game_image.replace(" ", "%20") if game_image else None,
-        'wideImage': wide_image.replace(" ", "%20") if wide_image else None,
-        'type': productType,
-        'checkout_slug': checkout_slug
-    })
+    json_data.append(deal.to_dict())
     return json_data
 
 
