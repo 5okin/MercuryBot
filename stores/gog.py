@@ -45,7 +45,7 @@ class Main(Store):
             game_data = await self.request_data(link.get('href'),'html')
             if game_data is None: return 
 
-            root = game_data.getroot()
+            root = game_data
             game_id = root.find(".//div[@card-product]").get("card-product")
             offer_until = root.find(".//span[@class='product-actions__time']").text.rsplit(' ', 1)[0]
             offer_until = self.parse_date(offer_until, ["%d/%m/%Y %H:%M", "%m/%d/%Y %H:%M"])              
