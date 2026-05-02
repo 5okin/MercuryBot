@@ -15,6 +15,8 @@ MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that moni
 
 <br>
 
+Invite to your Discord server or follow on X or Bluesky using the links below
+
 <div align="center">
     <a href="https://x.com/_MercuryBot_"><img src="https://github.com/user-attachments/assets/e1d13e8e-93fc-49a0-99f1-6f03b74fae59" alt="X Link"></a>
     <a href="https://discord.com/oauth2/authorize?client_id=827564914733350942"><img src="https://github.com/user-attachments/assets/aaf0d3f0-eecc-4e87-9004-11171d68da00" alt="Discord Link"></a>
