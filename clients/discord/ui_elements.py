@@ -14,9 +14,9 @@ class FooterButtons(discord.ui.View):
     def __init__(self) -> None:
         super().__init__(timeout=None)
         self.add_item(RateUsButton())
-        button_donate = discord.ui.Button(label='Donate', style=discord.ButtonStyle.url, emoji='💰',url='https://google.com')
+        button_donate = discord.ui.Button(label='Support MercuryBot', style=discord.ButtonStyle.url, emoji='☕',url='https://ko-fi.com/mercurybot')
         button_invite = discord.ui.Button(label='Invite', style=discord.ButtonStyle.url, emoji='🤖',url='https://discord.com/oauth2/authorize?client_id=827564914733350942')
-        #self.add_item(button_donate)
+        self.add_item(button_donate)
         self.add_item(button_invite)
 
 
