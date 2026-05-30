@@ -71,7 +71,7 @@ Discord             |  X            |  Bluesky
     - `Set stores`: Set the store you wish to receive notifications for.
 
 <p align='center'>
-    <image src="https://github.com/user-attachments/assets/feb013c1-3f0c-4fc9-85bd-11ad140a2f57">
+    <image src="https://github.com/user-attachments/assets/b49fbf73-d3bf-446f-ad2f-8e4d957f832e">
 <p>
 
 3. Enjoy automatic alerts for new free games on various platforms.
@@ -102,6 +102,11 @@ Discord             |  X            |  Bluesky
 - The `Set stores` button allows you change the stores for which you receive notifications.
 <p align='center'>
  <image src="https://github.com/user-attachments/assets/c0c03f56-837b-41d5-ac51-648078bfd49d">
+<p>
+
+- The `Skip low quality games` toggle button allows you to choose choose whether or not to skip notifications for "low quality" titles. For now, these are Steam games marked with the **Profile Features Limited** tag.
+<p align='center'>
+ <image src="https://github.com/user-attachments/assets/8b4a117e-3c64-40b5-9cc9-06eecca6d5f2">
 <p>
 
 ## Project Structure
