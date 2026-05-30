@@ -184,6 +184,16 @@ class MyClient(discord.Client):
         image_bytes = store.image.getvalue()
         image_type = store.image_type
 
+        def all_new_deals_are_low_quality(games: list[dict])-> bool:
+            new_deals = [
+                game for game in store.data
+                if game.get('newDeal')
+            ]
+            return (
+                bool(new_deals)
+                and all(game.get('type') == 'low_quality' for game in new_deals)
+            )
+
         async def send_message(server) -> bool:
             file, buffer = None, None
             try:
@@ -209,11 +219,25 @@ class MyClient(discord.Client):
                 if buffer:
                     buffer.close()
 
+        only_low_quality = all_new_deals_are_low_quality(store.data)
 
         servers_eligible = [
             server for server in servers_data
-            if store.id in str(server.get('notification_settings')) and server.get('channel') 
+            if (
+                store.id in str(server.get('notification_settings')) 
+                and server.get('channel')
+                and not (
+                    server.get('skip_low_quality', False)
+                    and only_low_quality
+                )
+            )
         ]
+        if not servers_eligible:
+            logger.info("No eligible servers found for notifications", extra={
+                '_store_name': store.name,
+                '_only_low_quality': only_low_quality,
+            })
+            return
 
         batch_stats = []
         for i in range(0, len(servers_eligible), BATCH_SIZE):

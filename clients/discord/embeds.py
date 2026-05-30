@@ -14,6 +14,7 @@ def settings_embed(client, interaction, change_note=None) -> discord.Embed:
     else:
         role = '`None`'
     
+    skip_low_quality = '✅' if server and server.get('skip_low_quality') else '❌'
     notifications_str = str(server['notification_settings'] if server and server.get('notification_settings') else '')
     notifications = ''
     for store in client.modules:
@@ -23,6 +24,7 @@ def settings_embed(client, interaction, change_note=None) -> discord.Embed:
     embed = discord.Embed(title="⚙️ Settings ⚙️", color=0x00aff4)
     embed.set_thumbnail(url="https://5okin.github.io/mercurybot-web/images/mercury_avatar.gif")
     embed.add_field(name="\u200B", value=f"**Notification channel:** {channel}\n**Notification role:** {role}", inline=True)
+    embed.add_field(name="\u200B", value=f"**Skip low quality games:** {skip_low_quality}", inline=False)
     embed.add_field(name="\u200B", value="", inline=False)
     embed.add_field(name="🛎️ You'll receive notifications for the following stores 🛎️", value="\n", inline=False)
     embed.add_field(name="\u200B", value=f"{notifications}", inline=False)

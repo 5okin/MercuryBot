@@ -364,6 +364,7 @@ class Store_Select(discord.ui.Select):
     @staticmethod
     async def handle(interaction: discord.Interaction, client, settings_message) -> None:
         await interaction.response.defer()
+        server = Database.get_discord_server(interaction.guild_id)
 
         description_embed = discord.Embed( title="Store notification Settings",
             description=(
@@ -373,6 +374,7 @@ class Store_Select(discord.ui.Select):
         view = discord.ui.View()
         view.add_item(Store_Select(client, interaction, settings_message))
         view.add_item(BackButton(client, settings_message))
+        view.add_item(LowQualityToggleButton(server))
         await settings_message.edit(content=None, embed=description_embed, view=view)
 
     def __init__(self, client, interaction, settings_message) -> None:
@@ -416,10 +418,6 @@ class Store_Select(discord.ui.Select):
             'server' : interaction.guild_id,
             'notification_settings' : notification_settings
         }])
-        
-        # updated_selector = Store_Select(self.client, interaction, settings_message=self.settings_message)
-        # view = discord.ui.View()
-        # view.add_item(updated_selector)
 
         embed = settings_success()
         await self.settings_message.edit(content=None, embed=embed, view=None)
@@ -430,3 +428,31 @@ class Store_Select(discord.ui.Select):
             embed=settings_embed(self.client, interaction, change_note="Stores updated!"),
             view=Settings_buttons(self.client, settings_message=self.settings_message)
         )
+
+
+# MARK: LowQualityButton
+class LowQualityToggleButton(discord.ui.Button):
+    def __init__(self, server):
+        skip_low_quality = server['skip_low_quality'] if server and server.get('skip_low_quality') else False
+
+        super().__init__(
+            label=f"Skip low quality games: {'ON' if skip_low_quality else 'OFF'}",
+            style=discord.ButtonStyle.green if skip_low_quality else discord.ButtonStyle.gray
+        )
+        self.skip_low_quality = skip_low_quality
+
+    async def callback(self, interaction: discord.Interaction):
+        self.skip_low_quality = not self.skip_low_quality
+
+        Database.insert_store_notifications([{
+            'server' : interaction.guild_id,
+            'skip_low_quality' : self.skip_low_quality
+        }])
+
+        self.label = f"Skip low quality games: {'ON' if self.skip_low_quality else 'OFF'}"
+        self.style = (
+            discord.ButtonStyle.green
+            if self.skip_low_quality
+            else discord.ButtonStyle.gray
+        )
+        await interaction.response.edit_message(view=self.view)

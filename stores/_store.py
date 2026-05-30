@@ -485,11 +485,16 @@ class Store:
                 should_update = local_titles != online_titles
 
             if should_update:
-
                 self.logger.info("Store Compare: %s", self.name, extra={
                     '_Online'   : online_titles,
                     '_Local'    : local_titles
                 })
+
+                # Mark the games that triggered the notification
+                new_titles = online_titles - local_titles
+                for game in json_data:
+                    game['newDeal'] = game.get('title') in new_titles
+
                 state_backup = (self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter)
                 
                 try:

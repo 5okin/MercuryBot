@@ -31,7 +31,7 @@ class GameDeal:
     offer_until : datetime | None
         End of the offer, or None if no end date. Invalid values are set to None.
     product_type : str | None
-        Type of product e.g. 'game', 'dlc'. Defaults to 'game'.
+        Type of product e.g. 'game', 'dlc', 'low_quality'. Defaults to 'game'.
     checkout_slug : str | None
         Identifier used for the checkout URL.
 

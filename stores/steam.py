@@ -76,11 +76,18 @@ class Main(Store):
 
             game_details = await self.request_data(game_url, mode='text')
             end_date_object = None
+            profile_features_limited = False
             if game_details:
                 soup = BeautifulSoup(game_details, 'html.parser')
                 end_date_object = await self._parse_end_date(soup)
                 meta = soup.find("meta", property="og:image")
                 game_image = str(meta.get("content")) if isinstance(meta, Tag) else game_image
+                features = soup.find("div", class_="game_area_features_list_ctn")
+                if isinstance(features, Tag):
+                    profile_features_limited = any(
+                        hasattr(feature, "text") and "Profile Features Limited" in feature.text
+                        for feature in features.contents
+                    )
 
             game_data = GameDeal(
                 name=game_name,
@@ -89,7 +96,7 @@ class Main(Store):
                 image=str(game_image),
                 wide_image=str(game_image),
                 offer_until=end_date_object,
-                product_type=product_type
+                product_type='low_quality' if profile_features_limited else product_type
             )
             json_data = append_game_deal(json_data, game_data)
             
