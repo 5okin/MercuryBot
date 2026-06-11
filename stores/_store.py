@@ -2,6 +2,7 @@ import asyncio
 import io
 import imageio
 import aiohttp
+import json
 import numpy as np
 from lxml import html
 from urllib.request import urlopen
@@ -246,6 +247,20 @@ class Store:
 
             await browser.close()
         return result
+    
+
+    # Mark: json cleanup
+    def cleanup_json_response(self, json_text: str) -> dict:
+        """
+        epic mobile cleanup json response
+        """
+        start = json_text.find("<pre>")
+        end = json_text.find("</pre>")
+        if start != -1 and end != -1:
+            json_text = json_text[start + 5:end]
+            return json.loads(json_text)
+        else:
+            return {}
 
 
     def make_image(self)-> Image.Image | None:

@@ -1,4 +1,4 @@
-import asyncio, json
+import asyncio
 from datetime import datetime, timezone
 
 from stores.epic import Main as epic
@@ -30,19 +30,6 @@ class Main(epic):
         )   
         self.cart_url = 'https://store.epicgames.com/purchase?{slugs}#/purchase/payment-methods'
         self.checkout_url = None
-
-
-    def cleanup_json_response(self, json_text):
-        """
-        epic mobile cleanup json response
-        """
-        start = json_text.find("<pre>")
-        end = json_text.find("</pre>")
-        if start != -1 and end != -1:
-            json_text = json_text[start + 5:end]
-            return json.loads(json_text)
-        else:
-            return None
 
 
     async def get_mobile_deals(self):

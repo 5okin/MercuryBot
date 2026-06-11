@@ -26,7 +26,7 @@ class Main(Store):
     ) -> None:
 
         self.page = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions'
-        self.checkout_url_template = 'https://store.epicgames.com/purchase?{slugs}#/purchase/payment-methods'
+        self.checkout_url_template = 'https://store.epicgames.com/purchase?{slugs}#/free-checkout'
         self.checkout_url = None
         self.giveawayUrl = 'https://store.epicgames.com/en-US/free-games'
         
@@ -95,7 +95,8 @@ class Main(Store):
                         offer = game['promotions']['promotionalOffers'][0]['promotionalOffers'][0]
                         startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                         endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
-                        checkout_slug = f"offers=1-{game['namespace']}-{game['id']}"
+                        product_slug = game['offerMappings'][0]['pageSlug']
+                        checkout_slug = await self.get_checkout_offer(product_slug)
                         game_data = GameDeal(
                             name=game_name,
                             url=game_url,
@@ -127,6 +128,24 @@ class Main(Store):
                             json_data = append_game_deal(json_data, game_data)
         del game_list
         return await self.compare(json_data)
+    
+
+    # MARK: get checkout offer
+    async def get_checkout_offer(self, product_slug):
+        url = (
+            'https://store.epicgames.com/graphql'
+            '?operationName=getMappingByPageSlug'
+            f'&variables={{"pageSlug":"{product_slug}","locale":"en-US"}}'
+            '&extensions={"persistedQuery":{"version":1,"sha256Hash":"781fd69ec8116125fa8dc245c0838198cdf5283e31647d08dfa27f45ee8b1f30"}}'
+        )
+        response = (await self.request_data_playwright(url, return_response=True))['response']
+        data = self.cleanup_json_response(response).get('data')
+        
+        assert data is not None
+        namespace = data.get('StorePageMapping').get('mapping').get('mappings').get('offer').get('namespace')
+        id = data.get('StorePageMapping').get('mapping').get('mappings').get('offer').get('id') 
+
+        return  f"offers=1-{namespace}-{id}"
 
 
     #MARK: combined GIF
