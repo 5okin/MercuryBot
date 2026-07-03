@@ -66,8 +66,8 @@ async def update(update_store: "Store") -> None:
         update_store (store object): The store to update
     '''
 
-    try:
-        if update_store:
+    if update_store:
+        try:
             logger.info("Updating store: %s", update_store.name)
             if await update_store.get():
                 update_store.image_cdn = await discord.upload_image_to_cdn(update_store)
@@ -76,12 +76,15 @@ async def update(update_store: "Store") -> None:
                 await send_games_notification(update_store)
             else:
                 logger.debug("No new games to for %s", update_store.name)
-            await update_store.close_session()
-            update_store.reset_scheduler()
-    except:
-        logger.error("Failed to update store")
-        update_store.schedule_retry()
 
+            update_store.reset_scheduler()
+    
+        except Exception:
+            logger.error("Failed to update store: %s", update_store.name)
+            update_store.schedule_retry()
+        
+        finally:
+            await update_store.close_session()
 
 #MARK: Initialize
 async def initialize() -> None:
