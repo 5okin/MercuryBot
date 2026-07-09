@@ -529,10 +529,17 @@ class Store:
             self.image = self.image_twitter = None
             return False
         elif has_active and not self.data:
+            for game in json_data:
+                game['newDeal'] = bool(game.get('activeDeal'))
+
             self.data = json_data
-            await self.create_checkout_url()
-            await self.set_images()
-            return False
+            try:
+                await self.create_checkout_url()
+                await self.set_images()
+            except:
+                self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter = None, None, None, None, None
+                raise
+            return self.verify_new_notification(json_data)
         return False
     
     # MARK: create_checkout_url
