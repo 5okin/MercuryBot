@@ -44,6 +44,13 @@ def settings_success(message="") -> discord.Embed:
         )
     return embed
 
+def post_selected_store_store_deals() -> discord.Embed:
+    embed = discord.Embed(
+        title=f"✅ Selected Store Deals are being Posted ✅",
+        color=0x009933
+        )
+    return embed
+
 
 def feedback_embed():
     embed = discord.Embed(title="We’d love your feedback! 💬", color=0x00aff4)

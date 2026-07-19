@@ -1,9 +1,9 @@
 import io
 import discord
 from discord import WebhookMessage, app_commands
-import clients.discord.messages as messages
 from .ui_elements import FooterButtons, Settings_buttons, FeedBackView
 from .embeds import settings_embed, feedback_embed
+from .helpers import build_deal_payload
 from utils import environment
 
 logger = environment.logging.getLogger("bot.discord")
@@ -24,16 +24,18 @@ def define_commands(self) -> None:
 
         for store in self.modules:
             if store_choice.value == store.name:
-                message_to_show = getattr(messages, store.name, messages.default)
-                if store.data and any(game.get('activeDeal', False) for game in store.data):
-                    if isinstance(store.image, io.BytesIO):
-                        store.image.seek(0)
-                        file = discord.File(store.image, filename='img.' + store.image_type.lower())
-                        await interaction.response.send_message(embed=message_to_show(store, mobile=mobile), file=file, view=FooterButtons(), ephemeral=True)
-                    else:
-                        logger.error("Image isnt BytesIO and image wasn't found on CDN", extra={'_store_data': store.data})
-                else:
+                payload = build_deal_payload(store, mobile=mobile)
+                if payload is None:
                     await interaction.response.send_message(f"No free games on {store.name}", ephemeral=True)
+                    return
+
+                await interaction.response.send_message(
+                    embed=payload["embed"],
+                    file=payload["file"],
+                    view=FooterButtons(),
+                    ephemeral=True,
+                )
+                return
 
 
     # MARK: Feedback

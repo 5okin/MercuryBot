@@ -3,7 +3,8 @@ import discord
 import asyncio
 from datetime import datetime
 from utils.database import Database
-from .embeds import settings_embed, settings_success, feedback_embed
+from .embeds import *
+from .helpers import build_deal_payload
 from utils import environment
 
 logger = environment.logging.getLogger("bot.discord")
@@ -108,6 +109,7 @@ class Settings_buttons(discord.ui.View):
         self.message = None
 
         self.add_item(self.create_test_button())
+        self.add_item(self.create_send_all_notifications_button())
         self.add_item(self.create_channel_button())
         self.add_item(self.create_role_button())
         self.add_item(self.create_store_button())
@@ -138,16 +140,28 @@ class Settings_buttons(discord.ui.View):
         button = discord.ui.Button(
             label="Test notifications",
             emoji=discord.PartialEmoji(name="test", id=os.getenv('DISCORD_TEST_BTN')),
-            style=discord.ButtonStyle.primary
+            style=discord.ButtonStyle.primary,
+            row=1
         )
         button.callback = self.test_settings_callback
+        return button
+    
+    def create_send_all_notifications_button(self):
+        button = discord.ui.Button(
+            label = "Post Selected Store Deals",
+            emoji=discord.PartialEmoji(name="test", id=os.getenv('DISCORD_TEST_BTN')),
+            style=discord.ButtonStyle.danger,
+            row=1
+        )
+        button.callback = self.post_all_games
         return button
 
     def create_channel_button(self):
         button = discord.ui.Button(
             label="​ Set channel",
             emoji=discord.PartialEmoji(name="channel", id=os.getenv('DISCORD_CHNL_BTN')),
-            style=discord.ButtonStyle.secondary
+            style=discord.ButtonStyle.secondary,
+            row=0
         )
         button.callback = self.channel_select_callback
         return button
@@ -156,7 +170,8 @@ class Settings_buttons(discord.ui.View):
         button = discord.ui.Button(
             label="​ Set role",
             emoji=discord.PartialEmoji(name="role", id=os.getenv('DISCORD_ROLE_BTN')),
-            style=discord.ButtonStyle.secondary
+            style=discord.ButtonStyle.secondary,
+            row=0
         )
         button.callback = self.settings_role_callback
         return button
@@ -165,7 +180,8 @@ class Settings_buttons(discord.ui.View):
         button = discord.ui.Button(
             label="​ Set stores",
             emoji=discord.PartialEmoji(name="stores", id=os.getenv('DISCORD_STORE_BTN')),
-            style=discord.ButtonStyle.secondary
+            style=discord.ButtonStyle.secondary,
+            row=0
         )
         button.callback = self.settings_store_callback
         return button
@@ -205,6 +221,44 @@ class Settings_buttons(discord.ui.View):
                 await self.settings_message.edit(embed=permissions['embed'], view=Settings_buttons(self.client, self.settings_message))
         else:
             await interaction.response.send_message("You have to set a channel first in order to test the notification", ephemeral=True)
+
+
+    # MARK: Post all games
+    async def post_all_games(self, interaction: discord.Interaction) -> None:
+        server = Database.get_discord_server(interaction.guild_id)
+        if server and server.get('channel'):
+            channel = self.client.get_channel(server['channel'])
+            permissions = self.client.check_channel_permissions(channel)
+
+            if permissions['has_all_permissions']:
+                if not interaction.response.is_done():
+                    await interaction.response.defer(ephemeral=True)
+
+                await self.settings_message.edit(content=None, embed=post_selected_store_store_deals(), view=None)
+
+                notifications_str = str(server['notification_settings'] if server and server.get('notification_settings') else '')
+                msg_send = False
+                for store in self.client.modules:
+                    if store.id in notifications_str:
+                        payload = build_deal_payload(store, mobile=False)
+                        if payload:
+                            msg_send = True
+                            await channel.send(embed=payload["embed"], file=payload["file"])
+                if msg_send:
+                    await channel.send(view=FooterButtons()) # Only send footer buttons as a last message
+
+                await self.settings_message.edit(
+                    content=None,
+                    embed=settings_embed(self.client, interaction, change_note="Selected store deals posted!"),
+                    view=Settings_buttons(self.client, settings_message=self.settings_message)
+                )
+            else:
+                if not interaction.response.is_done():
+                    await interaction.response.defer()
+                await self.settings_message.edit(embed=permissions['embed'], view=Settings_buttons(self.client, self.settings_message))
+        else:
+            await interaction.response.send_message("You have to set a channel first in order to test the notification", ephemeral=True)
+
 
 # MARK: Channel select
 class Channel_Select(discord.ui.ChannelSelect):
