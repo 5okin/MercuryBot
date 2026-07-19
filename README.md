@@ -66,12 +66,13 @@ Discord             |  X            |  Bluesky
 2. Run the `/settings` slash command and configure the bot:
 
     - `Test notifications`: Test your settings.
+    - `Post Selected Store Deals`: Post the current free games from the selected stores.
     - `Set channel`: The channel to receive the notifications.
     - `Set role`: Specify the role to be pinged for notifications (optional).
     - `Set stores`: Set the store you wish to receive notifications for.
 
 <p align='center'>
-    <image src="https://github.com/user-attachments/assets/b49fbf73-d3bf-446f-ad2f-8e4d957f832e">
+    <image src="https://github.com/user-attachments/assets/367eb47c-469d-41ec-af77-e18c029ec5e5">
 <p>
 
 3. Enjoy automatic alerts for new free games on various platforms.
@@ -82,6 +83,11 @@ Discord             |  X            |  Bluesky
 - The `Test notifications` button sends a notification to the set channel, pinging the set role to ensure everything works correctly.
 <p align='center'>
  <image src="https://github.com/user-attachments/assets/0806c7b4-5ddd-402a-90e1-c4ba4e6e9584">
+<p>
+
+- The `Post Selected Store Deals` button sends the current free games to the set channel, for all selected stores.
+<p align='center'>
+ <image src="https://github.com/user-attachments/assets/76f77a13-d1d6-46a5-8f6f-198220c294a0">
 <p>
 
 - The `Set channel` button allowes you to set the channel the channel you want the bot to send the notifications to. If its a locked channel make sure to give the bot permissions. A channel must be set.
