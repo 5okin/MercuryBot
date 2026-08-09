@@ -171,7 +171,12 @@ class Store:
                 else:
                     raise ValueError(f"Unsupported mode: {mode}")
         except:
-            self.logger.warning("Request to %s failed", self.service_name)
+            self.logger.warning("Request failed", 
+                extra={
+                    '_store': self.service_name,
+                    '_url': url
+                }
+            )
             return None
 
 
@@ -442,14 +447,39 @@ class Store:
         self.image = self.image_twitter = await self.make_gif_image()
 
 
-    def _normilize_title(self, data) -> set:
+    def _normalize_title(self, data) -> set:
         return set(
             game['title'].encode('ascii', 'ignore').decode('ascii')
             for game in data if game.get('activeDeal')
         )
 
+    # MARK: check deals
+    async def _check_links_validity(self, potential_deal: list[dict]) -> bool:
+        """
+        Validate the URLs for active deals before sending a notification.
+        """
+        urls = []
+
+        for deal in potential_deal:
+            if deal.get('activeDeal'):
+                url = deal.get('url')
+
+                if isinstance(url, str) and url:
+                    urls.append(url)
+
+        async def validate_url(url: str) -> bool:
+            response = await self.request_data(url, mode='html')
+            return response is not None
+
+        results = await asyncio.gather(
+            *(validate_url(url) for url in urls)
+        )
+
+        return all(results)
+
+
     # MARK: verify_new_notification
-    def verify_new_notification(self, potential_deal) -> bool:
+    async def verify_new_notification(self, potential_deal) -> bool:
         """
         Verify whether a notification should be sent for the current deals.
 
@@ -471,12 +501,14 @@ class Store:
         """
         database_data = database.Database.find(self.name)
 
-        db_data = self._normilize_title(database_data)
-        potential_deal = self._normilize_title(potential_deal)
+        db_data = self._normalize_title(database_data)
+        potential_deal_valid_links = await self._check_links_validity(potential_deal)
+
+        potential_deal = self._normalize_title(potential_deal)
 
         match = potential_deal.issubset(db_data)
 
-        return False if match else True
+        return potential_deal_valid_links and not match
 
     #MARK: compare
     async def compare(self, json_data) -> bool:
@@ -488,8 +520,8 @@ class Store:
         # Theres local data and data online
         if has_active and self.data:
 
-            online_titles = self._normilize_title(json_data)
-            local_titles = self._normilize_title(self.data)
+            online_titles = self._normalize_title(json_data)
+            local_titles = self._normalize_title(self.data)
 
             should_update = False
             if self.require_all_deals_new:
@@ -520,7 +552,7 @@ class Store:
                     self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter = state_backup
                     raise
 
-                return self.verify_new_notification(json_data)
+                return await self.verify_new_notification(json_data)
             return False
 
         # Theres no data online
@@ -539,7 +571,7 @@ class Store:
             except:
                 self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter = None, None, None, None, None
                 raise
-            return self.verify_new_notification(json_data)
+            return await self.verify_new_notification(json_data)
         return False
     
     # MARK: create_checkout_url
