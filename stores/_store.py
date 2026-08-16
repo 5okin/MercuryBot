@@ -213,7 +213,7 @@ class Store:
                     "cookies": dict   # Cookies as {name: value}
                 }
         """
-        result = {"headers": {}, "cookies": {}, "response": None}
+        result = {"headers": {}, "cookies": {}, "response": None, "status": None}
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
@@ -233,9 +233,7 @@ class Store:
                     context.remove_listener("request", capture)
 
             context.on("request", capture)
-            
-            await page.goto(url)
-            await page.wait_for_load_state('domcontentloaded') 
+            response = await page.goto(url, wait_until='domcontentloaded')
 
             cookies = []
             for c in await context.cookies():
@@ -247,8 +245,8 @@ class Store:
             result["cookies"] = dict(cookies)
 
             if return_response:
-                response = await page.content()
-                result["response"] = response
+                result["response"] = await page.content()
+                result["status"] = response.status if response else None
 
             await browser.close()
         return result
@@ -459,6 +457,9 @@ class Store:
         Validate the URLs for active deals before sending a notification.
         """
         urls = []
+
+        if "epic" in self.name:
+            return True
 
         for deal in potential_deal:
             if deal.get('activeDeal'):
