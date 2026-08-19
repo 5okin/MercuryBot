@@ -11,7 +11,9 @@
 
 # MercuryBot
 
-MercuryBot is a Discord, Bluesky and X, formerly known as twitter, bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, both desktop and mobile, Steam, GOG,  PS Plus and luna (prime gaming). Never miss out on the opportunity to grab titles for free. Discover more on our [website](https://5okin.github.io/mercurybot-web/).
+MercuryBot is a Discord and Bluesky bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, both desktop and mobile, Steam, GOG,  PS Plus and luna (prime gaming). Never miss out on the opportunity to grab titles for free. Discover more on our [website](https://5okin.github.io/mercurybot-web/).
+
+It was also an X, formerly known as twitter bot but the price changes to the API for autamated posting are no longer sustainable for us, so we’ve decided to discontinue our X posts.
 
 <br>
 
