@@ -121,10 +121,10 @@ async def send_games_notification(store) -> None:
     log_memory('Before send social notification')
 
     # tweet about it...
-    if store.twitter_notification and x:
-        tweet_url = x.tweet(store)
-        await discord.dm_logs("Tweet", tweet_url)
-        Database.update_social_followers(x.get_follower_count())
+    # if store.twitter_notification and x:
+    #     tweet_url = x.tweet(store)
+    #     await discord.dm_logs("Tweet", tweet_url)
+    #     Database.update_social_followers(x.get_follower_count())
 
     # The other tweet about it...
     if store.bsky_notification and bsky:
