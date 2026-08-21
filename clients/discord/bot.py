@@ -179,7 +179,8 @@ class MyClient(discord.Client):
         logger.info("Started sending Discord notifications...")
         servers_data = Database.get_discord_servers()
         servers_notified = 0
-        BATCH_SIZE = int(environment.NOTIFICATION_BATCH_SIZE or 1)
+        notification_limit = int(environment.NOTIFICATION_BATCH_SIZE or 1)
+        semaphore = asyncio.Semaphore(notification_limit)
     
         image_bytes = store.image.getvalue()
         image_type = store.image_type
@@ -196,28 +197,29 @@ class MyClient(discord.Client):
 
         async def send_message(server) -> bool:
             file, buffer = None, None
-            try:
-                if store.image_cdn:
-                    file = store.image_cdn
-                else:
-                    buffer = BytesIO(image_bytes)
-                    file = discord.File(fp=buffer, filename=f'img.{image_type.lower()}')
+            async with semaphore:
+                try:
+                    if store.image_cdn:
+                        file = store.image_cdn
+                    else:
+                        buffer = BytesIO(image_bytes)
+                        file = discord.File(fp=buffer, filename=f'img.{image_type.lower()}')
 
-                await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
-                return True
-            except Exception:
-                logger.error("Failed to send notification", 
-                    extra={
-                    '_store_name': getattr(store, 'name', 'unknown'),
-                    '_server_name':server.get('server_name', 'unknown'),
-                    '_server_id': server.get('server', 'unknown'),
-                    '_server_channel': server.get('channel', 'unknown'),
-                    }
-                )
-                return False
-            finally:
-                if buffer:
-                    buffer.close()
+                    await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
+                    return True
+                except Exception:
+                    logger.error("Failed to send notification", 
+                        extra={
+                        '_store_name': getattr(store, 'name', 'unknown'),
+                        '_server_name':server.get('server_name', 'unknown'),
+                        '_server_id': server.get('server', 'unknown'),
+                        '_server_channel': server.get('channel', 'unknown'),
+                        }
+                    )
+                    return False
+                finally:
+                    if buffer:
+                        buffer.close()
 
         only_low_quality = all_new_deals_are_low_quality(store.data)
 
@@ -239,34 +241,16 @@ class MyClient(discord.Client):
             })
             return
 
-        batch_stats = []
-        for i in range(0, len(servers_eligible), BATCH_SIZE):
-            batch = servers_eligible[i:i + BATCH_SIZE]
-            batch_start = time.time()
-            
-            tasks = [send_message(server) for server in batch]
-            results = await asyncio.gather(*tasks)
-            
-            batch_time = time.time() - batch_start
-            servers_notified += sum(results)
-
-            batch_stats.append({
-                # "batch": i // BATCH_SIZE + 1,
-                # "attempted": len(batch),
-                # "notified": sum(results),
-                "time": batch_time,
-            })
-
+        results = await asyncio.gather(*(send_message(server) for server in servers_eligible))
+        servers_notified = sum(results)
         end_time = time.time()
 
         logger.info("Finished sending Discord notifications", 
             extra={
                 "_store_name": store.name,
-                "_total_batches": len(batch_stats),
                 "_total_servers": len(servers_data),
                 "_total_notified": f"{servers_notified}/{len(servers_eligible)}",
-                "_total_time": f"{end_time - start_time:.2f}s",
-                "_Avg_batch_time": f"{sum(b['time'] for b in batch_stats) / len(batch_stats):.2f}s"
+                "_total_time": f"{end_time - start_time:.2f}s"
             }
         )
 
