@@ -1,6 +1,7 @@
 import asyncio, time, tempfile
 import discord
 from discord import app_commands
+from dataclasses import dataclass
 from utils import environment
 import psutil, tracemalloc
 from io import BytesIO
@@ -11,6 +12,13 @@ from .ui_elements import FooterButtons
 from .events import setup_events
 
 logger = environment.logging.getLogger("bot.discord")
+
+
+@dataclass
+class NotificationResult:
+    server_id: int
+    sent: bool
+    permission_problems: dict | None = None
 
 
 class MyClient(discord.Client):
@@ -195,8 +203,9 @@ class MyClient(discord.Client):
                 and all(game.get('type') == 'low_quality' for game in new_deals)
             )
 
-        async def send_message(server) -> bool:
+        async def send_message(server) -> NotificationResult:
             file, buffer = None, None
+            server_id = server.get('server')
             async with semaphore:
                 try:
                     if store.image_cdn:
@@ -205,8 +214,12 @@ class MyClient(discord.Client):
                         buffer = BytesIO(image_bytes)
                         file = discord.File(fp=buffer, filename=f'img.{image_type.lower()}')
 
-                    await self.store_messages(store.name, server.get('server'), server.get('channel'), server.get('role'), file)
-                    return True
+                    permission_problems = await self.store_messages(store.name, server_id, server.get('channel'), server.get('role'), file)
+                    return NotificationResult(
+                        server_id=server_id,
+                        sent=permission_problems is None,
+                        permission_problems=permission_problems,
+                    )
                 except Exception:
                     logger.error("Failed to send notification", 
                         extra={
@@ -216,7 +229,7 @@ class MyClient(discord.Client):
                         '_server_channel': server.get('channel', 'unknown'),
                         }
                     )
-                    return False
+                    return NotificationResult(server_id=server_id, sent=False)
                 finally:
                     if buffer:
                         buffer.close()
@@ -242,7 +255,22 @@ class MyClient(discord.Client):
             return
 
         results = await asyncio.gather(*(send_message(server) for server in servers_eligible))
-        servers_notified = sum(results)
+
+        successful_servers = {}
+        failed_servers = {}
+
+        for result in results:
+            if result.sent:
+                successful_servers[result.server_id] = result
+            elif result.permission_problems is not None:
+                failed_servers[result.server_id] = result.permission_problems
+
+        notification_results = {
+            "successful_servers": successful_servers,
+            "failed_servers": failed_servers,
+        }
+        servers_notified = len(notification_results["successful_servers"])
+        deferred_results = await self.send_deferred_permission_notifications(notification_results["failed_servers"])
         end_time = time.time()
 
         logger.info("Finished sending Discord notifications", 
@@ -250,13 +278,42 @@ class MyClient(discord.Client):
                 "_store_name": store.name,
                 "_total_servers": len(servers_data),
                 "_total_notified": f"{servers_notified}/{len(servers_eligible)}",
+                "_total_deferred": f"{len(deferred_results['successful_servers'])}/{len(notification_results['failed_servers'])}",
+                "_deferred_failed_server_ids": deferred_results["failed_servers"],
                 "_total_time": f"{end_time - start_time:.2f}s"
             }
         )
 
 
     # MARK: store_messages
-    async def store_messages(self, command, server_id: int, channel_id: int, role_id: int | None, file: discord.File | None) -> None:
+    async def store_messages(self, command, server_id: int, channel_id: int, role_id: int | None, file: discord.File | None) -> dict | None:
+        """Send a store notification or return permission problems.
+
+        Parameters
+        ----------
+        command
+            Store name used to select the notification formatter and message builder.
+        server_id : int
+            Discord guild ID that should receive the notification.
+        channel_id : int
+            Configured Discord channel ID for the notification.
+        role_id : int | None
+            Optional role ID to mention in the notification.
+        file : discord.File | None
+            Optional image file attached to the notification. It may be reused
+            by the caller for multiple server sends.
+
+        Returns
+        -------
+        dict | None
+            Returns ``None`` when the notification is sent successfully, or
+            the permission result when the configured channel lacks permissions.
+
+        Raises
+        ------
+        discord.HTTPException
+            If Discord rejects the notification send.
+        """
         for store in self.modules:
             if command == store.name:
                 message_to_show = getattr(messages, store.name, messages.default)
@@ -289,41 +346,88 @@ class MyClient(discord.Client):
                                 file=file # type: ignore
                             )
 
-                    # Check if you can send a permissions notification msg to selected channel
-                    elif permissions['permission_details'].send_messages:
-                        if isinstance(channel, discord.TextChannel):
-                            await channel.send(content=permissions['text_message'])
-
                     else:
-                        # Check if you can send permissions notification embed or msg to system channel
-                        if server.system_channel and server.system_channel.permissions_for(server.me).embed_links:
-                            await server.system_channel.send(embed=permissions['embed'])
-                        elif server.system_channel and server.system_channel.permissions_for(server.me).send_messages:
-                            await server.system_channel.send(content=permissions['text_message'])
+                        return permissions
 
-                        # Try sending permissions notification msg to server owner as dm
-                        else:
-                            if server.owner_id is not None:
-                                owner = await self.fetch_user(server.owner_id)
-                            else:
-                                logger.warning("Server owner ID is None for server %s", server.id)
-                                return
-                            try:
-                                await owner.send(
-                                    f"Hello {owner.name}, we noticed that the bot does not have all the required permissions for **{server.name}**.\n"
-                                    "The bot is unable to send game notifications without these permissions !!\n"
-                                    "Please update the bot settings from your server using the `/settings` command and removing and re-adding the desired channel 😊")
-                            except discord.Forbidden:
-                                # Try sending permissions notification msg to any server channel:
-                                logger.info("Could not DM the server owner %s: %s.", owner.name, server.owner_id, extra={
-                                    '_channel': channel,
-                                    '_store_name': getattr(store, 'name', 'unkown'),
-                                    '_server_name':server.name,
-                                    '_server_id': server.id,
-                                })
-                                for public_channel in server.text_channels:
-                                    if public_channel.permissions_for(server.me).send_messages:
-                                        await public_channel.send(content=permissions['text_message'])
-                                        logger.info("Send permission notification for %s to public channel", server.id)
-                                        return
-                                logger.warning("Failed to notify server %s for permission problems", server.id)
+    # MARK: send_deferred_permission_notifications
+    async def send_deferred_permission_notifications(self, deferred_servers: dict[int, dict]) -> dict[str, list[int]]:
+        """Send one permission warning for each failed notification server.
+
+        Parameters
+        ----------
+        deferred_servers : dict[int, dict]
+            Mapping of Discord guild IDs to permission failure details from ``store_messages``.
+
+        Returns
+        -------
+        dict[str, list[int]]
+            Server IDs grouped into ``successful_servers`` and
+            ``failed_servers``. A server is successful when one warning route
+            sends a message, and failed when no route can notify it.
+
+        Raises
+        ------
+        discord.HTTPException
+            If Discord rejects a warning message. A forbidden owner DM is
+            handled by trying another public channel.
+        """
+        notified_servers = []
+        failed_servers = []
+
+        for server_id, permissions in deferred_servers.items():
+            server = self.get_guild(server_id)
+            if server is None:
+                failed_servers.append(server_id)
+                continue
+
+            server_settings = Database.get_discord_server(server_id)
+            channel = self.get_channel(server_settings.get('channel')) if server_settings else None
+
+            if permissions['permission_details'].send_messages and isinstance(channel, discord.TextChannel):
+                await channel.send(content=permissions['text_message'])
+                notified_servers.append(server_id)
+                continue
+
+            if server.system_channel and server.system_channel.permissions_for(server.me).embed_links:
+                await server.system_channel.send(embed=permissions['embed'])
+                notified_servers.append(server_id)
+                continue
+            if server.system_channel and server.system_channel.permissions_for(server.me).send_messages:
+                await server.system_channel.send(content=permissions['text_message'])
+                notified_servers.append(server_id)
+                continue
+
+            server.owner_id = None
+
+            if server.owner_id is None:
+                logger.warning("Server owner ID is None for server %s", server.id)
+                failed_servers.append(server_id)
+                continue
+            
+            try:
+                owner = await self.fetch_user(server.owner_id)
+                await owner.send(
+                    f"Hello {owner.name}, we noticed that the bot does not have all the required permissions for **{server.name}**.\n"
+                    "The bot is unable to send game notifications without these permissions !!\n"
+                    "Please update the bot settings from your server using the `/settings` command and removing and re-adding the desired channel 😊")
+                notified_servers.append(server_id)
+            except discord.Forbidden:
+                logger.info("Could not DM the owner for server %s.", server.owner_id, extra={
+                    '_channel': channel,
+                    '_server_name': server.name,
+                    '_server_id': server.id,
+                })
+                # Try sending permissions notification msg to any server channel:
+                for public_channel in server.text_channels:
+                    if public_channel.permissions_for(server.me).send_messages:
+                        await public_channel.send(content=permissions['text_message'])
+                        notified_servers.append(server_id)
+                        logger.info("Send permission notification for %s to public channel", server.id)
+                        break
+                else:
+                    failed_servers.append(server_id)
+                    logger.warning("Failed to notify server %s for permission problems", server.id)
+        return {
+            "successful_servers": notified_servers,
+            "failed_servers": failed_servers,
+        }
