@@ -40,7 +40,11 @@ class Main(Store):
                 game_button = game.xpath('.//a[@role="button"]')
 
                 if game_button and 'href' in game_button[0].attrib:
-                    game_url = self.base_url + game_button[0].attrib['href']
+                    url = game_button[0].attrib['href']
+                    if 'https://store.playstation.com' in url:
+                        game_url = url
+                    else:
+                        game_url = self.base_url + url
                 else:
                     game_url = 'https://store.playstation.com'
 
