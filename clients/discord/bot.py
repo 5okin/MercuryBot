@@ -254,7 +254,9 @@ class MyClient(discord.Client):
             })
             return
 
+        start_time_notifications = time.time()
         results = await asyncio.gather(*(send_message(server) for server in servers_eligible))
+        end_time_notifications = time.time()
 
         successful_servers = {}
         failed_servers = {}
@@ -279,8 +281,9 @@ class MyClient(discord.Client):
                 "_total_servers": len(servers_data),
                 "_total_notified": f"{servers_notified}/{len(servers_eligible)}",
                 "_total_deferred": f"{len(deferred_results['successful_servers'])}/{len(notification_results['failed_servers'])}",
-                "_deferred_failed_server_ids": deferred_results["failed_servers"],
-                "_total_time": f"{end_time - start_time:.2f}s"
+                "_notification_time": f"{end_time_notifications - start_time_notifications:.2f}s",
+                "_total_time": f"{end_time - start_time:.2f}s",
+                "_deferred_failed_server_ids": deferred_results["failed_servers"]
             }
         )
 
