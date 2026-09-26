@@ -49,7 +49,7 @@ def setup_events(client):
         # await asyncio.to_thread(Database.insert_discord_server, payloads)
 
         if client.ADMIN_USER:
-            await client.ADMIN_USER.send(f"**Status** {client.user} `Started/Restarted and ready`, connected to {len(client.guilds)} servers")
+            await client.ADMIN_USER.send(f"**Status:**\n{client.ADMIN_USER.mention} {client.user} `Started/Restarted and ready`, connected to {len(client.guilds)} servers")
         else:
             logger.info("%s Started/Restarted and ready, connected to %s servers", format(client.user), len(client.guilds))
         

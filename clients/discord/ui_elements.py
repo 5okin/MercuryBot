@@ -81,7 +81,7 @@ class FeedbackModal(discord.ui.Modal, title='Feedback'):
         Database.add_feedback(feedback_payload)
 
         if interaction.client.ADMIN_USER:
-            await interaction.client.ADMIN_USER.send(f"**Feedback**\n`{feedback_payload['feedback']}`")
+            await interaction.client.ADMIN_USER.send(f"**Feedback:**\n{interaction.client.ADMIN_USER.mention} `{feedback_payload['feedback']}`")
         
         await interaction.response.send_message(f'Thanks for your feedback, {interaction.user}!', ephemeral=True)
 

@@ -26,8 +26,8 @@ class MyClient(discord.Client):
         self.modules = modules
         intents = discord.Intents.none()
         intents.guilds = True
-        self.ADMIN_USER = None
-        self.DEV_GUILD = None
+        self.ADMIN_USER: discord.User | None = None
+        self.DEV_GUILD: discord.Object | None = None
         super().__init__(
             intents = intents,
             max_messages=None,
