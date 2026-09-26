@@ -1,23 +1,29 @@
 <div align="center">
   <a href="https://discord.com/oauth2/authorize?client_id=827564914733350942">
     <img src="https://img.shields.io/endpoint?url=https://shieldsapi.fly.dev/api/stats/discordservers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
-  <a href="https://discord.com/api/oauth2/authorize?client_id=827564914733350942&permissions=534723885120&scope=bot">
+  <a href="https://discord.com/oauth2/authorize?client_id=827564914733350942">
     <img src="https://img.shields.io/endpoint?url=https://shieldsapi.fly.dev/api/stats/discordusers&style=for-the-badge&logo=discord&logoColor=%235865f2"></a>
-  <a href="https://x.com/_MercuryBot_">
-    <img src="https://img.shields.io/endpoint?url=https://shieldsapi.fly.dev/api/stats/twitter&style=for-the-badge&logo=x"></a>
   <a href="https://bsky.app/profile/mercurybot.bsky.social">
     <img src="https://img.shields.io/endpoint?url=https://shieldsapi.fly.dev/api/stats/bluesky&style=for-the-badge&logo=bluesky"></a>
 </div>
 
 # MercuryBot
 
-MercuryBot is a Discord and Bluesky bot that monitors various platforms to find and notify users about new free game promotions. Stay updated on the latest giveaways from Epic Games, both desktop and mobile, Steam, GOG,  PS Plus and luna (prime gaming). Never miss out on the opportunity to grab titles for free. Discover more on our [website](https://5okin.github.io/mercurybot-web/).
+MercuryBot is a Discord and Bluesky bot that monitors multiple platforms for free game promotions and automatically notifies users when new deals become available.
 
-It was also an X, formerly known as twitter bot but the price changes to the API for autamated posting are no longer sustainable for us, so we’ve decided to discontinue our X posts.
+It currently monitors:
+- Epic Games
+- Epic Games Mobile
+- Steam
+- GOG
+- PlayStation Plus
+- Luna (Prime Gaming)
+
+Never miss an opportunity to claim free games. Learn more on our [website](https://5okin.github.io/mercurybot-web/).
+
+> **Note:** MercuryBot previously supported automated posting to X (formerly Twitter). Due to changes in X API pricing, maintaining automated posting is no longer sustainable, and X posting has been discontinued.
 
 <br>
-
-Invite to your Discord server or follow on X or Bluesky using the links below
 
 <div align="center">
     <a href="https://x.com/_MercuryBot_"><img src="https://github.com/user-attachments/assets/e1d13e8e-93fc-49a0-99f1-6f03b74fae59" alt="X Link"></a>
@@ -28,193 +34,256 @@ Invite to your Discord server or follow on X or Bluesky using the links below
 <br>
 
 <p align='center'>
-    <a href= "https://discord.com/oauth2/authorize?client_id=827564914733350942"> 
+    <a href="https://discord.com/oauth2/authorize?client_id=827564914733350942">
     <img src="https://github.com/5okin/MercuryBot/assets/70406237/34d1a800-4dd5-4915-a02d-9c884848fcb3"></a>
 <p><br>
 
-Mercury bot sends you notifications like the ones bellow every time there's a new free game available, so you never miss out again. For epic notifications on Discord, it also sends you next weeks free game (if available) all in one notification!
+MercuryBot sends notifications like the examples below whenever a new free game becomes available. For Epic Games notifications on Discord, the following week's free game is also included when available, in the same notification.
 
 Discord             |  X            |  Bluesky
-:-------------------------:|:-------------------------:|:-------------------------:
-<img src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0"> | <img src="https://github.com/user-attachments/assets/2aa7d6b4-d88a-44f4-a8c7-9871e760f18d" width="60%"> | <img src="https://github.com/user-attachments/assets/f8bee8bc-7f56-452c-adc0-5ba84d14fa13">
-
+:-------------------------: | :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------: |
+| <img src="https://github.com/5okin/MercuryBot/assets/70406237/a40c122b-369f-48f1-9f31-a9e383044da0"> | <img src="https://github.com/user-attachments/assets/2aa7d6b4-d88a-44f4-a8c7-9871e760f18d" width="60%"> | <img src="https://github.com/user-attachments/assets/f8bee8bc-7f56-452c-adc0-5ba84d14fa13"> |
 
 ## Features
 
-- **Multi-Platform Support:** MercuryBot monitors free game promotions on Epic Games, Steam, GOG, and PS Plus.
-
-- **Online 24/7:** Bot doesn't go offline ensuring you dont miss out on any deal!
-
-- **Automated Reminders:** Receive timely reminders in your Discord server, X or Bluesky feed when new free games become available.
-
-- **Customizable Settings:** Configure MercuryBot to tailor notifications to your preferences on discord.
-
-- **Ephemeral Messages:** Commands you send to the bot won't spam and clutter your channels, they stay invisible to everyone but you.
-
-- **Privacy focused:** Using slash commands the bot never has access to your messages.
-
+- **Multi-Platform Support:** MercuryBot monitors free game promotions across multiple stores and services.
+- **Online 24/7:** MercuryBot runs continuously to ensure you never miss a deal.
+- **Automated Notifications:** Receive notifications whenever new free games become available.
+- **Customizable Settings:** Configure MercuryBot to tailor notifications to your preferences on Discord.
+- **Ephemeral Messages:** Slash commands return private responses that do not clutter your channels.
+- **Privacy-Focused:** MercuryBot uses slash commands and does not require access to messages in your server.
 
 ## Discord
 
 ### Slash Commands
-- `/settings`: Setup and review your notification preferences.
-- `/deals`: Display a list of available stores and get the current available games (Ephemeral Message).
-- `/feedback`: Send feedback or bug reports. 
+- `/settings`: Configure and review your notification preferences.
+- `/deals`: View the currently available free games. *(Ephemeral message.)*
+- `/feedback`: Submit feedback or report a bug.
 
-### How to use
+### How to Use
 
-1. Invite MercuryBot to your Discord server. [<img src="https://github.com/5okin/MercuryBot/assets/70406237/9fbf5218-d5bc-476a-8892-2496a1bbe1ba">](https://discord.com/oauth2/authorize?client_id=827564914733350942=bot)
+1. Invite MercuryBot to your Discord server. [<img src="https://github.com/5okin/MercuryBot/assets/70406237/9fbf5218-d5bc-476a-8892-2496a1bbe1ba">](https://discord.com/oauth2/authorize?client_id=827564914733350942)
 
-2. Run the `/settings` slash command and configure the bot:
+2. Run `/settings`.
 
-    - `Test notifications`: Test your settings.
-    - `Post Selected Store Deals`: Post the current free games from the selected stores.
-    - `Set channel`: The channel to receive the notifications.
-    - `Set role`: Specify the role to be pinged for notifications (optional).
-    - `Set stores`: Set the store you wish to receive notifications for.
+3. Configure your notification preferences:
+
+   - **Test notifications:** Send a test notification to verify your configuration.
+   - **Post Selected Store Deals:** Post the currently available free games from your selected stores.
+   - **Set channel:** Select the channel where notifications should be sent.
+   - **Set role:** Select an optional role to mention when notifications are sent.
+   - **Set stores:** Choose which stores you want to receive notifications from.
+   - **Skip low-quality games:** Optionally skip notifications for games considered low-quality.
+
+4. Save your settings and let MercuryBot handle the rest.
 
 <p align='center'>
     <image src="https://github.com/user-attachments/assets/367eb47c-469d-41ec-af77-e18c029ec5e5">
 <p>
 
-3. Enjoy automatic alerts for new free games on various platforms.
+### Command Breakdown
 
+- **Test notifications**
+  
+  The `Test notifications` button sends a test notification to your configured channel and mentions the configured role, allowing you to verify that your settings are working correctly.
 
-### Command breakdown
+  <p align='center'>
+   <image src="https://github.com/user-attachments/assets/0806c7b4-5ddd-402a-90e1-c4ba4e6e9584">
+  <p>
 
-- The `Test notifications` button sends a notification to the set channel, pinging the set role to ensure everything works correctly.
-<p align='center'>
- <image src="https://github.com/user-attachments/assets/0806c7b4-5ddd-402a-90e1-c4ba4e6e9584">
-<p>
+- **Post Selected Store Deals**
 
-- The `Post Selected Store Deals` button sends the current free games to the set channel, for all selected stores.
-<p align='center'>
- <image src="https://github.com/user-attachments/assets/76f77a13-d1d6-46a5-8f6f-198220c294a0">
-<p>
+  The `Post Selected Store Deals` button posts the currently available free games from all selected stores to the configured channel.
+  <p align='center'>
+   <image src="https://github.com/user-attachments/assets/76f77a13-d1d6-46a5-8f6f-198220c294a0">
+  <p>
 
-- The `Set channel` button allowes you to set the channel the channel you want the bot to send the notifications to. If its a locked channel make sure to give the bot permissions. A channel must be set.
-<p align='center'>
- <image src="https://github.com/user-attachments/assets/000b9130-5e67-4864-a070-45f2c42184b6">
-<p>
+- **Set channel**
 
-- When setting a channel, you will be notified if you select a channel that the bot lacks permissions for.
-<p align='center'>
- <image src="https://github.com/user-attachments/assets/29d6541a-dfb3-4456-bcf2-7db7d02b0f74">
-<p>
+  The `Set channel` button allows you to choose which channel receives notifications.
+  <p align='center'>
+   <image src="https://github.com/user-attachments/assets/000b9130-5e67-4864-a070-45f2c42184b6">
+  <p>
 
-- The `Set role` button allowes you set the role that will be pinged when a notification is send, you can choose not to ping any roles.
-<p align='center'>
- <image src="https://github.com/user-attachments/assets/36d13c17-d472-497c-bb91-f2211891cd14">
-<p>
+  MercuryBot must have permission to send messages in the selected channel. If it does not have the required permissions, MercuryBot will notify you.
+  <p align='center'>
+   <image src="https://github.com/user-attachments/assets/29d6541a-dfb3-4456-bcf2-7db7d02b0f74">
+  <p>
 
-- The `Set stores` button allows you change the stores for which you receive notifications.
-<p align='center'>
- <image src="https://github.com/user-attachments/assets/c0c03f56-837b-41d5-ac51-648078bfd49d">
-<p>
+- **Set role**
 
-- The `Skip low quality games` toggle button allows you to choose choose whether or not to skip notifications for "low quality" titles. For now, these are Steam games marked with the **Profile Features Limited** tag.
-<p align='center'>
- <image src="https://github.com/user-attachments/assets/8b4a117e-3c64-40b5-9cc9-06eecca6d5f2">
-<p>
+  The `Set role` button allows you to select a role to mention when a notification is sent.
+  <p align='center'>
+   <image src="https://github.com/user-attachments/assets/36d13c17-d472-497c-bb91-f2211891cd14">
+  <p>
+
+- **Set stores**
+
+  The `Set stores` button allows you to select which platforms you want to receive notifications from.
+  <p align='center'>
+   <image src="https://github.com/user-attachments/assets/c0c03f56-837b-41d5-ac51-648078bfd49d">
+  <p>
+
+- **Skip low-quality games**
+
+  The `Skip low-quality games` toggle allows you to choose whether to skip notifications for "low-quality" titles. Currently, this applies to Steam games marked with the **Profile Features Limited** tag.
+  <p align='center'>
+   <image src="https://github.com/user-attachments/assets/8b4a117e-3c64-40b5-9cc9-06eecca6d5f2">
+  <p>
 
 ## Project Structure
-```
-📁 MercuryBot
-│── 📂 clients
+```text
+📁 MercuryBot/
+│── 📂 clients/
 │ ├── 📜 discord.py     # Discord bot implementation
 │ ├── 📜 bluesky.py     # Bluesky integration
-│ ├── 📜 twitter.py     # X (Twitter) integration
-│── 📂 stores
-│ ├── 📜 epic_mobile.py # Epic Games store handler
-│ ├── 📜 epic.py        # Epic Games store handler
-│ ├── 📜 gog.py         # GOG store handler
-│ ├── 📜 luna.py        # luna store handler
-│ ├── 📜 ps_plus.py     # PlayStation Plus store handler
-│ ├── 📜 steam.py       # Steam store handler
-│── 📂 utils
+│ └── 📜 twitter.py     # X integration
+│
+│── 📂 stores/
+│ ├── 📜 epic_mobile.py # Epic Games Mobile handler
+│ ├── 📜 epic.py        # Epic Games handler
+│ ├── 📜 gog.py         # GOG handler
+│ ├── 📜 luna.py        # Luna handler
+│ ├── 📜 ps_plus.py     # PlayStation Plus handler
+│ └── 📜 steam.py       # Steam handler
+│
+│── 📂 utils/
 │ ├── 📜 logger.py      # Logging utility
-│ ├── 📜 helpers.py     # Helper functions
+│ └── 📜 helpers.py     # Helper functions
+│
 │── 📜 main.py          # Main entry point of the bot
 │── 📜 .env.example     # Environment configuration template
 │── 📜 requirements.txt # Python dependencies
-│── 📜 LICENSE          # License information
-│── 📜 Dockerfile	    # Docker configuration
-│── 📜 fly.toml         # Deployment process file
-│── 📜 README.md        # Project documentation
+│── 📜 LICENSE          # Project license
+│── 📜 Dockerfile       # Docker configuration
+│── 📜 fly.toml         # Deployment configuration
+└── 📜 README.md        # Project documentation
 ```
 
-## Running it on your own
+## Running MercuryBot Yourself
 
-- Download or clone the repository.
-- Obtain a working [discord bot TOKEN](#get-a-discord-token) and [mongoDB server](#mongodb-connection-string) running.
-- Optionally, set up a [twitter key](#get-twitter-keys) and [BlueSky account](#get-a-bluesky-account) but these aren't required.  
-- Add your credentials to the [.env](#env-file) file.
+Before running MercuryBot, you will need:
 
-### Locally
+- Python 3.12 or newer (`python -V`)
+- A [Discord bot token](#get-a-discord-token)
+- A [MongoDB database](#mongodb)
+- A [Bluesky account](#get-a-bluesky-account) *(optional)*
 
-- Make sure you have python 3.12 or higher installed. `python -V`
-- Install the required dependencies by running. `pip install -r requirements.txt`
-- Install Playwright
-    ```
-    python -m playwright install-deps
-    python -m playwright install chromium
-    ```
-- Run it using: `python3 main.py`
+### Installation
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/5okin/MercuryBot.git
+   cd MercuryBot
+   ```
+
+2. Install the required dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Install Playwright and Chromium:
+
+   ```bash
+   python -m playwright install-deps
+   python -m playwright install chromium
+   ```
+
+4. Create your environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+5. Edit [`.env`](#env-file) and add your configuration.
+
+
+
+### Running Locally
+Start MercuryBot with:
+
+```bash
+python3 main.py
+```
 
 ### Docker
-- Build the Docker image `docker build -t mercurybot .`
-- Run the bot in a container with your .env `docker run -d --env-file .env mybot`
 
-### Get a discord TOKEN
-Log in to https://discord.com/developers/applications/ and click on the New Application button. Go to the bot tab and click the Add Bot button to get a TOKEN.
+Build the Docker image:
 
-### Get twitter Keys
-You can follow twitters documentation https://developer.x.com/en/docs/twitter-api/getting-started/getting-access-to-the-twitter-api to get started.
+```bash
+docker build -t mercurybot .
+```
 
-### Get a Bluesky account
-All you need to do is create a normal Bluesky account https://bsky.app/ 
+Run the bot in a container using your `.env` file:
 
-### MongoDB connection string
-The database used is MongoDB, you can use mongodb atlas which offers a shared $0/month plan, if you don't want to host your own database. Navigate to ***DEPLOYMENT*** > ***Database*** > ***Connect*** > ***Drivers*** to obtain a connection string (eg., `mongodb+srv://...`)
+```bash
+docker run -d --env-file .env mercurybot
+```
 
+### `.env` File
 
-### `.env` file
+MercuryBot uses environment variables for configuration. Copy or rename the [`.env.example`](.env.example) file to `.env` and configure the required values.
 
-Copy or rename the [`.env.example`](.env.example) file to `.env` and edit it with your data.
+The following table describes each variable:
 
-Here is an explanation of what everything is:
-| Variable               | What it is                                                                                        |
-| ---------------------- | ----------------------------------------------                                                    |
-| DEBUG                  | Can be `true` or `false`. Controls log output and bot configuration (test vs. live).              |
-| DB_CONNECTION_STRING   | Your mongoDB connection string                                                                    |
-| DISCORD_TOKEN_LIVE     | Live discord TOKEN, used when DEBUG=False                                                         |
-| DISCORD_TOKEN_TEST     | Test/Dev discord TOKEN, used when DEBUG=True                                                      |
-| X_ACCESS_TOKEN         | Twitter/X access token                                                                            |
-| X_ACCESS_TOKEN_SECRET  | Twitter/X access token secret                                                                     | 
-| X_API_KEY              | Twitter/X api key                                                                                 |
-| X_API_SECRET           | Twitter/X api secret                                                                              |
-| DISCORD_DEV_GUILD      | Test Guild Id (not necessary)                                                                     |
-| DISCORD_ADMIN_ACC      | Your account Id (not necessary)                                                                   |
-| BSKY_USER              | Your account username                                                                             |
-| BSKY_PASSWORD          | Your account password                                                                             |
+| Variable                | Description                                                                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `DEBUG`                 | Can be `true` or `false`. Controls logging and bot configuration (development vs. production). |
+| `DB_CONNECTION_STRING`  | Your MongoDB connection string.                                                                |
+| `DISCORD_TOKEN_LIVE`    | Production Discord token, used when `DEBUG=false`.                                             |
+| `DISCORD_TOKEN_TEST`    | Development Discord token, used when `DEBUG=true`.                                             |
+| `X_ACCESS_TOKEN`        | X API access token.                                                                            |
+| `X_ACCESS_TOKEN_SECRET` | X API access token secret.                                                                     |
+| `X_API_KEY`             | X API key.                                                                                     |
+| `X_API_SECRET`          | X API secret.                                                                                  |
+| `DISCORD_DEV_GUILD`     | Optional Discord development guild ID.                                                         |
+| `DISCORD_ADMIN_ACC`     | Discord account ID used for administrative notifications.                                      |
+| `BSKY_USER`             | Bluesky account username.                                                                      |
+| `BSKY_PASSWORD`         | Bluesky account password.                                                                      |
 
+### Debug Mode
 
-- When `DEBUG` variable is set to True, the log output is changed, the bot uses DISCORD_TOKEN_TEST instead of DISCORD_TOKEN_LIVE and the twitter and bluesky clients dont run at all.
+When `DEBUG=true`:
 
-- When in `DEBUG` mode the bot can use `DISCORD_DEV_GUILD` to sync commands to that specific guild to cut down on wait times.
+* Development logging is enabled.
+* `DISCORD_TOKEN_TEST` is used instead of `DISCORD_TOKEN_LIVE`.
+* Bluesky and X clients are disabled.
+* `DISCORD_DEV_GUILD` can be used to synchronize slash commands to a specific development server, reducing command registration delays.
 
-- If you wish to receive discord direct messages from the bot for things like bot restart, feedback send, etc you can set `DISCORD_ADMIN_ACC`.
+## Setting Up External Services
+
+### Get a Discord Token
+
+Create a Discord application through the [Discord Developer Portal](https://discord.com/developers/applications/). Create a bot for your application and copy its token into the appropriate environment variable.
+
+### Get a Bluesky Account
+
+Create a Bluesky account at [bsky.app](https://bsky.app/) and use its credentials for the `BSKY_USER` and `BSKY_PASSWORD` environment variables.
+
+### Get X Keys
+
+Follow [X's documentation](https://developer.x.com/en/docs/twitter-api/getting-started/getting-access-to-the-twitter-api) to get started with the X API.
 
 ### MongoDB
-There are three databases created `deals`, `feedback` and `servers` (with _dev variants for debug mode).
 
-| Database    | Contents                                                                                                              |
-| ------      | ------                                                                                                                |
-| `deals`     | Contains a number of collections, one for every store (eg., steam, epic)                                              |
-| `feedback`  | Stores feedback and bug reports submitted via Discord.                                                                |
-| `servers`   | Contains a collection with the servers and the preferences and configurations for every discord server the bot is in  |
+MercuryBot uses MongoDB as its database. You can host MongoDB yourself or use a managed service such as MongoDB Atlas, which offers a shared $0/month plan.
 
-#### Deals database:
+For MongoDB Atlas, navigate to **Deployment → Database → Connect → Drivers** to obtain a connection string (for example, `mongodb+srv://...`).
+
+## Database Structure
+
+MercuryBot uses three databases: `deals`, `feedback`, and `servers`, along with corresponding `_dev` variants when running in debug mode.
+
+| Database   | Contents                                                                                                        |
+| ---------- | --------------------------------------------------------------------------------------------------------------- |
+| `deals`    | Contains multiple collections, one for each store (e.g., `steam`, `epic`).                                      |
+| `feedback` | Stores feedback and bug reports submitted through Discord.                                                      |
+| `servers`  | Contains a collection with the servers, preferences, and configurations for every Discord server the bot is in. |
+
+### `deals` Database
+
 ```mermaid
 graph TD;
     deals-->epic;
@@ -223,56 +292,70 @@ graph TD;
     deals-->etc.;
 ```
 
-Each collection contains all the information required for its respective store.
+Each store has its own document containing all the information required for that store.
 
-|               |                                                                                           |
-| ------        | ------                                                                                    |
-| `title`       | Game name.                                                                                |
-| `activeDeals` | boolean `0` or `1`. If the deal is active right now or its a feature offer.               |
-| `url`         | The url of the game.                                                                      | 
-| `startDate`   | When the deal starts.                                                                     |
-| `endDate`     | When the deal is set to end.                                                              |
-| `image`       | The image (usually gif) that is created containing all the game art.                      |
-| `wideImage`   | Social media-optimized image.                                                             |
+| Field         | Description                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| `title`       | Name of the game.                                                                            |
+| `activeDeals` | Boolean (`0` or `1`) indicating whether the deal is currently active or is a featured offer. |
+| `url`         | URL of the game.                                                                             |
+| `startDate`   | Date and time when the deal starts.                                                          |
+| `endDate`     | Date and time when the deal ends.                                                            |
+| `image`       | Image (usually a GIF) created using the game's artwork.                                      |
+| `wideImage`   | Social media-optimized image.                                                                |
 
-#### servers database
-This datebase only has a collection for discord. For the time being its the only implementation that requires it.
+### `feedback` Collection
 
-|                         |                                                                                           |
-| ------                  | ------                                                                                    |
-| `server`                | Guild id.                                                                                 |
-| `channel`               | Channel id.                                                                               |
-| `population`            | The number of actual people in the server.                                                | 
-| `server_name`           | The name of the server.                                                                   |
-| `role`                  | The role id that is to be pinged in the notifications send.                               |
-| `notification_settings` | A integer number that represents what notifications the server wants to receive.          |
+Stores feedback and bug reports submitted through Discord.
 
+### `servers` Database
 
-#### notification_settings
-To optimize storage and simplify notification settings, MercuryBot uses a compact integer-based encoding system for `notification_settings`:
+This database contains a document for each Discord server.
 
-- Each store is assigned a unique integer ID:
-  - Epic Games Mobile: `0`  
-  - Epic Games: `1`
-  - GOG: `2`
-  - Steam: `3`
-  - PS Plus: `4`
-  - luna: `5`
-  - (Additional stores can be added as needed.)
-  
-- These IDs are combined into a single integer to represent notification preferences. For example:
-  - `123`: Notifications for Epic Games, GOG, and Steam.
-  - `23`: Notifications for GOG and Steam only.
-  - `3`: Notifications for Steam only.
+| Field                   | Description                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `server`                | Guild ID.                                                                    |
+| `channel`               | Channel ID.                                                                  |
+| `population`            | Number of actual users in the server.                                        |
+| `joined`                | Date and time when the bot joined the server.                                |
+| `server_name`           | Name of the server.                                                          |
+| `role`                  | Role ID to be mentioned in notifications.                                    |
+| `notification_settings` | Integer representing the notification preferences configured for the server. |
 
-This method is both space-efficient and scalable.
+The database also contains a document for social media accounts:
 
-**Decoding Logic**: 
-- To determine if notifications are enabled for a specific store, parse the integer into its individual digits.
-- For example, if `notification_settings = 123`, notifications are enabled for stores `1`, `2`, and `3`.
+| Field       | Description                                   |
+| ----------- | --------------------------------------------- |
+| `social`    | Name of the social media platform.            |
+| `followers` | Number of followers on the specified account. |
 
+## Notification Settings
+To optimize storage and simplify notification management, MercuryBot uses a compact integer-based encoding to store notification preferences.
+
+Each store is assigned a unique integer ID:
+
+| Store             | ID  |
+| ----------------- | --- |
+| Epic Games Mobile | `0` |
+| Epic Games        | `1` |
+| GOG               | `2` |
+| Steam             | `3` |
+| PlayStation Plus  | `4` |
+| Luna              | `5` |
+
+These IDs are combined into a single integer to represent notification preferences. For example:
+
+- `123`: Notifications for Epic Games, GOG, and Steam.
+- `23`: Notifications for GOG and Steam only.
+- `3`: Notifications for Steam only.
+
+This approach keeps the stored configuration compact while allowing additional stores to be added in the future.
 
 ## Contributions
+If you have an idea for an improvement, find a bug, or want to add support for another platform, feel free to open an issue or submit a pull request.
 
-Contributions are welcome! If you have any ideas for improvements or new features, feel free to submit a pull request.
+## License
 
+MercuryBot is licensed under the GNU General Public License v3.0.
+
+See [LICENSE](LICENSE) for the full license text.
