@@ -170,7 +170,7 @@ class Store:
                     return html.fromstring(await response.read())
                 else:
                     raise ValueError(f"Unsupported mode: {mode}")
-        except:
+        except Exception:
             self.logger.warning("Request failed", 
                 extra={
                     '_store': self.service_name,
@@ -362,7 +362,7 @@ class Store:
         for b in image_bytes_list:
             try:
                 b.close()
-            except:
+            except Exception:
                 pass
 
         del image_bytes_list
@@ -549,7 +549,7 @@ class Store:
                     self.data = json_data
                     await self.create_checkout_url()
                     await self.set_images()
-                except:
+                except Exception:
                     self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter = state_backup
                     raise
 
@@ -569,7 +569,7 @@ class Store:
             try:
                 await self.create_checkout_url()
                 await self.set_images()
-            except:
+            except Exception:
                 self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter = None, None, None, None, None
                 raise
             return await self.verify_new_notification(json_data)

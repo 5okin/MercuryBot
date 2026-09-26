@@ -66,7 +66,7 @@ def define_commands(self) -> None:
                 raise Exception("Failed to send settings message")
             view.message = message
             await message.edit(view=Settings_buttons(self, settings_message=message))
-        except:
+        except Exception:
             logger.warning("Failed discord command /settings", 
                 extra={
                     '_server_id': interaction.guild_id

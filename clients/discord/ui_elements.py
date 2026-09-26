@@ -132,7 +132,7 @@ class Settings_buttons(discord.ui.View):
                 await asyncio.sleep(60)
                 await self.message.delete()
                 self.message = None
-        except:
+        except Exception:
             logger.error("Failed to cleanup after /Settings embed")
 
 

@@ -27,14 +27,17 @@ def load_modules() -> list:
     """Imports and instances all the modules automagically."""
 
     stores_dir = os.path.join( os.path.dirname(os.path.abspath(__file__)), "stores")
-    for i in sorted(os.listdir(stores_dir)):
-        module_name, module_extension = os.path.splitext(i)
-        if module_extension == ".py" and not module_name.startswith('_'):
-            try:
-                imported_module = importlib.import_module(f"stores.{module_name}")
-                modules.append(getattr(imported_module, "Main")())
-            except:
-                logger.error("Error while loading module")
+    for filename in sorted(os.listdir(stores_dir)):
+        module_name, module_extension = os.path.splitext(filename)
+        if module_extension != ".py" or module_name.startswith('_'):
+            continue
+
+        try:
+            imported_module = importlib.import_module(f"stores.{module_name}")
+            modules.append(getattr(imported_module, "Main")())
+        except Exception:
+            logger.error("Error while loading module", extra={"_module_name": module_name})
+
     if not modules:
         logger.error("Program is exiting because no modules were loaded")
         import sys
@@ -58,33 +61,38 @@ def log_memory(tag="") -> None:
 
 
 #MARK: Update
-async def update(update_store: "Store") -> None:
+async def update(store: "Store", notify: bool = True ) -> None:
     '''
-    Update specified store
+    Update a store with the latest data.
 
-    Parameters:
-        update_store (store object): The store to update
+    Args:
+        store: The store to update.
+        notify: Whether to send a notification when new data is found.
+
+    Returns:
+        None.
     '''
 
-    if update_store:
+    if store:
         try:
-            logger.info("Updating store: %s", update_store.name)
-            if await update_store.get():
-                update_store.image_cdn = await discord.upload_image_to_cdn(update_store)
-                Database.overwrite_deals(update_store.name, update_store.data)
-                Database.add_image(update_store)
-                await send_games_notification(update_store)
+            logger.info("Updating store: %s", store.name)
+            if await store.get():
+                store.image_cdn = await discord.upload_image_to_cdn(store)
+                Database.overwrite_deals(store.name, store.data)
+                Database.add_image(store)
+                if notify: 
+                    await send_games_notification(store)
             else:
-                logger.debug("No new games to for %s", update_store.name)
+                logger.debug("No new games for %s", store.name)
 
-            update_store.reset_scheduler()
+            store.reset_scheduler()
     
         except Exception:
-            logger.error("Failed to update store: %s", update_store.name)
-            update_store.schedule_retry()
+            logger.error("Failed to update store", extra={"_store_name":store.name})
+            store.schedule_retry()
         
         finally:
-            await update_store.close_session()
+            await store.close_session()
 
 #MARK: Initialize
 async def initialize() -> None:
@@ -105,13 +113,7 @@ async def initialize() -> None:
             logger.debug("Checking if theres new data")
             await update(store)
         else:
-            logger.debug("Scrapping data for %s", store.name)
-            try:
-                await store.get()
-                Database.overwrite_deals(store.name, store.data)
-                Database.add_image(store)
-            except Exception as error:
-                logger.error("Failed to scrape store %s: %s", store.name, str(error))
+            await update(store, notify=False)
 
 #MARK: Send games notification
 async def send_games_notification(store) -> None:
@@ -175,7 +177,7 @@ async def scrape_scheduler() -> None:
             log_memory('After Scrape Loop')
 
         if shutdown_flag_is_set:
-            print("Braking scrape_scheduler()")
+            logger.info("Braking scrape_scheduler()")
             for task in tasks:
                 task.cancel()
             break
