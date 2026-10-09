@@ -7,7 +7,7 @@ logger = environment.logging.getLogger("bot.discord")
 
 
 def build_deal_payload(store, mobile: bool = False):
-    if store.data and any(game.get("activeDeal", False) for game in store.data):
+    if store.data and any(game.active_deal for game in store.data):
         message_to_show = getattr(messages, store.name, messages.default)
         if isinstance(store.image, io.BytesIO):
             store.image.seek(0)

@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from utils import environment
 from datetime import datetime, timezone
+from utils.makejson import GameDeal
 
 logger = environment.logging.getLogger("bot.database")
 
@@ -121,20 +122,20 @@ class Database(object):
         return True if Database.images.find_one({"_id": store_name}) else False
 
     @staticmethod
-    def overwrite_deals(collection, data) -> None:
+    def overwrite_deals(collection: str, data: list[GameDeal] | None) -> None:
         Database.deals[collection].drop()
         if data:
             logger.info('Creating collection for %s', collection)
-            Database.deals[collection].insert_many(data)
+            Database.deals[collection].insert_many([deal.to_document() for deal in data])
         else:
             logger.debug('Module %s has no data to upload', collection)
 
     @staticmethod
-    def find(collection):
-        data = []
-        for x in Database.deals[collection].find():
-            data.append(x)
-        return data
+    def find(collection: str) -> list[GameDeal]:
+        return [
+            GameDeal.from_document(document)
+            for document in Database.deals[collection].find()
+        ]
 
     @staticmethod
     def stores_to_get():

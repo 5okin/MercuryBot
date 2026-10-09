@@ -11,6 +11,7 @@ from typing import List, IO, Self, overload, Literal
 from PIL import Image
 from utils import environment, database
 from datetime import datetime, timedelta
+from utils.makejson import GameDeal
 import psutil, tracemalloc
 import objgraph
 import gc
@@ -24,7 +25,7 @@ class Store:
                 id: str,
                 service_name: str,
                 url: str,
-                data: List | None = None,
+                data: list[GameDeal] | None = None,
                 image: IO | None = None,
                 image_cdn: str | None = None,
                 image_twitter: list[IO[bytes] | None] | None = None,
@@ -275,7 +276,7 @@ class Store:
 
         if self.data:
             for game in self.data:
-                with urlopen(game['image']) as img_stream:
+                with urlopen(game.image) as img_stream:
                     with Image.open(img_stream) as img:
                         images.append(img.copy())
 
@@ -314,8 +315,10 @@ class Store:
         return None
 
 
-    async def fetch_image(self, url:str, max_height: int = 300) -> Image.Image | None:
+    async def fetch_image(self, url: str | None, max_height: int = 300) -> Image.Image | None:
         """Fetch an image asynchronously and return a BytesIO object."""
+        if not url:
+            return None
         try:
             await self.create_session()
             assert self._session is not None
@@ -344,10 +347,10 @@ class Store:
         if not self.data:
             return None
 
-        images_key = 'wideImage' if wide else 'image'
-
         image_futures = [
-            self.fetch_image(game[images_key], 500) for game in self.data if game['activeDeal'] is status
+            self.fetch_image(game.wide_image if wide else game.image, 500)
+            for game in self.data
+            if game.active_deal is status
         ]
         image_bytes_list = await asyncio.gather(*image_futures)
 
@@ -411,7 +414,7 @@ class Store:
         return arr, arr_mp4
 
     #MARK: get_date
-    def get_date(self, data, status='start', returnAsRelative=False) -> str | None:
+    def get_date(self, data: GameDeal, status='start', returnAsRelative=False) -> str | None:
         """
         Returns the start or end date of a deal based on the status parameter.
         
@@ -424,14 +427,13 @@ class Store:
         - A formatted date string or "Tomorrow !!" returnAsRelative value.
         """
         if status == 'start':
-            status = 'startDate'
+            date_value = data.offer_from
         elif status == 'end':
-            status = 'endDate'
+            date_value = data.offer_until
         else:
             raise ValueError("Invalid date_type. Choose 'start' or 'end'.")
         
-        if data.get(status):
-            date_value = data[status]
+        if date_value:
             tomorrow = datetime.now().date() + timedelta(days=1)
 
             if returnAsRelative and date_value.date() == tomorrow:
@@ -445,14 +447,14 @@ class Store:
         self.image = self.image_twitter = await self.make_gif_image()
 
 
-    def _normalize_title(self, data) -> set:
+    def _normalize_title(self, data: list[GameDeal]) -> set[str]:
         return set(
-            game['title'].encode('ascii', 'ignore').decode('ascii')
-            for game in data if game.get('activeDeal')
+            game.title
+            for game in data if game.active_deal
         )
 
     # MARK: check deals
-    async def _check_links_validity(self, potential_deal: list[dict]) -> bool:
+    async def _check_links_validity(self, potential_deal: list[GameDeal]) -> bool:
         """
         Validate the URLs for active deals before sending a notification.
         """
@@ -462,11 +464,8 @@ class Store:
             return True
 
         for deal in potential_deal:
-            if deal.get('activeDeal'):
-                url = deal.get('url')
-
-                if isinstance(url, str) and url:
-                    urls.append(url)
+            if deal.active_deal and deal.url:
+                urls.append(deal.url)
 
         async def validate_url(url: str) -> bool:
             response = await self.request_data(url, mode='html')
@@ -480,7 +479,7 @@ class Store:
 
 
     # MARK: verify_new_notification
-    async def verify_new_notification(self, potential_deal) -> bool:
+    async def verify_new_notification(self, potential_deal: list[GameDeal]) -> bool:
         """
         Verify whether a notification should be sent for the current deals.
 
@@ -491,7 +490,7 @@ class Store:
 
         Parameters
         ----------
-        potential_deal : list[dict]
+        potential_deal : list[GameDeal]
             The latest deals retrieved from the store API or scraper.
 
         Returns
@@ -512,16 +511,16 @@ class Store:
         return potential_deal_valid_links and not match
 
     #MARK: compare
-    async def compare(self, json_data) -> bool:
+    async def compare(self, deals: list[GameDeal]) -> bool:
         """
         Compare local deals with current deals online
         """
-        has_active = json_data and any(game.get('activeDeal') for game in json_data)
+        has_active = any(game.active_deal for game in deals)
 
         # Theres local data and data online
         if has_active and self.data:
 
-            online_titles = self._normalize_title(json_data)
+            online_titles = self._normalize_title(deals)
             local_titles = self._normalize_title(self.data)
 
             should_update = False
@@ -540,39 +539,39 @@ class Store:
 
                 # Mark the games that triggered the notification
                 new_titles = online_titles - local_titles
-                for game in json_data:
-                    game['newDeal'] = game.get('title') in new_titles
+                for game in deals:
+                    game.new_deal = game.title in new_titles
 
                 state_backup = (self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter)
                 
                 try:
-                    self.data = json_data
+                    self.data = deals
                     await self.create_checkout_url()
                     await self.set_images()
                 except Exception:
                     self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter = state_backup
                     raise
 
-                return await self.verify_new_notification(json_data)
+                return await self.verify_new_notification(deals)
             return False
 
         # Theres no data online
-        elif not json_data:
+        elif not deals:
             self.data = None
             self.image = self.image_twitter = None
             return False
         elif has_active and not self.data:
-            for game in json_data:
-                game['newDeal'] = bool(game.get('activeDeal'))
+            for game in deals:
+                game.new_deal = game.active_deal
 
-            self.data = json_data
+            self.data = deals
             try:
                 await self.create_checkout_url()
                 await self.set_images()
             except Exception:
                 self.data, self.checkout_url, self.image, self.image_cdn, self.image_twitter = None, None, None, None, None
                 raise
-            return await self.verify_new_notification(json_data)
+            return await self.verify_new_notification(deals)
         return False
     
     # MARK: create_checkout_url
@@ -585,8 +584,9 @@ class Store:
             return
 
         offer_links = [
-            game["checkout_slug"]
-            for game in self.data if game.get("activeDeal")
+            game.checkout_slug
+            for game in self.data
+            if game.active_deal and game.checkout_slug
         ]
 
         self.checkout_url = template.format(

@@ -64,8 +64,8 @@ class MyClient():
         Returns:
             Tuple of formatted deal string and calculated tweet length impact.
         """
-        title = data['title']
-        link = data['url']
+        title = data.title
+        link = data.url
         end_date = store.get_date(data, 'end', True)
 
         line = "• " + f"{title}\n"
@@ -86,7 +86,7 @@ class MyClient():
         tweet_length = len(txt)
 
         for data in store.data:
-            if not data.get('activeDeal', False):
+            if not data.active_deal:
                 continue
 
             line, length = self._format_deal_line(data, store)
@@ -103,14 +103,14 @@ class MyClient():
         tweet_length = len(txt)
 
         for data in store.data:
-            if not data.get('activeDeal', False) or data.get('type') != 'game':
+            if not data.active_deal or data.product_type != 'game':
                 continue
 
             line, length = self._format_deal_line(data, store, include_link)
             txt += line
             tweet_length += length
 
-        dlcCount = sum(1 for obj in store.data if obj.get('type') != "game")
+        dlcCount = sum(1 for obj in store.data if obj.product_type != "game")
         if dlcCount:
             dlc_line = f"• {dlcCount} free DLC's \n{store.dlcUrl}"
             txt += dlc_line

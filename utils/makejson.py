@@ -15,9 +15,9 @@ class GameDeal:
 
     Attributes
     ----------
-    name : str
+    title : str
         The game title. Leading/trailing whitespaces are stripped during initialization.
-        Non-ASCII characters are removed when converting to a dictionary.
+        Non-ASCII characters are removed during initialization.
     url : str
         URL to the game's store or offer page. Stripped of leading/trailing whitespaces.
     active_deal : bool
@@ -34,19 +34,20 @@ class GameDeal:
         Type of product e.g. 'game', 'dlc', 'low_quality'. Defaults to 'game'.
     checkout_slug : str | None
         Identifier used for the checkout URL.
+    new_deal : bool
+        Whether this deal was newly found during the latest comparison.
 
     Methods
     -------
     is_valid() -> bool
         Returns True if the deal contains the minimum required data
-        (name, url, and at least one image).
+        (title, url, and at least one image).
 
-    to_dict() -> dict[str, Any]
-        Converts the GameDeal into a dictionary.
-        Handles string normalization, ASCII cleanup, and URL formatting.
+    to_document() -> dict[str, Any]
+        Converts the GameDeal to the existing MongoDB document schema.
     """
 
-    name: str
+    title: str
     url: str
     active_deal: bool = True
     image: str | None = None
@@ -55,20 +56,24 @@ class GameDeal:
     offer_until: datetime | None = None
     product_type: str = 'game'
     checkout_slug: str | None = None
+    new_deal: bool = False
 
     def __post_init__(self):
         """
         Post-initialization validation and normalization.
         """
-        self.name = self.name.strip() if isinstance(self.name, str) else self.name
+        self.title = self.title.strip() if isinstance(self.title, str) else self.title
+        self.title = self.title.encode('ascii', 'ignore').decode('ascii') if isinstance(self.title, str) else self.title
         self.url = self.url.strip() if isinstance(self.url, str) else self.url
+        self.image = self.image.replace(" ", "%20") if self.image else None
+        self.wide_image = self.wide_image.replace(" ", "%20") if self.wide_image else None
 
         if not isinstance(self.offer_from, datetime):
-            logger.warning("Invalid offer_from date", extra={'_game': self.name, '_date': self.offer_from})
+            logger.warning("Invalid offer_from date", extra={'_game': self.title, '_date': self.offer_from})
             self.offer_from = datetime.now(timezone.utc)
 
         if self.offer_until is not None and not isinstance(self.offer_until, datetime):
-            logger.warning("Invalid offer_until date", extra={'_game': self.name, '_date': self.offer_until})
+            logger.warning("Invalid offer_until date", extra={'_game': self.title, '_date': self.offer_until})
             self.offer_until = None
 
     def is_valid(self) -> bool:
@@ -80,75 +85,86 @@ class GameDeal:
         bool
             True if name, url, and at least one image are present; False otherwise.
         """
-        return bool(self.name and self.url and (self.image or self.wide_image))
+        return bool(self.title and self.url and (self.image or self.wide_image))
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_document(self) -> dict[str, Any]:
         """
-        Convert the GameDeal to a dictionary.
+        Convert the deal to the MongoDB document schema used by existing data.
 
         Returns
         -------
         dict[str, Any]
-            A dictionary representation of the GameDeal.
+            A MongoDB-compatible representation of the GameDeal.
         """
         return {
-            'title': self.name.encode('ascii', 'ignore').decode('ascii'),
+            'title': self.title,
             'activeDeal': self.active_deal,
             'url': self.url,
             'startDate': self.offer_from,
             'endDate': self.offer_until,
-            'image': self.image.replace(" ", "%20") if self.image else None,
-            'wideImage': self.wide_image.replace(" ", "%20") if self.wide_image else None,
+            'image': self.image,
+            'wideImage': self.wide_image,
             'type': self.product_type,
             'checkout_slug': self.checkout_slug,
+            'newDeal': self.new_deal,
         }
 
+    @classmethod
+    def from_document(cls, document: dict[str, Any]) -> "GameDeal":
+        """Create a deal from a MongoDB document."""
+        return cls(
+            title=document.get('title', document.get('name', '')),
+            url=document.get('url', ''),
+            active_deal=document.get('activeDeal', document.get('active_deal', True)),
+            image=document.get('image'),
+            wide_image=document.get('wideImage', document.get('wide_image')),
+            offer_from=document.get('startDate', document.get('offer_from', datetime.now(timezone.utc))),
+            offer_until=document.get('endDate', document.get('offer_until')),
+            product_type=document.get('type', document.get('product_type', 'game')),
+            checkout_slug=document.get('checkout_slug'),
+            new_deal=document.get('newDeal', document.get('new_deal', False)),
+        )
 
-def append_game_deal(json_data: list[dict[str, Any]], deal: GameDeal) -> list[dict[str, Any]]:
+
+def append_game_deal(deals: list[GameDeal], deal: GameDeal) -> list[GameDeal]:
     """
     Append a game deal entry to an existing list of game data.
 
-    Creates a structured dictionary from a GameDeal and appends it to the provided list.
-    Dates are stored as datetime objects so further calculations (like finding the earliest
-    end date) can be performed directly.
+    Appends a valid GameDeal instance to the provided list. Dates stay as datetime objects
+    for calculations such as finding the earliest end date.
 
     Parameters
     ----------
-    json_data : list[dict[str, Any]]
-        The list to append the new game data to.
+    deals : list[GameDeal]
+        The list to append the new deal to.
     deal : GameDeal
         The game deal to append. See GameDeal for field descriptions.
 
     Returns
     -------
-    list[dict[str, Any]]
-        The updated list with the new game entry appended.
+    list[GameDeal]
+        The updated list with the new deal appended.
 
     Notes
     -----
     - The deal is only appended if `deal.is_valid()` returns True.
     - Invalid deals are logged and skipped.
-    - Conversion to dictionary is handled by `GameDeal.to_dict()`.
+    - Deals are kept as `GameDeal` instances and converted only at persistence boundaries.
 
     Example
     -------
-    >>> json_data = []
-    >>> deal = GameDeal(name="Example Game", url="https://example.com", image="https://example.com/image.jpg")
-    >>> append_game_deal(json_data, deal)
-    [{'title': 'Example Game', 'activeDeal': True, ...}]
+    >>> deals = []
+    >>> deal = GameDeal(title="Example Game", url="https://example.com", image="https://example.com/image.jpg")
+    >>> append_game_deal(deals, deal)
+    [GameDeal(title='Example Game', ...)]
     """
 
     if not deal.is_valid():
         logger.warning(
             "Not all required data passed for game deal", 
-            extra={'_game': deal.name, '_image': deal.image, '_wide_image': deal.wide_image, '_url': deal.url}
+            extra={'_game': deal.title, '_image': deal.image, '_wide_image': deal.wide_image, '_url': deal.url}
         )
-        return json_data
+        return deals
 
-    json_data.append(deal.to_dict())
-    return json_data
-
-
-def save_to_file(filename: str, json_data: list[dict[str, Any]]) -> None:
-    with open(filename, 'w', encoding="utf-8") as outfile:
-        json.dump(json_data, outfile, ensure_ascii=False, indent=4, default=str, sort_keys=False)
+    deals.append(deal)
+    return deals

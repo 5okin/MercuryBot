@@ -49,7 +49,7 @@ class Main(Store):
         if not pages:
             return False
 
-        json_data = []
+        deals = []
         game_list = pages['data']['Catalog']['searchStore']['elements']
         for game in game_list:
 
@@ -98,7 +98,7 @@ class Main(Store):
                         product_slug = game['offerMappings'][0]['pageSlug']
                         checkout_slug = await self.get_checkout_offer(product_slug)
                         game_data = GameDeal(
-                            name=game_name,
+                            title=game_name,
                             url=game_url,
                             active_deal=True,
                             image=tall_image_url,
@@ -107,7 +107,7 @@ class Main(Store):
                             offer_until=endDate,
                             checkout_slug=checkout_slug
                         )
-                        json_data = append_game_deal(json_data, game_data)
+                        deals = append_game_deal(deals, game_data)
 
                 # Upcoming deal
                 if game['promotions']['upcomingPromotionalOffers']:
@@ -117,7 +117,7 @@ class Main(Store):
                             startDate = datetime.strptime(offer['startDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                             endDate = datetime.strptime(offer['endDate'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
                             game_data = GameDeal(
-                                name=game_name,
+                                title=game_name,
                                 url=game_url,
                                 active_deal=False,
                                 image=tall_image_url,
@@ -125,9 +125,9 @@ class Main(Store):
                                 offer_from=startDate,
                                 offer_until=endDate
                             )
-                            json_data = append_game_deal(json_data, game_data)
+                            deals = append_game_deal(deals, game_data)
         del game_list
-        return await self.compare(json_data)
+        return await self.compare(deals)
     
 
     # MARK: get checkout offer
@@ -157,17 +157,17 @@ class Main(Store):
         arr = io.BytesIO()
         curr_images, next_images, combined_images = [], [], []
 
-        active_games = [game for game in self.data if game['activeDeal']]
-        future_games = [game for game in self.data if not game['activeDeal']]
+        active_games = [game for game in self.data if game.active_deal]
+        future_games = [game for game in self.data if not game.active_deal]
 
-        all_have_tall_img = all(game.get('image') for game in self.data)
+        all_have_tall_img = all(game.image for game in self.data)
 
         if (all_have_tall_img):
-            image_active = [self.fetch_image(game['image']) for game in active_games]
-            image_future = [self.fetch_image(game['image']) for game in future_games]
+            image_active = [self.fetch_image(game.image) for game in active_games if game.image]
+            image_future = [self.fetch_image(game.image) for game in future_games if game.image]
         else:
-            image_active = [self.fetch_image(game['wideImage']) for game in active_games]
-            image_future = [self.fetch_image(game['wideImage']) for game in future_games]
+            image_active = [self.fetch_image(game.wide_image) for game in active_games if game.wide_image]
+            image_future = [self.fetch_image(game.wide_image) for game in future_games if game.wide_image]
         
         active_images, future_images = await asyncio.gather(
             asyncio.gather(*image_active),
@@ -225,13 +225,8 @@ class Main(Store):
             await asyncio.sleep(self.scheduler_time)
             return self
 
-        date = self.data[0]['endDate']
-
-        # From all the deals saved find the one that ends first
-        for time in self.data:
-            temp = time['endDate']
-            if temp < date:
-                date = temp
+        offer_end_dates = [deal.offer_until for deal in self.data if deal.offer_until is not None]
+        date = min(offer_end_dates)
 
         now = datetime.now(timezone.utc).replace(microsecond=0)
         delta = date - now

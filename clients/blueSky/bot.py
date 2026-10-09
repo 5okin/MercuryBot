@@ -45,9 +45,9 @@ class MyClient():
         txt.text(f'Free now until: {str(end_date)}\n\n')
 
         for data in store.data:
-            title = data['title']
-            link = data['url']
-            if data['activeDeal']:
+            title = data.title
+            link = data.url
+            if data.active_deal:
                 txt.text("• ").link(title, link)
                 txt.text("\n\n")
         return txt

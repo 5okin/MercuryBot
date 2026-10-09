@@ -50,7 +50,7 @@ class Main(Store):
         """
         Luna process data
         """
-        json_data = []
+        deals: list[GameDeal] = []
         if not self.headers:
             await self.get_cookies_playwright()
         
@@ -71,7 +71,7 @@ class Main(Store):
                 startDate = datetime.strptime(item.get("offers")[0].get("startTime"), "%Y-%m-%dT%H:%M:%SZ")
                 endDate = datetime.strptime(item.get("offers")[0].get("endTime"), "%Y-%m-%dT%H:%M:%SZ")
                 game_data = GameDeal(
-                    name=title,
+                    title=title,
                     url=link,
                     active_deal=True,
                     image=image,
@@ -79,9 +79,9 @@ class Main(Store):
                     offer_from=startDate,
                     offer_until=endDate
                 )
-                json_data = append_game_deal(json_data, game_data)
+                append_game_deal(deals, game_data)
 
-            return await self.compare(json_data)
+            return await self.compare(deals)
 
         except Exception:
             self.logger.error("Unexpected error retrieving data for %s", self.service_name)

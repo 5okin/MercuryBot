@@ -30,7 +30,7 @@ class Main(Store):
         )
 
     #MARK: giveaway
-    async def giveaway(self, json_data) -> None:
+    async def giveaway(self, deals: list[GameDeal]) -> None:
         '''
         Search gog front page for giveaways
         '''
@@ -59,7 +59,7 @@ class Main(Store):
             offer_from  = datetime.now()
 
             game_data = GameDeal(
-                name=game_title,
+                title=game_title,
                 url=game_url,
                 active_deal=True,
                 image=game_image,
@@ -67,7 +67,7 @@ class Main(Store):
                 offer_from=offer_from,
                 offer_until=offer_until
             )
-            json_data = append_game_deal(json_data, game_data)
+            append_game_deal(deals, game_data)
         else:
             return
 
@@ -99,11 +99,11 @@ class Main(Store):
         '''
         Parse the retrieved data
         '''
-        json_data = []
+        deals: list[GameDeal] = []
         data = []
 
-        await self.giveaway(json_data)
-        return await self.compare(json_data)
+        await self.giveaway(deals)
+        return await self.compare(deals)
 
     #MARK: get
     async def get(self) -> bool:
@@ -123,4 +123,3 @@ if __name__ == "__main__":
     a = Main()
     asyncio.run(a.get())
     print(a.data)
-

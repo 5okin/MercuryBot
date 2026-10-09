@@ -29,7 +29,7 @@ class Main(Store):
 
         monthly_games_section = data.xpath('//div[contains(concat(" ", normalize-space(@class), " "), " cmp-experiencefragment--wn-latest-monthly-games-content ")]')[0]
         games= monthly_games_section.xpath('.//div[starts-with(@class, "box")]')
-        json_data = []
+        deals: list[GameDeal] = []
 
         if not games: return self.logger.critical('PSplus isn\'t returning any deals!')
 
@@ -51,17 +51,17 @@ class Main(Store):
                 game_image = (game.xpath('.//source'))[2].attrib.get('srcset') if len(game.xpath('.//source')) >= 2 else (games[i-1].xpath('.//source'))[2].attrib.get('srcset') 
                 
                 game_data = GameDeal(
-                    name=title,
+                    title=title,
                     url=game_url,
                     active_deal=True,
                     image=game_image,
                     wide_image=game_image
                 )
-                json_data = append_game_deal(json_data, game_data)
+                append_game_deal(deals, game_data)
             except Exception as e:
                 self.logger.debug("Data acquisition failed %s", e)
 
-        return await self.compare(json_data)
+        return await self.compare(deals)
 
 
     async def get(self) -> bool:

@@ -17,10 +17,10 @@ def epic(store, image_url: str | None = None, mobile=False) -> discord.Embed:
 
     now_end_date = game_details = ''
     for deal in store.data:
-        title = deal['title']
-        link = deal['url']
+        title = deal.title
+        link = deal.url
 
-        if deal['activeDeal']:
+        if deal.active_deal:
             now_end_date = store.get_date(deal, 'end', True)
             all_freenow += "• " + f"[**{title}**]({link})\n\n"
         else:
@@ -46,8 +46,8 @@ def gog(store, image_url: str | None = None, mobile=False) -> discord.Embed:
     embed_var = discord.Embed(title="🕹️ GOG 🕹️", description=f'{ZWSP}\n**Free Now**', color=0x00aff4)
 
     for deal in store.data:
-        title = deal['title']
-        link = deal['url']
+        title = deal.title
+        link = deal.url
         end_date = store.get_date(deal, 'end', True)
         embed_var.add_field(name=f'{ZWSP}\n', value=f"[**{title}**]({link})\nUntil: {end_date}", inline=False)
 
@@ -82,7 +82,7 @@ def default(store, image_url: str | None = None, mobile=False) -> discord.Embed:
         col2.clear()
 
     for i, deal in enumerate(store.data):
-        entry = f"• [**{deal['title']}**]({deal['url']})"
+        entry = f"• [**{deal.title}**]({deal.url})"
         end_date = store.get_date(deal, 'end', True)
         if end_date:
             entry += f"\nUntil: {end_date}"

@@ -47,7 +47,7 @@ class Main(epic):
         """
         epic mobile process data
         """
-        json_data = []
+        deals: list[GameDeal] = []
 
         for platform, data in pages.items():            
 
@@ -67,7 +67,7 @@ class Main(epic):
                     game_url = self.url + product_url
 
                     game_data = GameDeal(
-                        name=title, 
+                        title=title,
                         url=game_url,
                         active_deal=True,
                         image=image,
@@ -75,9 +75,9 @@ class Main(epic):
                         offer_until=endDate,
                         checkout_slug=checkout_slug
                     )
-                    json_data = append_game_deal(json_data, game_data)
+                    append_game_deal(deals, game_data)
 
-        return await self.compare(json_data)
+        return await self.compare(deals)
 
     #MARK: get
     async def get(self) -> bool:

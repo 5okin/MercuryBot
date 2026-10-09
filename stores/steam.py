@@ -48,7 +48,7 @@ class Main(Store):
         """
         Steam process data
         """
-        json_data = []
+        deals: list[GameDeal] = []
         data = await self.request_data(self.url, mode='json')
         if not data or data.get('total_count', 0) == 0:
             return False
@@ -90,7 +90,7 @@ class Main(Store):
                     )
 
             game_data = GameDeal(
-                name=game_name,
+                title=game_name,
                 url=game_url,
                 active_deal=True,
                 image=str(game_image),
@@ -98,9 +98,9 @@ class Main(Store):
                 offer_until=end_date_object,
                 product_type='low_quality' if profile_features_limited else product_type
             )
-            json_data = append_game_deal(json_data, game_data)
+            append_game_deal(deals, game_data)
             
-        return await self.compare(json_data)
+        return await self.compare(deals)
 
     #MARK: get
     async def get(self) -> bool:
