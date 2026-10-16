@@ -193,15 +193,15 @@ class MyClient(discord.Client):
         image_bytes = store.image.getvalue()
         image_type = store.image_type
 
-        def all_new_deals_are_low_quality() -> bool:
-            new_deals = [
-                game for game in store.data
-                if game.new_deal
-            ]
-            return (
-                bool(new_deals)
-                and all(game.product_type == 'low_quality' for game in new_deals)
-            )
+        new_deals = [game for game in store.data if game.new_deal]
+        only_low_quality = (
+            bool(new_deals)
+            and all(game.product_type == 'low_quality' for game in new_deals)
+        )
+        only_paid_game_dlc = (
+            bool(new_deals)
+            and all(game.base_game_free is False for game in new_deals)
+        )
 
         async def send_message(server) -> NotificationResult:
             file, buffer = None, None
@@ -234,8 +234,6 @@ class MyClient(discord.Client):
                     if buffer:
                         buffer.close()
 
-        only_low_quality = all_new_deals_are_low_quality()
-
         servers_eligible = [
             server for server in servers_data
             if (
@@ -244,6 +242,10 @@ class MyClient(discord.Client):
                 and not (
                     server.get('skip_low_quality', False)
                     and only_low_quality
+                )
+                and not (
+                    server.get('skip_dlc_for_paid', False)
+                    and only_paid_game_dlc
                 )
             )
         ]

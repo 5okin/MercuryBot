@@ -62,17 +62,24 @@ class Main(Store):
             if not isinstance(game, Tag):
                 continue
 
+            base_game_free = None
             title_tag = game.select_one("span.title")
             game_name = title_tag.text.strip() if title_tag else None
             game_url = str(game['href'])
             img = game.select_one(".search_capsule img")
             game_image = str(img.get("src")) if img else None
+
+            if not game_name or (not game_url) or (not game_image):
+                continue
+
             app_id = game['data-ds-appid']
             details = await self.request_data(f'{self.gamesInfoApi}={app_id}') or {}
             product_type = details.get(app_id, {}).get('data', {}).get('type')
 
-            if not game_name or (not game_url) or (not game_image):
-                continue
+            if product_type == "dlc":
+                base_game_id = details.get(app_id, {}).get('data', {}).get('fullgame').get('appid')
+                details_full_game = await self.request_data(f'{self.gamesInfoApi}={base_game_id}') or {}
+                base_game_free = details_full_game.get(base_game_id, {}).get('data').get('is_free')
 
             game_details = await self.request_data(game_url, mode='text')
             end_date_object = None
@@ -96,7 +103,8 @@ class Main(Store):
                 image=str(game_image),
                 wide_image=str(game_image),
                 offer_until=end_date_object,
-                product_type='low_quality' if profile_features_limited else product_type
+                product_type='low_quality' if profile_features_limited else product_type,
+                base_game_free=base_game_free
             )
             append_game_deal(deals, game_data)
             

@@ -429,6 +429,8 @@ class Store_Select(discord.ui.Select):
         view.add_item(Store_Select(client, interaction, settings_message))
         view.add_item(BackButton(client, settings_message))
         view.add_item(LowQualityToggleButton(server))
+        view.add_item(PaidDlcToggleButton(server))
+
         await settings_message.edit(content=None, embed=description_embed, view=view)
 
     def __init__(self, client, interaction, settings_message) -> None:
@@ -507,6 +509,34 @@ class LowQualityToggleButton(discord.ui.Button):
         self.style = (
             discord.ButtonStyle.green
             if self.skip_low_quality
+            else discord.ButtonStyle.gray
+        )
+        await interaction.response.edit_message(view=self.view)
+
+
+# MARK: PaidDlcToggleButton
+class PaidDlcToggleButton(discord.ui.Button):
+    def __init__(self, server):
+        skip_dlc_for_paid = server['skip_dlc_for_paid'] if server and server.get('skip_dlc_for_paid') else False
+
+        super().__init__(
+            label=f"Skip DLC for paid games: {'ON' if skip_dlc_for_paid else 'OFF'}",
+            style=discord.ButtonStyle.green if skip_dlc_for_paid else discord.ButtonStyle.gray
+        )
+        self.skip_dlc_for_paid = skip_dlc_for_paid
+
+    async def callback(self, interaction: discord.Interaction):
+        self.skip_dlc_for_paid = not self.skip_dlc_for_paid
+
+        Database.insert_store_notifications([{
+            'server' : interaction.guild_id,
+            'skip_dlc_for_paid' : self.skip_dlc_for_paid
+        }])
+
+        self.label = f"Skip DLC for paid base games: {'ON' if self.skip_dlc_for_paid else 'OFF'}"
+        self.style = (
+            discord.ButtonStyle.green
+            if self.skip_dlc_for_paid
             else discord.ButtonStyle.gray
         )
         await interaction.response.edit_message(view=self.view)

@@ -32,6 +32,8 @@ class GameDeal:
         End of the offer, or None if no end date. Invalid values are set to None.
     product_type : str | None
         Type of product e.g. 'game', 'dlc', 'low_quality'. Defaults to 'game'.
+    base_game_free: bool | None
+        Whether or not the base product for a dlc is free.
     checkout_slug : str | None
         Identifier used for the checkout URL.
     new_deal : bool
@@ -55,6 +57,7 @@ class GameDeal:
     offer_from: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     offer_until: datetime | None = None
     product_type: str = 'game'
+    base_game_free: bool | None = None
     checkout_slug: str | None = None
     new_deal: bool = False
 
@@ -107,6 +110,7 @@ class GameDeal:
             'type': self.product_type,
             'checkout_slug': self.checkout_slug,
             'newDeal': self.new_deal,
+            'base_game_free': self.base_game_free
         }
 
     @classmethod
@@ -123,6 +127,7 @@ class GameDeal:
             product_type=document.get('type', document.get('product_type', 'game')),
             checkout_slug=document.get('checkout_slug'),
             new_deal=document.get('newDeal', document.get('new_deal', False)),
+            base_game_free=document.get('base_game_free')
         )
 
 
