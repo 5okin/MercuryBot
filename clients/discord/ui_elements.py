@@ -73,10 +73,11 @@ class FeedbackModal(discord.ui.Modal, title='Feedback'):
     async def on_submit(self, interaction: discord.Interaction) -> None:
 
         feedback_payload = {
-        'server': interaction.guild_id,
-        'user': interaction.user.name,
-        'timestamp': datetime.now(),
-        'feedback': str(self.feedback.value)
+            'server': interaction.guild_id,
+            'user': interaction.user.name,
+            'user_id': interaction.user.id,
+            'timestamp': datetime.now(),
+            'feedback': str(self.feedback.value)
         }
         Database.add_feedback(feedback_payload)
 
