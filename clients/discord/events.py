@@ -48,10 +48,17 @@ def setup_events(client):
         # } for guild in client.guilds]
         # await asyncio.to_thread(Database.insert_discord_server, payloads)
 
+        status_payload = (
+            f"{client.user} `Started/Restarted and ready`, connected to "
+            f"{len(client.guilds)} servers using "
+            f"{len(client.shards)} / {client.shard_count} shards"
+        )
         if client.ADMIN_USER:
-            await client.ADMIN_USER.send(f"**Status:**\n{client.ADMIN_USER.mention} {client.user} `Started/Restarted and ready`, connected to {len(client.guilds)} servers")
+            await client.ADMIN_USER.send(
+                f"**Status:**\n{client.ADMIN_USER.mention} {status_payload}"
+            )
         else:
-            logger.info("%s Started/Restarted and ready, connected to %s servers", format(client.user), len(client.guilds))
+            logger.info("%s", status_payload)
         
         # Upload animated avatar (only needs to be run once)
         if os.path.exists('avatar.gif'):

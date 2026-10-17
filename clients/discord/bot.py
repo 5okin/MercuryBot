@@ -21,7 +21,7 @@ class NotificationResult:
     permission_problems: dict | None = None
 
 
-class MyClient(discord.Client):
+class MyClient(discord.AutoShardedClient):
     def __init__(self, modules) -> None:
         self.modules = modules
         intents = discord.Intents.none()
