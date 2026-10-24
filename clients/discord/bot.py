@@ -402,8 +402,6 @@ class MyClient(discord.AutoShardedClient):
                 notified_servers.append(server_id)
                 continue
 
-            server.owner_id = None
-
             if server.owner_id is None:
                 logger.warning("Server owner ID is None for server %s", server.id)
                 failed_servers.append(server_id)
