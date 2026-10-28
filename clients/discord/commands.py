@@ -1,8 +1,6 @@
-import io
 import discord
 from discord import WebhookMessage, app_commands
 from .ui_elements import FooterButtons, Settings_buttons, FeedBackView
-from .embeds import settings_embed, feedback_embed
 from .helpers import build_deal_payload
 from utils import environment
 
@@ -16,6 +14,7 @@ def define_commands(self) -> None:
     @app_commands.choices(store_choice=[app_commands.Choice(name=store.service_name, value=store.name) for store in self.modules])
     @app_commands.describe(store_choice='Select the store you want to view')
     async def store_select(interaction: discord.Interaction, store_choice: app_commands.Choice[str]) -> None:
+        await interaction.response.defer(ephemeral=True)
 
         mobile = False
         # Check if the command was not send in a DM
@@ -26,10 +25,10 @@ def define_commands(self) -> None:
             if store_choice.value == store.name:
                 payload = build_deal_payload(store, mobile=mobile)
                 if payload is None:
-                    await interaction.response.send_message(f"No free games on {store.name}", ephemeral=True)
+                    await interaction.followup.send(f"No free games on {store.name}", ephemeral=True)
                     return
 
-                await interaction.response.send_message(
+                await interaction.followup.send(
                     embed=payload["embed"],
                     file=payload["file"],
                     view=FooterButtons(),
@@ -37,11 +36,10 @@ def define_commands(self) -> None:
                 )
                 return
 
-
     # MARK: Feedback
     @self.tree.command(description="Submit feedback")
     async def feedback(interaction: discord.Interaction) -> None:
-        await interaction.response.send_message(embed=feedback_embed(), view=FeedBackView(), ephemeral=True)
+        await interaction.response.send_message(view=FeedBackView(), ephemeral=True)
 
     # MARK: Settings
     @app_commands.default_permissions(manage_guild=True)
@@ -56,16 +54,9 @@ def define_commands(self) -> None:
             return
 
         try:
-            if not interaction.response.is_done():
-                await interaction.response.defer(thinking=True, ephemeral=True)
+            view = Settings_buttons(self, interaction)
+            await interaction.response.send_message(view=view, ephemeral=True)
 
-            view = Settings_buttons(self)
-            embed = settings_embed(self, interaction)
-            message: WebhookMessage | None = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
-            if message is None:
-                raise Exception("Failed to send settings message")
-            view.message = message
-            await message.edit(view=Settings_buttons(self, settings_message=message))
         except Exception:
             logger.warning("Failed discord command /settings", 
                 extra={

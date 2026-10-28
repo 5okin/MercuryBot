@@ -8,7 +8,7 @@ from io import BytesIO
 from utils.database import Database
 import clients.discord.messages as messages
 from .commands import define_commands
-from .ui_elements import FooterButtons
+from .ui_elements import FooterButtons, missing_permissions_view
 from .events import setup_events
 
 logger = environment.logging.getLogger("bot.discord")
@@ -60,82 +60,63 @@ class MyClient(discord.AutoShardedClient):
 
     # MARK: check_permissions 
     def check_channel_permissions(self, channel) -> dict:
-        """
-        Checks if the bot has the required permissions in a given channel and returns detailed information about the permissions.
+        """Check the bot's required channel permissions.
+
+        Checks ``view_channel``, ``send_messages``, ``embed_links``, and
+        ``attach_files`` for the bot member in ``channel``. A ``None`` channel
+        is treated as inaccessible, with all required permissions marked false.
 
         Args:
-            channel (discord.TextChannel): The Discord text channel to check.
+            channel: The Discord channel to check, or ``None`` if unavailable.
 
         Returns:
-            dict: A dictionary containing:
-            - 'has_all_permissions' (bool): True if the bot has all required permissions, otherwise False.
-            - 'permission_details' (dict): A dictionary where keys are permissions and values are booleans indicating permissions status.
-            - 'embed' (discord.Embed): An embed message listing the permissions and their statuses (✅ or ❌).
-
-        Notes:
-            - The method checks the following permissions: 'view_channel', 'send_messages', 'embed_links', 'attach_files'.
-            - If the bot does not have the required permissions, the embed will list each permission's status and provide instructions for updating permissions.
-            - If the channel does not exist, the method will return a message indicating so.
+            A dictionary with ``has_all_permissions`` (bool), ``permission_details``
+            (a mapping of required permission names to bools), and the title,
+            description, instruction, and footer strings used to build the
+            permission warning view.
         """
         assert self.user is not None, "Bot user is None"
-        #  It is possible for system channel not to exist on a guild.
+        required_permissions = ("view_channel", "send_messages", "embed_links", "attach_files")
         if channel is None:
-            # object to match discords API response to channel permissions
-            class PermissionDetails:
-                def __init__(self) -> None:
-                    self.view_channel = False
-                    self.send_messages = False
-                    self.embed_links = False
-                    self.attach_files = False
-
-            msg = (f"The selected channel does not exist, or {self.user.mention} can't access it. "
-                    "To fix this, update your settings using the `/settings` command with a valid channel, "
-                    "and ensure the bot has access to it.")
-
-            embed = discord.Embed(
-                title="❌ Channel Not Found",
-                description= msg,
-                color=0xff0000
+            description = (
+                f"The selected channel does not exist, or {self.user.mention} can't access it. "
+                "To fix this, update your settings using the `/settings` command with a valid channel, "
+                "and ensure the bot has access to it."
             )
-            embed.set_thumbnail(url="https://5okin.github.io/mercurybot-web/images/mercury_avatar.gif")
-            msg = f"**❌ Channel Not Found**\n{msg}\n"
-            return {"has_all_permissions": False, "permission_details": PermissionDetails(), "embed": embed, "text_message": msg}
+            return {
+                "has_all_permissions": False,
+                "permission_details": {name: False for name in required_permissions},
+                "title": "❌ Channel Not Found",
+                "description": description,
+                "permission_heading": "Required permissions",
+                "instruction_heading": "How to fix this",
+                "instruction_description": "Select a valid channel and ensure the bot can access it.",
+                "footer": "Please update channel permissions and try again",
+            }
 
         guild = channel.guild
-        required_permissions  = ['view_channel', 'send_messages', 'embed_links', 'attach_files']
         bot_permissions = channel.permissions_for(guild.me)
-        has_all_permissions = all(getattr(bot_permissions, perm, False) for perm in required_permissions)
-
-        permissions_status = [
-            f"{'✅' if getattr(bot_permissions, perm, False) else '❌'} {perm.replace('_', ' ').title()}"
-            for perm in required_permissions
-        ]
-        permissions_message = "\n".join(permissions_status)
-
-        msg_d = "I don't have all the required permission to send messages to the selected channel."
-        msg_f = "I need at least the following permissions to work correctly"
-        msg_e_t = "To change channel permissions:"
-        msg_e_d = "Click on the 3 dots next to the channel name / Edit channel / Permissions"
-        msg_g = "Please update channel permissions and try again"
-        embed = discord.Embed(title="🔒 Missing permissions 🔒", description=f"{msg_d}", color=0xff0000)
-        embed.add_field(name="​", value="", inline=False)
-        embed.add_field(name=msg_f, value=f"\n{permissions_message}\n", inline=False)
-        embed.add_field(name="​", value="", inline=False)
-        embed.add_field(name=msg_e_t, value=msg_e_d, inline=False)
-        embed.set_footer(text=msg_g)
-        embed.set_thumbnail(url="https://5okin.github.io/mercurybot-web/images/mercury_avatar.gif")
-
-        text_message = f"**{embed.title}**\n{embed.description}\n"
-        for field in embed.fields:
-            text_message += f"**{field.name}** {field.value}\n"
-
-        permission_status = {
-            "has_all_permissions": has_all_permissions,
-            "permission_details": bot_permissions,
-            "embed": embed,
-            "text_message": text_message
+        has_all_permissions = all(getattr(bot_permissions, name, False) for name in required_permissions)
+        permission_details = {
+            name: getattr(bot_permissions, name, False)
+            for name in required_permissions
         }
-        return permission_status
+        description = "I don't have all the required permission to send messages to the selected channel."
+        permission_heading = "I need at least the following permissions to work correctly"
+        instruction_heading = "To change channel permissions:"
+        instruction_description = "Click on the 3 dots next to the channel name / Edit channel / Permissions"
+        footer = "Please update channel permissions and try again"
+
+        return {
+            "has_all_permissions": has_all_permissions,
+            "permission_details": permission_details,
+            "title": "🔒 Missing permissions 🔒",
+            "description": description,
+            "permission_heading": permission_heading,
+            "instruction_heading": instruction_heading,
+            "instruction_description": instruction_description,
+            "footer": footer,
+        }
 
 
     #MARK: dm_logs
@@ -388,17 +369,13 @@ class MyClient(discord.AutoShardedClient):
             server_settings = Database.get_discord_server(server_id)
             channel = self.get_channel(server_settings.get('channel')) if server_settings else None
 
-            if permissions['permission_details'].send_messages and isinstance(channel, discord.TextChannel):
-                await channel.send(content=permissions['text_message'])
+            if permissions['permission_details']['send_messages'] and isinstance(channel, discord.TextChannel):
+                await channel.send(view=missing_permissions_view(permissions))
                 notified_servers.append(server_id)
                 continue
 
-            if server.system_channel and server.system_channel.permissions_for(server.me).embed_links:
-                await server.system_channel.send(embed=permissions['embed'])
-                notified_servers.append(server_id)
-                continue
             if server.system_channel and server.system_channel.permissions_for(server.me).send_messages:
-                await server.system_channel.send(content=permissions['text_message'])
+                await server.system_channel.send(view=missing_permissions_view(permissions))
                 notified_servers.append(server_id)
                 continue
 
@@ -423,7 +400,7 @@ class MyClient(discord.AutoShardedClient):
                 # Try sending permissions notification msg to any server channel:
                 for public_channel in server.text_channels:
                     if public_channel.permissions_for(server.me).send_messages:
-                        await public_channel.send(content=permissions['text_message'])
+                        await public_channel.send(view=missing_permissions_view(permissions))
                         notified_servers.append(server_id)
                         logger.info("Send permission notification for %s to public channel", server.id)
                         break
