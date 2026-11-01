@@ -24,6 +24,7 @@ class Main(Store):
             name = 'gog',
             id = '2',
             twitter_notification = True,
+            bsky_notification = True,
             discord_emoji = os.getenv('DISCORD_GOG_EMOJI'),
             service_name = 'GOG',
             url = 'https://www.gog.com/games/ajax/filtered?mediaType=game&page=1&price=discounted'
