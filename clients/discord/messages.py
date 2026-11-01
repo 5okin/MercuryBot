@@ -41,22 +41,6 @@ def epic(store, image_url: str | None = None, mobile=False) -> discord.Embed:
 
     return embed_var
 
-# MARK: gog
-def gog(store, image_url: str | None = None, mobile=False) -> discord.Embed:
-    embed_var = discord.Embed(title="🕹️ GOG 🕹️", description=f'{ZWSP}\n**Free Now**', color=0x00aff4)
-
-    for deal in store.data:
-        title = deal.title
-        link = deal.url
-        end_date = store.get_date(deal, 'end', True)
-        embed_var.add_field(name=f'{ZWSP}\n', value=f"[**{title}**]({link})\nUntil: {end_date}", inline=False)
-
-    if image_url:
-        embed_var.set_image(url=image_url)
-    else:
-        embed_var.set_image(url="attachment://img.gif")
-    embed_var.set_footer(text=footer)
-    return embed_var
 
 # MARK: default
 def default(store, image_url: str | None = None, mobile=False) -> discord.Embed:
