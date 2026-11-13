@@ -124,11 +124,12 @@ Discord             |  X            |  Bluesky
    <image src="https://github.com/user-attachments/assets/c0c03f56-837b-41d5-ac51-648078bfd49d">
   <p>
 
-- **Skip low-quality games**
+- **Notification filters**
 
-  The `Skip low-quality games` toggle allows you to choose whether to skip notifications for "low-quality" titles. Currently, this applies to Steam games marked with the **Profile Features Limited** tag.
+  - The `Skip low-quality games` toggle allows you to choose whether to skip notifications for "low-quality" titles. Currently, this applies to Steam games marked with the **Profile Features Limited** tag.
+  - The `Skip DLC for paid base games` toggle, like the name suggests, skips notifications for DLCs if the base game is paid
   <p align='center'>
-   <image src="https://github.com/user-attachments/assets/8b4a117e-3c64-40b5-9cc9-06eecca6d5f2">
+   <image src="https://github.com/user-attachments/assets/f728e714-9893-4853-b36e-7aed3095d860">
   <p>
 
 ## Project Structure
