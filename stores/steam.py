@@ -50,7 +50,9 @@ class Main(Store):
         """
         deals: list[GameDeal] = []
         data = await self.request_data(self.url, mode='json')
-        if not data or data.get('total_count', 0) == 0:
+
+        if not data or 'results_html' not in data:
+            self.logger.critical('Steam isn\'t fetching data correctly')
             return False
         
         soup = BeautifulSoup(data['results_html'], 'html.parser')
